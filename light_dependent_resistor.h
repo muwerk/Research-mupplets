@@ -32,7 +32,7 @@ class Ldr {
             [=](String topic, String msg, String originator) {
                 this->subsMsg(topic, msg, originator);
             };
-        pSched->subscribe("#", fnall);
+        pSched->subscribe(name + "/luminosity/#", fnall);
     }
 
     void loop() {
@@ -40,20 +40,15 @@ class Ldr {
         if (ldrsens.filter(&val)) {
             ldrvalue = val;
             char buf[32];
-            sprintf(buf, "%5.1f", val);
+            sprintf(buf, "%5.1f", ldrvalue);
             pSched->publish(name + "/luminosity", buf);
         }
     }
 
     void subsMsg(String topic, String msg, String originator) {
-        DynamicJsonBuffer jsonBuffer(200);
-        JsonObject &root = jsonBuffer.parseObject(msg);
-        if (!root.success()) {
-            // DBG("ldr: Invalid JSON received: " + String(msg));
-            return;
-        }
-        if (topic == "net/services/ldrserver") {
-            // ldrServer = root["server"].as<char *>();
+        if (topic == name + "/luminosity/get") {
+            sprintf(buf, "%5.1f", ldrvalue);
+            pSched->publish(name + "/luminosity", buf);
         }
     };
 };  // Ldr

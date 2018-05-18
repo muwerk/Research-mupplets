@@ -9,6 +9,8 @@ class Ldr {
     Scheduler *pSched;
     uint8_t port;
     String name;
+    double ldrvalue;
+    ustd::sensorprocessor ldrsens = ustd::sensorprocessor(8, 600, 0.01);
 
     Ldr(uint8_t port, String name) : port(port), name(name) {
     }
@@ -24,7 +26,7 @@ class Ldr {
         // give a c++11 lambda as callback scheduler task registration of
         // this.loop():
         std::function<void()> ft = [=]() { this->loop(); };
-        pSched->add(ft);
+        pSched->add(ft, 200000);
 
         std::function<void(String, String, String)> fnall =
             [=](String topic, String msg, String originator) {
@@ -34,6 +36,13 @@ class Ldr {
     }
 
     void loop() {
+        double val = analogRead(port) / 1023.0;
+        if (ldrsens.filter(&val)) {
+            ldrvalue = val;
+            char buf[32];
+            sprintf(buf, "%5.1f", val);
+            pSched->publish(name + "/luminosity", buf);
+        }
     }
 
     void subsMsg(String topic, String msg, String originator) {

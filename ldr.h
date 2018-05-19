@@ -47,6 +47,7 @@ class Ldr {
 
     void subsMsg(String topic, String msg, String originator) {
         if (topic == name + "/luminosity/get") {
+            char buf[32];
             sprintf(buf, "%5.1f", ldrvalue);
             pSched->publish(name + "/luminosity", buf);
         }

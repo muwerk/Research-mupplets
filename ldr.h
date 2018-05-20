@@ -10,7 +10,7 @@ class Ldr {
     uint8_t port;
     String name;
     double ldrvalue;
-    ustd::sensorprocessor ldrsens = ustd::sensorprocessor(8, 600, 0.01);
+    ustd::sensorprocessor ldrsens = ustd::sensorprocessor(4, 600, 0.005);
 
     Ldr(uint8_t port, String name) : port(port), name(name) {
     }
@@ -40,7 +40,7 @@ class Ldr {
         if (ldrsens.filter(&val)) {
             ldrvalue = val;
             char buf[32];
-            sprintf(buf, "%5.1f", ldrvalue);
+            sprintf(buf, "%5.3f", ldrvalue);
             pSched->publish(name + "/luminosity", buf);
         }
     }
@@ -48,7 +48,7 @@ class Ldr {
     void subsMsg(String topic, String msg, String originator) {
         if (topic == name + "/luminosity/get") {
             char buf[32];
-            sprintf(buf, "%5.1f", ldrvalue);
+            sprintf(buf, "%5.3f", ldrvalue);
             pSched->publish(name + "/luminosity", buf);
         }
     };

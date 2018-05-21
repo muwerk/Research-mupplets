@@ -72,7 +72,7 @@ class NeoCandle {
         // give a c++11 lambda as callback scheduler task registration of
         // this.loop():
         std::function<void()> ft = [=]() { this->loop(); };
-        pSched->add(ft, 50000);
+        pSched->add(ft, 100000);
 
         std::function<void(String, String, String)> fnall =
             [=](String topic, String msg, String originator) {

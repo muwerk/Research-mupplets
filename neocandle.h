@@ -2,6 +2,7 @@
 #pragma once
 
 #include "scheduler.h"
+
 #include <Adafruit_NeoPixel.h>
 
 // Neopixel default hardware:
@@ -61,8 +62,8 @@ class NeoCandle {
     }
 
     void begin(Scheduler *_pSched) {
-        // Make sure _clientName is Unique! Otherwise MQTT server will rapidly
-        // disconnect.
+        // Make sure _clientName is Unique! Otherwise MQTT server will
+        // rapidly disconnect.
         pSched = _pSched;
 
         pPixels = new Adafruit_NeoPixel(NUMPIXELS, NEO_GRB + NEO_KHZ800);
@@ -100,7 +101,8 @@ class NeoCandle {
                 ce = 0;
 
             if (ce == 1) {  // center of one lamp
-                // pixels.Color takes RGB values, from 0,0,0 up to 255,255,255
+                // pixels.Color takes RGB values, from 0,0,0 up to
+                // 255,255,255
                 cr = 40;
                 cg = 15;
                 cb = 0;
@@ -154,7 +156,8 @@ class NeoCandle {
 
             pPixels->setPixelColor(i, pixels.Color(cr, cg, cb));
         }
-        pPixels->show();  // This sends the updated pixel color to the hardware.
+        pPixels->show();  // This sends the updated pixel color to the
+                          // hardware.
     }
 
     void loop() {

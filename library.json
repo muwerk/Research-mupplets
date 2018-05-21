@@ -8,7 +8,7 @@
         "maintainer": true
     }],
     "dependencies": {
-        "name": "muwerk",
+        "name": "ustd",
         "authors": "Dominik Schösser",
         "frameworks": "arduino"
     },

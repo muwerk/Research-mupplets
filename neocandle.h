@@ -1,9 +1,6 @@
 #pragma once
 
-#include "scheduler.h"
-
 //#include "../lib/Adafruit NeoPixel_ID28/Adafruit_NeoPixel.h"
-#include <Adafruit_NeoPixel.h>
 
 // Neopixel default hardware:
 #define NEOCANDLE_PIN 15        // Soldered to pin 15 on neopixel feather-wing

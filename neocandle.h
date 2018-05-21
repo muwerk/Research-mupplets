@@ -3,7 +3,8 @@
 
 #include "scheduler.h"
 
-#include <Adafruit_NeoPixel.h>
+#include "../lib/Adafruit NeoPixel_ID28/Adafruit_NeoPixel.h"
+//#include <Adafruit_NeoPixel.h>
 
 // Neopixel default hardware:
 #define NEOCANDLE_PIN 15        // Soldered to pin 15 on neopixel feather-wing
@@ -16,25 +17,26 @@ class NeoCandle {
   public:
     Scheduler *pSched;
     String name;
-    uint8_t port;
+    bool bStarted = false;
+    uint8_t pin;
     int numPixels;
     int options;
     // Max brightness of butterlamp 0..100
     int amp = 20;
     // Max wind flicker 0..100
     int wind = 20;
-    Adafruit_NeoPixel pPixels;
+    Adafruit_NeoPixel *pPixels;
 
-    NeoCandle(String name, uint8_t port = NEOCANDLE_PORT,
+    NeoCandle(String name, uint8_t pin = NEOCANDLE_PIN,
               int numPixels = NEOCANDLE_NUMPIXELS,
               int options = NEOCANDLE_OPTIONS)
-        : port(port), name(name), numPixels(numPixels), options(options) {
+        : name(name), pin(pin), numPixels(numPixels), options(options) {
     }
 
     ~NeoCandle() {
     }
 
-    int parseValue(byte *msg, unsigned int len) {
+    int parseValue(const byte *msg, unsigned int len) {
         char buff[32];
         int l;
         int amp = 0;
@@ -64,9 +66,10 @@ class NeoCandle {
     void begin(Scheduler *_pSched) {
         // Make sure _clientName is Unique! Otherwise MQTT server will
         // rapidly disconnect.
+        char buf[32];
         pSched = _pSched;
 
-        pPixels = new Adafruit_NeoPixel(NUMPIXELS, NEO_GRB + NEO_KHZ800);
+        pPixels = new Adafruit_NeoPixel(numPixels, pin, options);
 
         // give a c++11 lambda as callback scheduler task registration of
         // this.loop():
@@ -83,16 +86,17 @@ class NeoCandle {
         pSched->publish("butterlamp/windlevel", buf);
         sprintf(buf, "%d", amp);
         pSched->publish("butterlamp/brightness", buf);
+        bStarted = true;
     }
 
     int f1 = 0, f2 = 0, max_b = 20;
     void butterlamp() {
-        int r, c, l, lc, ce, cr, cg, cb, mf;
+        int r, c, lc, ce, cr, cg, cb, mf;
         int flic[] = {4, 7, 8, 9, 10, 12, 16, 20, 32, 30, 32, 20, 24, 16, 8, 6};
         for (int i = 0; i < numPixels; i++) {
             r = i / 8;
             c = i % 8;
-            l = c / 2;
+            // l = c / 2;
             lc = c % 4;
             if (((r == 1) || (r == 2)) && ((lc == 1) || (lc == 2)))
                 ce = 1;  // two lamps have 2x2 centers: ce=1 -> one of the
@@ -154,14 +158,15 @@ class NeoCandle {
             if (cb < 0)
                 cb = 0;
 
-            pPixels->setPixelColor(i, pixels.Color(cr, cg, cb));
+            pPixels->setPixelColor(i, pPixels->Color(cr, cg, cb));
         }
         pPixels->show();  // This sends the updated pixel color to the
                           // hardware.
     }
 
     void loop() {
-        butterlamp();
+        if (bStarted)
+            butterlamp();
     }
 
     void subsMsg(String topic, String msg, String originator) {
@@ -173,7 +178,7 @@ class NeoCandle {
             Serial.print(topic.c_str());
             Serial.print("] ");
             int amp_old = amp;
-            amp = parseValue(msg.c_str(), length);
+            amp = parseValue((const byte *)msg.c_str(), strlen(msg.c_str()));
             if (amp < 0)
                 amp = 0;
             if (amp > 100)
@@ -181,15 +186,16 @@ class NeoCandle {
             if (amp != amp_old) {
                 char buf[32];
                 sprintf(buf, "%d", amp);
-                pSched->publish("butterlamp/brightness", buf, strlen(buf) + 1);
+                pSched->publish("butterlamp/brightness", buf);
             }
         }
-        if (!strcmp(topic, "butterlamp/windlevel/set")) {
+        if (topic == "butterlamp/windlevel/set") {
             Serial.print("Message arrived [");
-            Serial.print(topic);
+            Serial.print(topic.c_str());
             Serial.print("] ");
             int wind_old = wind;
-            wind = parseValue(payload, length);
+            wind = parseValue((const byte *)msg.c_str(), strlen(msg.c_str()));
+
             if (wind < 0)
                 wind = 0;
             if (wind > 100)
@@ -197,13 +203,9 @@ class NeoCandle {
             if (wind != wind_old) {
                 char buf[32];
                 sprintf(buf, "%d", wind);
-                if (mqActive)
-                    mqttclient.publish("butterlamp/windlevel", buf,
-                                       strlen(buf) + 1);
+                pSched->publish("butterlamp/windlevel", buf);
             }
         }
     }
 };
 };  // namespace ustd
-
-}  // namespace ustd

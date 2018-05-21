@@ -1,16 +1,15 @@
-// neocandle.h
 #pragma once
 
 #include "scheduler.h"
 
-#include "../lib/Adafruit NeoPixel_ID28/Adafruit_NeoPixel.h"
-//#include <Adafruit_NeoPixel.h>
+//#include "../lib/Adafruit NeoPixel_ID28/Adafruit_NeoPixel.h"
+#include <Adafruit_NeoPixel.h>
 
 // Neopixel default hardware:
 #define NEOCANDLE_PIN 15        // Soldered to pin 15 on neopixel feather-wing
 #define NEOCANDLE_NUMPIXELS 32  // neopixel feather-wing
-#define NEOCANDLE_OPTIONS                                                      \
-    (NEO_GRB + NEO_KHZ800)  // defaults for 5x8 adafruit feather-wing.
+// defaults for 5x8 adafruit feather-wing:
+#define NEOCANDLE_OPTIONS (NEO_GRB + NEO_KHZ800)
 
 namespace ustd {
 class NeoCandle {

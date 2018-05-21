@@ -1,12 +1,14 @@
 #pragma once
 
-//#include "../lib/Adafruit NeoPixel_ID28/Adafruit_NeoPixel.h"
+#include "../butterlamp/src/Adafruit_NeoPixel.h"
 
 // Neopixel default hardware:
-#define NEOCANDLE_PIN 15        // Soldered to pin 15 on neopixel feather-wing
-#define NEOCANDLE_NUMPIXELS 32  // neopixel feather-wing
-// defaults for 5x8 adafruit feather-wing:
-#define NEOCANDLE_OPTIONS (NEO_GRB + NEO_KHZ800)
+// Soldered to pin 15 on neopixel feather-wing
+#define NEOCANDLE_PIN 15
+// neopixel feather-wing number of leds:
+#define NEOCANDLE_NUMPIXELS 32
+// defaults for 4x8 adafruit feather-wing:
+#define NEOCANDLEX_OPTIONS (NEO_GRB + NEO_KHZ800)
 
 namespace ustd {
 class NeoCandle {
@@ -15,8 +17,8 @@ class NeoCandle {
     String name;
     bool bStarted = false;
     uint8_t pin;
-    int numPixels;
-    int options;
+    uint16_t numPixels;
+    uint8_t options;
     // Max brightness of butterlamp 0..100
     int amp = 20;
     // Max wind flicker 0..100
@@ -24,8 +26,8 @@ class NeoCandle {
     Adafruit_NeoPixel *pPixels;
 
     NeoCandle(String name, uint8_t pin = NEOCANDLE_PIN,
-              int numPixels = NEOCANDLE_NUMPIXELS,
-              int options = NEOCANDLE_OPTIONS)
+              uint16_t numPixels = NEOCANDLE_NUMPIXELS,
+              uint8_t options = NEOCANDLEX_OPTIONS)
         : name(name), pin(pin), numPixels(numPixels), options(options) {
     }
 
@@ -35,7 +37,7 @@ class NeoCandle {
     int parseValue(const byte *msg, unsigned int len) {
         char buff[32];
         int l;
-        int amp = 0;
+        int ampx = 0;
         memset(buff, 0, 32);
         if (len > 31)
             l = 31;
@@ -44,19 +46,19 @@ class NeoCandle {
         strncpy(buff, (const char *)msg, l);
 
         if (l >= 2 && !strncmp((const char *)buff, "on", 2)) {
-            amp = 100;
+            ampx = 100;
         } else {
             if (l >= 3 && !strncmp((const char *)buff, "off", 3)) {
-                amp = 0;
+                ampx = 0;
             } else {
                 if (l >= 4 && !strncmp((const char *)buff, "pct ", 4)) {
-                    amp = atoi((char *)(buff + 4));
+                    ampx = atoi((char *)(buff + 4));
                 } else {
-                    amp = atoi((char *)buff);
+                    ampx = atoi((char *)buff);
                 }
             }
         }
-        return amp;
+        return ampx;
     }
 
     void begin(Scheduler *_pSched) {
@@ -66,7 +68,7 @@ class NeoCandle {
         pSched = _pSched;
 
         pPixels = new Adafruit_NeoPixel(numPixels, pin, options);
-
+        pPixels->begin();
         // give a c++11 lambda as callback scheduler task registration of
         // this.loop():
         std::function<void()> ft = [=]() { this->loop(); };
@@ -172,9 +174,10 @@ class NeoCandle {
         if (topic == "butterlamp/brightness/set") {
             Serial.print("Message arrived [");
             Serial.print(topic.c_str());
-            Serial.print("] ");
+            Serial.println("] ");
             int amp_old = amp;
-            amp = parseValue((const byte *)msg.c_str(), strlen(msg.c_str()));
+            amp =
+                parseValue((const byte *)msg.c_str(), strlen(msg.c_str()) + 1);
             if (amp < 0)
                 amp = 0;
             if (amp > 100)
@@ -188,10 +191,10 @@ class NeoCandle {
         if (topic == "butterlamp/windlevel/set") {
             Serial.print("Message arrived [");
             Serial.print(topic.c_str());
-            Serial.print("] ");
+            Serial.println("] ");
             int wind_old = wind;
-            wind = parseValue((const byte *)msg.c_str(), strlen(msg.c_str()));
-
+            wind =
+                parseValue((const byte *)msg.c_str(), strlen(msg.c_str()) + 1);
             if (wind < 0)
                 wind = 0;
             if (wind > 100)

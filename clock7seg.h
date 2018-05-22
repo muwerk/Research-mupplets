@@ -20,21 +20,21 @@ class Clock7Seg {
     String name;
     uint8_t i2cAddress;
     bool bStarted = false;
-    Adafruit_7segment *pClockDisplay
+    Adafruit_7segment *pClockDisplay;
 
-    Clock7Seg(String name, i2cAddress = DISPLAY_ADDRESS)
-        : name(name), ic2Address(i2cAddress) {
+    Clock7Seg(String name, uint8_t i2cAddress = DISPLAY_ADDRESS)
+        : name(name), i2cAddress(i2cAddress) {
     }
 
     ~Clock7Seg() {
     }
 
-    uint8_t old_hr = 0x255;
-    uint8_t old_mn = 0x255;
-    uint8_t old_dots = 0x255;
+    uint8_t old_hr = 0xFF;
+    uint8_t old_mn = 0xFF;
+    uint8_t old_dots = 0xFF;
     void displayClockDigits(uint8_t hr, uint8_t mn, uint8_t dots = 0x1,
                             bool cache = true) {
-        if (cache && old_ht == hr && old_mn == mn && old_dots == dots)
+        if (cache && old_hr == hr && old_mn == mn && old_dots == dots)
             return;
         old_hr = hr;
         old_mn = mn;
@@ -43,19 +43,19 @@ class Clock7Seg {
         uint8_t d1 = hr % 10;
         uint8_t d2 = mn / 10;
         uint8_t d3 = mn % 10;
-        clockDisplay.writeDigitNum(0, d0);
-        clockDisplay.writeDigitNum(1, d1);
-        clockDisplay.writeDigitNum(3, d2);
-        clockDisplay.writeDigitNum(4, d3);
-        clockDisplay.drawColon(dots & 0x1);
-        clockDisplay.writeDisplay();
+        pClockDisplay->writeDigitNum(0, d0);
+        pClockDisplay->writeDigitNum(1, d1);
+        pClockDisplay->writeDigitNum(3, d2);
+        pClockDisplay->writeDigitNum(4, d3);
+        pClockDisplay->drawColon(dots & 0x1);
+        pClockDisplay->writeDisplay();
     }
 
     time_t old_now = -1;
-    uint8_t old_extraDots = 0x255;
+    uint8_t old_extraDots = 0xFF;
     void displayTime(uint8_t extraDots = 0x0, bool cache = true) {
         time_t now = time(nullptr);
-        if (cache = true && old_extraDots == extraDots && now == old_now)
+        if (cache && old_extraDots == extraDots && now == old_now)
             return;
         old_extraDots = extraDots;
         old_now = now;
@@ -69,8 +69,8 @@ class Clock7Seg {
 
         pClockDisplay = new Adafruit_7segment();
 
-        clockDisplay.begin(i2cAddress);
-        clockDisplay.clear();
+        pClockDisplay->begin(i2cAddress);
+        pClockDisplay->clear();
 
         std::function<void()> ft = [=]() { this->loop(); };
         pSched->add(ft, 50000);

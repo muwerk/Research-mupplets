@@ -19,8 +19,6 @@ class Ldr {
     }
 
     void begin(Scheduler *_pSched) {
-        // Make sure _clientName is Unique! Otherwise LDR server will rapidly
-        // disconnect.
         pSched = _pSched;
 
         // give a c++11 lambda as callback scheduler task registration of

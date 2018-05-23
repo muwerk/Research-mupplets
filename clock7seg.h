@@ -36,6 +36,12 @@ class Clock7Seg {
                             bool cache = true) {
         if (cache && old_hr == hr && old_mn == mn && old_dots == dots)
             return;
+
+        if (hr > 21 || hr < 7)
+            setBrightness(0.3);
+        else
+            setBrightness(1.0);
+
         old_hr = hr;
         old_mn = mn;
         old_dots = dots;
@@ -62,6 +68,11 @@ class Clock7Seg {
         struct tm *pTm = localtime(&now);
         uint8_t dots = ((pTm->tm_sec + 1) % 2) || extraDots;
         displayClockDigits(pTm->tm_hour, pTm->tm_min, dots);
+    }
+
+    void setBrightness(float fLevel) {  // 0.0 - 1.0
+        pClockDisplay->setBrightness(
+            (int)(fLevel * 15.0));  // Brightness [0..15]
     }
 
     void begin(Scheduler *_pSched) {

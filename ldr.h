@@ -7,12 +7,13 @@ namespace ustd {
 class Ldr {
   public:
     Scheduler *pSched;
-    uint8_t port;
+    int tID;
     String name;
+    uint8_t port;
     double ldrvalue;
     ustd::sensorprocessor ldrsens = ustd::sensorprocessor(4, 600, 0.005);
 
-    Ldr(uint8_t port, String name) : port(port), name(name) {
+    Ldr(String name, uint8_t port) : name(name), port(port) {
     }
 
     ~Ldr() {
@@ -28,13 +29,13 @@ class Ldr {
         // give a c++11 lambda as callback scheduler task registration of
         // this.loop():
         std::function<void()> ft = [=]() { this->loop(); };
-        pSched->add(ft, 200000);
+        tID = pSched->add(ft, name, 200000);
 
         std::function<void(String, String, String)> fnall =
             [=](String topic, String msg, String originator) {
                 this->subsMsg(topic, msg, originator);
             };
-        pSched->subscribe(name + "/unitluminosity/#", fnall);
+        pSched->subscribe(tID, name + "/unitluminosity/#", fnall);
     }
 
     void loop() {

@@ -11,6 +11,7 @@ namespace ustd {
 class Lumin {
   public:
     Scheduler *pSched;
+    int tID;
     String name;
     uint8_t port;
     double luminvalue = 0.0;
@@ -128,14 +129,14 @@ class Lumin {
             // give a c++11 lambda as callback scheduler task registration of
             // this.loop():
             std::function<void()> ft = [=]() { this->loop(); };
-            pSched->add(ft, 250000);
+            tID = pSched->add(ft, name, 250000);
 
             std::function<void(String, String, String)> fnall =
                 [=](String topic, String msg, String originator) {
                     this->subsMsg(topic, msg, originator);
                 };
-            pSched->subscribe(name + "/luminosity/#", fnall);
-            pSched->subscribe(name + "/unitluminosity/#", fnall);
+            pSched->subscribe(tID, name + "/luminosity/#", fnall);
+            pSched->subscribe(tID, name + "/unitluminosity/#", fnall);
             bActive = true;
         }
     }

@@ -17,6 +17,7 @@ namespace ustd {
 class Clock7Seg {
   public:
     Scheduler *pSched;
+    int tID;
     String name;
     uint8_t i2cAddress;
     uint8_t buzzerPin;
@@ -109,13 +110,13 @@ class Clock7Seg {
             analogWrite(buzzerPin, 0);
         }
         std::function<void()> ft = [=]() { this->loop(); };
-        pSched->add(ft, 50000);
+        tID = pSched->add(ft, name, 50000);
 
         std::function<void(String, String, String)> fnall =
             [=](String topic, String msg, String originator) {
                 this->subsMsg(topic, msg, originator);
             };
-        pSched->subscribe(name + "/#", fnall);
+        pSched->subscribe(tID, name + "/#", fnall);
         bStarted = true;
     }
 

@@ -14,6 +14,7 @@ namespace ustd {
 class NeoCandle {
   public:
     Scheduler *pSched;
+    int tID;
     String name;
     bool bStarted = false;
     uint8_t pin;
@@ -72,18 +73,18 @@ class NeoCandle {
         // give a c++11 lambda as callback scheduler task registration of
         // this.loop():
         std::function<void()> ft = [=]() { this->loop(); };
-        pSched->add(ft, 100000);
+        tID = pSched->add(ft, name, 100000);
 
         std::function<void(String, String, String)> fnall =
             [=](String topic, String msg, String originator) {
                 this->subsMsg(topic, msg, originator);
             };
-        pSched->subscribe("butterlamp/brightness/set", fnall);
-        pSched->subscribe("butterlamp/windlevel/set", fnall);
+        pSched->subscribe(tID, name + "/brightness/set", fnall);
+        pSched->subscribe(tID, name + "/windlevel/set", fnall);
         sprintf(buf, "%d", wind);
-        pSched->publish("butterlamp/windlevel", buf);
+        pSched->publish(name + "/windlevel", buf);
         sprintf(buf, "%d", amp);
-        pSched->publish("butterlamp/brightness", buf);
+        pSched->publish(name + "/brightness", buf);
         bStarted = true;
     }
 
@@ -171,7 +172,7 @@ class NeoCandle {
         if (msg == "dummyOn") {
             return;  // Ignore, homebridge hack
         }
-        if (topic == "butterlamp/brightness/set") {
+        if (topic == name + "/brightness/set") {
             Serial.print("Message arrived [");
             Serial.print(topic.c_str());
             Serial.println("] ");
@@ -185,10 +186,10 @@ class NeoCandle {
             if (amp != amp_old) {
                 char buf[32];
                 sprintf(buf, "%d", amp);
-                pSched->publish("butterlamp/brightness", buf);
+                pSched->publish(name + "/brightness", buf);
             }
         }
-        if (topic == "butterlamp/windlevel/set") {
+        if (topic == name + "/windlevel/set") {
             Serial.print("Message arrived [");
             Serial.print(topic.c_str());
             Serial.println("] ");
@@ -202,7 +203,7 @@ class NeoCandle {
             if (wind != wind_old) {
                 char buf[32];
                 sprintf(buf, "%d", wind);
-                pSched->publish("butterlamp/windlevel", buf);
+                pSched->publish(name + "/windlevel", buf);
             }
         }
     }

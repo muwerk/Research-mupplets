@@ -13,8 +13,10 @@ class Lumin {
     Scheduler *pSched;
     String name;
     uint8_t port;
-    double luminvalue;
-    ustd::sensorprocessor luminsens = ustd::sensorprocessor(4, 600, 2.0);
+    double luminvalue = 0.0;
+    double unitLuminvalue = 0.0;
+    double maxLuminLux = 600.0;
+    ustd::sensorprocessor luminsens = ustd::sensorprocessor(10, 600, 10.0);
     Adafruit_TSL2561_Unified *pTsl;
     bool bActive = false;
 
@@ -24,7 +26,7 @@ class Lumin {
     ~Lumin() {
     }
 
-    double getLumin() {
+    double calcLumin() {
         double val = 0.0;
         /* Get a new sensor event */
         sensors_event_t event;
@@ -45,6 +47,14 @@ class Lumin {
 #endif
         }
         return val;
+    }
+
+    double getLuminosity() {
+        return luminvalue;
+    }
+
+    double getUnitLuminosity() {
+        return unitLuminvalue;
     }
 
     // Taken from Adafruit's sensorapi.ino example
@@ -86,9 +96,9 @@ class Lumin {
          * (402ms = 16-bit data) */
         pTsl->setIntegrationTime(
             TSL2561_INTEGRATIONTIME_13MS); /* fast but low resolution */
-        // tsl.setIntegrationTime(TSL2561_INTEGRATIONTIME_101MS);  /* medium
+        // pTsl->setIntegrationTime(TSL2561_INTEGRATIONTIME_101MS);  /* medium
         // resolution and speed   */
-        // tsl.setIntegrationTime(TSL2561_INTEGRATIONTIME_402MS);  /* 16-bit
+        // pTsl->setIntegrationTime(TSL2561_INTEGRATIONTIME_402MS);  /* 16-bit
         // data but slowest conversions */
 
 #ifdef USE_SERIAL_DBG
@@ -125,27 +135,36 @@ class Lumin {
                     this->subsMsg(topic, msg, originator);
                 };
             pSched->subscribe(name + "/luminosity/#", fnall);
+            pSched->subscribe(name + "/unitluminosity/#", fnall);
             bActive = true;
         }
     }
 
+    void publishLumin() {
+        char buf[32];
+        sprintf(buf, "%4.0f", luminvalue);
+        pSched->publish(name + "/luminosity", buf);
+        sprintf(buf, "%5.3f", unitLuminvalue);
+        pSched->publish(name + "/unitluminosity", buf);
+    }
+
     void loop() {
         if (bActive) {
-            double val = getLumin();
+            double val = calcLumin();
             if (luminsens.filter(&val)) {
                 luminvalue = val;
-                char buf[32];
-                sprintf(buf, "%5.3f", luminvalue);
-                pSched->publish(name + "/luminosity", buf);
+                unitLuminvalue = val / maxLuminLux;
+                if (unitLuminvalue > 1.0)
+                    unitLuminvalue = 1.0;
+                publishLumin();
             }
         }
     }
 
     void subsMsg(String topic, String msg, String originator) {
-        if (topic == name + "/luminosity/get") {
-            char buf[32];
-            sprintf(buf, "%5.3f", luminvalue);
-            pSched->publish(name + "/luminosity", buf);
+        if (topic == name + "/luminosity/get" ||
+            topic == name + "/unitluminosity/get") {
+            publishLumin();
         }
     };
 };  // Lumin

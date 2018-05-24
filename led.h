@@ -1,29 +1,28 @@
-// ldr.h
+// led.h
 #pragma once
 
 #include "scheduler.h"
 
 namespace ustd {
-class Ldr {
+class Led {
   public:
     Scheduler *pSched;
-    uint8_t port;
     String name;
-    double ldrvalue;
-    ustd::sensorprocessor ldrsens = ustd::sensorprocessor(4, 600, 0.005);
+    uint8_t port;
+    double ledvalue;
+    ustd::sensorprocessor ledsens = ustd::sensorprocessor(4, 600, 0.005);
 
-    Ldr(uint8_t port, String name) : port(port), name(name) {
+    Led(String name, uint8_t port) : name(name), port(port) {
     }
 
-    ~Ldr() {
-    }
-
-    double getUnitLuminosity() {
-        return ldrvalue;
+    ~Led() {
     }
 
     void begin(Scheduler *_pSched) {
         pSched = _pSched;
+
+        pinMode(port, OUTPUT);
+        digitalWrite(port, HIGH);  // OFF
 
         // give a c++11 lambda as callback scheduler task registration of
         // this.loop():
@@ -34,26 +33,19 @@ class Ldr {
             [=](String topic, String msg, String originator) {
                 this->subsMsg(topic, msg, originator);
             };
-        pSched->subscribe(name + "/unitluminosity/#", fnall);
+        pSched->subscribe(name + "/led/#", fnall);
     }
 
     void loop() {
-        double val = analogRead(port) / 1023.0;
-        if (ldrsens.filter(&val)) {
-            ldrvalue = val;
-            char buf[32];
-            sprintf(buf, "%5.3f", ldrvalue);
-            pSched->publish(name + "/unitluminosity", buf);
-        }
     }
 
     void subsMsg(String topic, String msg, String originator) {
         if (topic == name + "/unitluminosity/get") {
             char buf[32];
-            sprintf(buf, "%5.3f", ldrvalue);
+            sprintf(buf, "%5.3f", ledvalue);
             pSched->publish(name + "/unitluminosity", buf);
         }
     };
-};  // Ldr
+};  // Led
 
 }  // namespace ustd

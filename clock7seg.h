@@ -19,11 +19,15 @@ class Clock7Seg {
     Scheduler *pSched;
     String name;
     uint8_t i2cAddress;
+    uint8_t buzzerPin;
     bool bStarted = false;
     Adafruit_7segment *pClockDisplay;
+    unsigned long timerCounter = 0;
+    time_t timerStart = 0;
 
-    Clock7Seg(String name, uint8_t i2cAddress = DISPLAY_ADDRESS)
-        : name(name), i2cAddress(i2cAddress) {
+    Clock7Seg(String name, uint8_t i2cAddress = DISPLAY_ADDRESS,
+              uint8_t buzzerPin = 0xff)
+        : name(name), i2cAddress(i2cAddress), buzzerPin(buzzerPin) {
     }
 
     ~Clock7Seg() {
@@ -36,11 +40,6 @@ class Clock7Seg {
                             bool cache = true) {
         if (cache && old_hr == hr && old_mn == mn && old_dots == dots)
             return;
-
-        if (hr > 21 || hr < 7)
-            setBrightness(0.3);
-        else
-            setBrightness(1.0);
 
         old_hr = hr;
         old_mn = mn;
@@ -66,8 +65,31 @@ class Clock7Seg {
         old_extraDots = extraDots;
         old_now = now;
         struct tm *pTm = localtime(&now);
+
+        uint8_t hr = pTm->tm_hour;
+        if (hr > 21 || hr < 7)
+            setBrightness(0.3);
+        else
+            setBrightness(1.0);
+
         uint8_t dots = ((pTm->tm_sec + 1) % 2) || extraDots;
-        displayClockDigits(pTm->tm_hour, pTm->tm_min, dots);
+        if ((timerCounter > 0 && ((pTm->tm_sec % 5) > 1)) ||
+            (timerCounter > 0 && timerCounter - (now - timerStart) < 15)) {
+            long curt = timerCounter - (now - timerStart);
+            if (curt < 0) {
+                pSched->publish(name + "/timer/alarm", "Ding Dong");
+                if (buzzerPin != 0xff) {
+                    analogWrite(buzzerPin, 128);
+                }
+                timerStart = 0;
+                timerCounter = 0;
+            } else {
+                displayClockDigits(curt / 60, curt % 60, 1);
+            }
+
+        } else {
+            displayClockDigits(pTm->tm_hour, pTm->tm_min, dots);
+        }
     }
 
     void setBrightness(float fLevel) {  // 0.0 - 1.0
@@ -83,6 +105,9 @@ class Clock7Seg {
         pClockDisplay->begin(i2cAddress);
         pClockDisplay->clear();
 
+        if (buzzerPin != 0xff) {
+            analogWrite(buzzerPin, 0);
+        }
         std::function<void()> ft = [=]() { this->loop(); };
         pSched->add(ft, 50000);
 
@@ -90,7 +115,7 @@ class Clock7Seg {
             [=](String topic, String msg, String originator) {
                 this->subsMsg(topic, msg, originator);
             };
-        pSched->subscribe("borgclock/#", fnall);
+        pSched->subscribe(name + "/#", fnall);
         bStarted = true;
     }
 
@@ -104,11 +129,32 @@ class Clock7Seg {
         if (msg == "dummyOn") {
             return;  // Ignore, homebridge hack
         }
-        if (topic == "borgclock/display/set") {
+        if (topic == name + "/display/set") {
             Serial.print("Message arrived [");
             Serial.print(topic.c_str());
             Serial.println("] ");
         }
+        if (topic == name + "/timer/set") {
+            timerCounter = atoi(msg.c_str()) * 60;
+            timerStart = time(nullptr);
+            if (buzzerPin != 0xff) {
+                analogWrite(buzzerPin, 0);
+            }
+        }
+        if (topic == name + "/timer/stop" || topic == name + "/alarm/stop") {
+            timerCounter = 0;
+            timerStart = 0;
+            if (buzzerPin != 0xff) {
+                analogWrite(buzzerPin, 0);
+            }
+        }
+        if (topic == name + "/alarm/start") {
+            timerCounter = 0;
+            timerStart = 0;
+            if (buzzerPin != 0xff) {
+                analogWrite(buzzerPin, 128);
+            }
+        }
     }
-};  // namespace ustd
+};
 };  // namespace ustd

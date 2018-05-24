@@ -137,7 +137,10 @@ class Clock7Seg {
         }
         if (topic == name + "/timer/set") {
             timerCounter = atoi(msg.c_str()) * 60;
-            timerStart = time(nullptr);
+            if (timerCounter > 0)
+                timerStart = time(nullptr);
+            else
+                timerStart = 0;
             if (buzzerPin != 0xff) {
                 analogWrite(buzzerPin, 0);
             }

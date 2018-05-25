@@ -80,9 +80,9 @@ class NeoCandle {
                 this->subsMsg(topic, msg, originator);
             };
         pSched->subscribe(tID, name + "/brightness/set", fnall);
-        pSched->subscribe(tID, name + "/windlevel/set", fnall);
+        pSched->subscribe(tID, "windlevel/set", fnall);
         sprintf(buf, "%d", wind);
-        pSched->publish(name + "/windlevel", buf);
+        // pSched->publish(name+"/windlevel", buf);
         sprintf(buf, "%d", amp);
         pSched->publish(name + "/brightness", buf);
         bStarted = true;
@@ -173,9 +173,11 @@ class NeoCandle {
             return;  // Ignore, homebridge hack
         }
         if (topic == name + "/brightness/set") {
+#ifdef USE_SERIAL_DBG
             Serial.print("Message arrived [");
             Serial.print(topic.c_str());
             Serial.println("] ");
+#endif
             int amp_old = amp;
             amp =
                 parseValue((const byte *)msg.c_str(), strlen(msg.c_str()) + 1);
@@ -189,10 +191,12 @@ class NeoCandle {
                 pSched->publish(name + "/brightness", buf);
             }
         }
-        if (topic == name + "/windlevel/set") {
+        if (topic == "windlevel/set" || topic == name + "/windlevel/set") {
+#ifdef USE_SERIAL_DBG
             Serial.print("Message arrived [");
             Serial.print(topic.c_str());
             Serial.println("] ");
+#endif
             int wind_old = wind;
             wind =
                 parseValue((const byte *)msg.c_str(), strlen(msg.c_str()) + 1);

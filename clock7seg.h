@@ -25,10 +25,14 @@ class Clock7Seg {
     Adafruit_7segment *pClockDisplay;
     unsigned long timerCounter = 0;
     time_t timerStart = 0;
+    bool bAutobrightness = true;
+    String brightnessTopic = "";
 
     Clock7Seg(String name, uint8_t i2cAddress = DISPLAY_ADDRESS,
-              uint8_t buzzerPin = 0xff)
-        : name(name), i2cAddress(i2cAddress), buzzerPin(buzzerPin) {
+              uint8_t buzzerPin = 0xff, bool bAutobrightness = true,
+              String brightnessTopic = "")
+        : name(name), i2cAddress(i2cAddress), buzzerPin(buzzerPin),
+          bAutobrightness(bAutobrightness), brightnessTopic(brightnessTopic) {
     }
 
     ~Clock7Seg() {
@@ -67,11 +71,13 @@ class Clock7Seg {
         old_now = now;
         struct tm *pTm = localtime(&now);
 
+        /*
         uint8_t hr = pTm->tm_hour;
         if (hr > 21 || hr < 7)
             setBrightness(0.3);
         else
             setBrightness(1.0);
+        */
 
         uint8_t dots = ((pTm->tm_sec + 1) % 2) || extraDots;
         if ((timerCounter > 0 && ((pTm->tm_sec % 5) > 1)) ||
@@ -93,9 +99,16 @@ class Clock7Seg {
         }
     }
 
-    void setBrightness(float fLevel) {  // 0.0 - 1.0
-        pClockDisplay->setBrightness(
-            (int)(fLevel * 15.0));  // Brightness [0..15]
+    void setBrightness(double fLevel) {  // 0.0 - 1.0
+        double brL = fLevel;
+        if (brL < 0.0)
+            brL = 0.0;
+        if (brL > 1.0)
+            brL = 1.0;
+        int iBr = (int)(brL * 15.0);
+        pClockDisplay->setBrightness(iBr);  // Brightness [0..15]
+        String sbr = String(iBr);
+        pSched->publish(name + "/ibrightness", sbr);
     }
 
     void begin(Scheduler *_pSched) {
@@ -117,6 +130,10 @@ class Clock7Seg {
                 this->subsMsg(topic, msg, originator);
             };
         pSched->subscribe(tID, name + "/#", fnall);
+        if (bAutobrightness) {
+            if (brightnessTopic != "")
+                pSched->subscribe(tID, brightnessTopic, fnall);
+        }
         bStarted = true;
     }
 
@@ -157,6 +174,12 @@ class Clock7Seg {
             timerStart = 0;
             if (buzzerPin != 0xff) {
                 analogWrite(buzzerPin, 128);
+            }
+        }
+        if (bAutobrightness) {
+            if (pSched->mqttmatch(topic, brightnessTopic)) {
+                double unitBrightness = atof(msg.c_str());
+                setBrightness(unitBrightness);
             }
         }
     }

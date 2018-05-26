@@ -1,6 +1,7 @@
 #pragma once
 
 #include "../butterlamp/src/Adafruit_NeoPixel.h"
+#include "scheduler.h"
 
 // Neopixel default hardware:
 // Soldered to pin 15 on neopixel feather-wing

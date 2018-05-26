@@ -16,12 +16,44 @@ class Lumin {
     uint8_t port;
     double luminvalue = 0.0;
     double unitLuminvalue = 0.0;
-    double maxLuminLux = 600.0;
-    ustd::sensorprocessor luminsens = ustd::sensorprocessor(10, 600, 10.0);
+    double maxLuminLux = 800.0;
+    ustd::sensorprocessor luminsens = ustd::sensorprocessor(10, 60, 2.0);
     Adafruit_TSL2561_Unified *pTsl;
     bool bActive = false;
+    tsl2561Gain_t tGain = TSL2561_GAIN_1X;
+    tsl2561IntegrationTime_t tSpeed = TSL2561_INTEGRATIONTIME_101MS;
+    bool bAutogain = false;
+    double amp = 1.0;
 
-    Lumin(String name, uint8_t port) : name(name), port(port) {
+    Lumin(String _name, uint8_t _port, String _gain = "16x",
+          String _speed = "fast", double _amp = 1.0) {
+        name = _name;
+        port = _port;
+        amp = _amp;
+        if (_gain == "auto")
+            bAutogain = true;
+        else {
+            if (_gain = "16x") {
+                tGain = TSL2561_GAIN_16X;
+            } else if (_gain = "1x") {
+                tGain = TSL2561_GAIN_1X;
+            } else {
+#ifdef USE_SERIAL_DBG
+                Serial.println("Illegal gain mode, reverting to gain 1x");
+#endif
+            }
+        }
+        if (_speed == "fast")
+            tSpeed = TSL2561_INTEGRATIONTIME_13MS;
+        else if (_speed == "medium")
+            tSpeed = TSL2561_INTEGRATIONTIME_101MS;
+        else if (_speed == "long")
+            tSpeed = TSL2561_INTEGRATIONTIME_402MS;
+        else {
+#ifdef USE_SERIAL_DBG
+            Serial.println("Illegal speed mode, reverting to medium");
+#endif
+        }
     }
 
     ~Lumin() {
@@ -86,31 +118,24 @@ class Lumin {
 
     // Taken from Adafruit's sensorapi.ino example
     void configureSensor(void) {
-        /* You can also manually set the gain or enable auto-gain support */
-        // tsl.setGain(TSL2561_GAIN_1X);      /* No gain ... use in bright light
-        // to avoid sensor saturation */ tsl.setGain(TSL2561_GAIN_16X);     /*
-        // 16x gain ... use in low light to boost sensitivity */
-        pTsl->enableAutoRange(
-            true); /* Auto-gain ... switches automatically between 1x and 16x */
+        if (bAutogain) {
+            /* Auto-gain ... switches automatically between 1x and 16x */
+            pTsl->enableAutoRange(true);
+        } else {
+            /* You can also manually set the gain or enable auto-gain support */
+            // pTsl.setGain(TSL2561_GAIN_1X);      /* No gain ... use in bright
+            // light to avoid sensor saturation */
+            /* // 16x gain ... use in low light to boost sensitivity */
+            pTsl->setGain(tGain);
+        }
 
+        pTsl->setIntegrationTime(tSpeed);
         /* Changing the integration time gives you better sensor resolution
          * (402ms = 16-bit data) */
-        pTsl->setIntegrationTime(
-            TSL2561_INTEGRATIONTIME_13MS); /* fast but low resolution */
         // pTsl->setIntegrationTime(TSL2561_INTEGRATIONTIME_101MS);  /* medium
         // resolution and speed   */
         // pTsl->setIntegrationTime(TSL2561_INTEGRATIONTIME_402MS);  /* 16-bit
         // data but slowest conversions */
-
-#ifdef USE_SERIAL_DBG
-        /* Update these values depending on what you've set above! */
-        Serial.println("------------------------------------");
-        Serial.print("Gain:         ");
-        Serial.println("Auto");
-        Serial.print("Timing:       ");
-        Serial.println("13 ms");
-        Serial.println("------------------------------------");
-#endif
     }
 
     void begin(Scheduler *_pSched) {
@@ -129,7 +154,7 @@ class Lumin {
             // give a c++11 lambda as callback scheduler task registration of
             // this.loop():
             std::function<void()> ft = [=]() { this->loop(); };
-            tID = pSched->add(ft, name, 250000);
+            tID = pSched->add(ft, name, 300000);
 
             std::function<void(String, String, String)> fnall =
                 [=](String topic, String msg, String originator) {
@@ -151,7 +176,7 @@ class Lumin {
 
     void loop() {
         if (bActive) {
-            double val = calcLumin();
+            double val = calcLumin() * amp;
             if (luminsens.filter(&val)) {
                 luminvalue = val;
                 unitLuminvalue = val / maxLuminLux;

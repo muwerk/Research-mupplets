@@ -6,6 +6,7 @@
 namespace ustd {
 class Switch {
   public:
+    enum customtopic_t { NONE, BOTH, ON, OFF };
     Scheduler *pSched;
     int tID;
     String name;
@@ -14,11 +15,16 @@ class Switch {
     time_t lastChangeTime = 0;
     unsigned long debounceTimeMs;
     int state = -1;
+    customtopic_t customTopicType;
+    String customTopic;
 
     uint8_t mode;
 
-    Switch(String name, uint8_t port, unsigned long debounceTimeMs = 20)
-        : name(name), port(port), debounceTimeMs(debounceTimeMs) {
+    Switch(String name, uint8_t port, unsigned long debounceTimeMs = 20,
+           customtopic_t customTopicType = customtopic_t::NONE,
+           String customTopic = "")
+        : name(name), port(port), debounceTimeMs(debounceTimeMs),
+          customTpicType(customTopicType), customTopic(customTopic) {
     }
 
     ~Switch() {
@@ -44,7 +50,7 @@ class Switch {
 
     void publishState() {
         String textState;
-        if (state == 0)
+        if (state == LOW)
             textState = "off";
         else
             textState = "on";
@@ -58,6 +64,11 @@ class Switch {
             lastChangeMs = millis();
             lastChangeTime = time(nullptr);
             publishState();
+            if (state == LOW) {
+                if (customTopicType == customtopic_t::BOTH ||
+                    customTopicType == customtopic_t::OFF)
+            } else {
+            }
             return state;
         } else {
             if (state == newstate)

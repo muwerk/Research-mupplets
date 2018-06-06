@@ -27,20 +27,27 @@ class NeoCandle {
     int wind = 0;
     Adafruit_NeoPixel *pPixels;
     time_t manualSet = 0;
+    bool bUseModulator = true;
     bool bAutobrightness = true;
     String brightnessTopic = "";
     bool bUnitBrightness = false;
     double unitBrightness = 0.0;
-    bool bUseModulator = true;
 
     NeoCandle(String name, uint8_t pin = NEOCANDLE_PIN,
               uint16_t numPixels = NEOCANDLE_NUMPIXELS,
-              uint8_t options = NEOCANDLEX_OPTIONS, bool bAutobrightness = true,
-              String brightnessTopic = "")
+              uint8_t options = NEOCANDLEX_OPTIONS, bool bUseModulator = true,
+              bool bAutobrightness = true, String brightnessTopic = "")
         : name(name), pin(pin), numPixels(numPixels), options(options),
-          bAutobrightness(bAutobrightness), brightnessTopic(brightnessTopic) {
-        if (bAutobrightness && brightnessTopic == "") {
-            brightnessTopic = name + "/unitluminosity";
+          bUseModulator(bUseModulator), bAutobrightness(bAutobrightness),
+          brightnessTopic(brightnessTopic) {
+        if (bAutobrightness) {
+            if (brightnessTopic == "") {
+                brightnessTopic = name + "/unitluminosity";
+            }
+        }
+        if (bUseModulator) {
+            wind = 30;
+            amp = 20;
         }
     }
 
@@ -91,6 +98,16 @@ class NeoCandle {
         else {
             m1 = (23.0 - (pTm->tm_hour + pTm->tm_min / 60.0)) / (24.0 - 18.0);
         }
+        if (bUnitBrightness) {
+            m1 = (m1 + unitBrightness) / 2.0;
+        }
+        if (m2 != 0.0) {
+            if (m2 > 0.75)
+                m1 = m2;
+            else
+                m1 = (m1 + m2) / 2.0;
+        }
+        return m1;
     }
 
     void begin(Scheduler *_pSched) {

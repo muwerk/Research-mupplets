@@ -22,15 +22,26 @@ class NeoCandle {
     uint16_t numPixels;
     uint8_t options;
     // Max brightness of butterlamp 0..100
-    int amp = 20;
+    int amp = 0;
     // Max wind flicker 0..100
-    int wind = 20;
+    int wind = 0;
     Adafruit_NeoPixel *pPixels;
+    time_t manualSet = 0;
+    bool bAutobrightness = true;
+    String brightnessTopic = "";
+    bool bUnitBrightness = false;
+    double unitBrightness = 0.0;
+    bool bUseModulator = true;
 
     NeoCandle(String name, uint8_t pin = NEOCANDLE_PIN,
               uint16_t numPixels = NEOCANDLE_NUMPIXELS,
-              uint8_t options = NEOCANDLEX_OPTIONS)
-        : name(name), pin(pin), numPixels(numPixels), options(options) {
+              uint8_t options = NEOCANDLEX_OPTIONS, bool bAutobrightness = true,
+              String brightnessTopic = "")
+        : name(name), pin(pin), numPixels(numPixels), options(options),
+          bAutobrightness(bAutobrightness), brightnessTopic(brightnessTopic) {
+        if (bAutobrightness && brightnessTopic == "") {
+            brightnessTopic = name + "/unitluminosity";
+        }
     }
 
     ~NeoCandle() {
@@ -63,6 +74,25 @@ class NeoCandle {
         return ampx;
     }
 
+    double modulator() {
+        double m1 = 1.0;
+        double m2 = 0.0;
+        time_t now = time(nullptr);
+
+        if (!bUseModulator)
+            return m1;
+        long dt = now - manualSet;
+        if (dt < 3600) {
+            m2 = (3600.0 - (double)dt) / 3600.0;
+        }
+        struct tm *pTm = localtime(&now);
+        if (pTm->tm_hour < 18)
+            m1 = 0.0;
+        else {
+            m1 = (23.0 - (pTm->tm_hour + pTm->tm_min / 60.0)) / (24.0 - 18.0);
+        }
+    }
+
     void begin(Scheduler *_pSched) {
         // Make sure _clientName is Unique! Otherwise MQTT server will
         // rapidly disconnect.
@@ -82,10 +112,14 @@ class NeoCandle {
             };
         pSched->subscribe(tID, name + "/brightness/set", fnall);
         pSched->subscribe(tID, "windlevel/set", fnall);
+        pSched->subscribe(tID, name + "/windlevel/set", fnall);
+        if (bAutobrightness)
+            pSched->subscribe(tID, brightnessTopic, fnall);
         sprintf(buf, "%d", wind);
-        // pSched->publish(name+"/windlevel", buf);
+        pSched->publish(name + "/windlevel", buf);
         sprintf(buf, "%d", amp);
         pSched->publish(name + "/brightness", buf);
+        manualSet = 0;
         bStarted = true;
     }
 
@@ -190,6 +224,7 @@ class NeoCandle {
                 char buf[32];
                 sprintf(buf, "%d", amp);
                 pSched->publish(name + "/brightness", buf);
+                manualSet = time(nullptr);
             }
         }
         if (topic == "windlevel/set" || topic == name + "/windlevel/set") {
@@ -209,7 +244,12 @@ class NeoCandle {
                 char buf[32];
                 sprintf(buf, "%d", wind);
                 pSched->publish(name + "/windlevel", buf);
+                manualSet = time(nullptr);
             }
+        }
+        if (topic == brightnessTopic) {
+            unitBrightness = atof(msg.c_str());
+            bUnitBrightness = true;
         }
     }
 };

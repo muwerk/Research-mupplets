@@ -32,6 +32,7 @@ class NeoCandle {
     String brightnessTopic = "";
     bool bUnitBrightness = false;
     double unitBrightness = 0.0;
+    double oldMx = -1.0;
 
     NeoCandle(String name, uint8_t pin = NEOCANDLE_PIN,
               uint16_t numPixels = NEOCANDLE_NUMPIXELS,
@@ -42,7 +43,7 @@ class NeoCandle {
           brightnessTopic(brightnessTopic) {
         if (bAutobrightness) {
             if (brightnessTopic == "") {
-                brightnessTopic = name + "/unitluminosity";
+                brightnessTopic = name + "/ldr/unitluminosity";
             }
         }
         if (bUseModulator) {
@@ -99,7 +100,9 @@ class NeoCandle {
             m1 = (23.0 - (pTm->tm_hour + pTm->tm_min / 60.0)) / (24.0 - 18.0);
         }
         if (bUnitBrightness) {
-            m1 = (m1 + unitBrightness) / 2.0;
+            if (m1 > 0.0) {
+                m1 = m1 * unitBrightness;
+            }
         }
         if (m2 != 0.0) {
             if (m2 > 0.75)
@@ -211,6 +214,13 @@ class NeoCandle {
 
             if (bUseModulator) {
                 double mx = modulator();
+                double dx = fabs(oldMx - mx);
+                if (dx > 0.05) {
+                    oldMx = mx;
+                    char msg[32];
+                    sprintf(msg, "%6.3f", mx);
+                    pSched->publish(name + "/modulator", msg);
+                }
                 cr = ((double)cr * mx);
                 cg = ((double)cg * mx);
                 cb = ((double)cb * mx);

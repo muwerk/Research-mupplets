@@ -209,6 +209,12 @@ class NeoCandle {
             if (cb < 0)
                 cb = 0;
 
+            if (bUseModulator) {
+                double mx = modulator();
+                cr = ((double)cr * mx);
+                cg = ((double)cg * mx);
+                cb = ((double)cb * mx);
+            }
             pPixels->setPixelColor(i, pPixels->Color(cr, cg, cb));
         }
         pPixels->show();  // This sends the updated pixel color to the

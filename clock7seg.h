@@ -148,9 +148,11 @@ class Clock7Seg {
             return;  // Ignore, homebridge hack
         }
         if (topic == name + "/display/set") {
+#ifdef USE_SERIAL_DBG
             Serial.print("Message arrived [");
             Serial.print(topic.c_str());
             Serial.println("] ");
+#endif
         }
         if (topic == name + "/timer/set") {
             timerCounter = atoi(msg.c_str()) * 60;

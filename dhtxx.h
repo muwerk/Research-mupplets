@@ -4,6 +4,7 @@
 //#include "../.piolibdeps/DHT sensor library_ID19/DHT.h"
 #include "DHT.h"
 #include "scheduler.h"
+#include "sensors.h"
 
 namespace ustd {
 class Dht {

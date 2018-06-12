@@ -99,6 +99,7 @@ class Clock7Seg {
         }
     }
 
+    int oldIBr = -1;
     void setBrightness(double fLevel) {  // 0.0 - 1.0
         double brL = fLevel;
         if (brL < 0.0)
@@ -107,8 +108,11 @@ class Clock7Seg {
             brL = 1.0;
         int iBr = (int)(brL * 15.0);
         pClockDisplay->setBrightness(iBr);  // Brightness [0..15]
-        String sbr = String(iBr);
-        pSched->publish(name + "/ibrightness", sbr);
+        if (oldIBr != iBr) {
+            oldIBr = iBr;
+            String sbr = String(iBr);
+            pSched->publish(name + "/ibrightness", sbr);
+        }
     }
 
     void begin(Scheduler *_pSched) {

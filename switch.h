@@ -24,7 +24,7 @@ class Switch {
            customtopic_t customTopicType = customtopic_t::NONE,
            String customTopic = "")
         : name(name), port(port), debounceTimeMs(debounceTimeMs),
-          customTpicType(customTopicType), customTopic(customTopic) {
+          customTopicType(customTopicType), customTopic(customTopic) {
     }
 
     ~Switch() {
@@ -55,6 +55,17 @@ class Switch {
         else
             textState = "on";
         pSched->publish(name + "/state", textState);
+        if (state == LOW) {
+            if (customTopicType == customtopic_t::BOTH ||
+                customTopicType == customtopic_t::OFF) {
+                pSched->publish(customTopic, "off");
+            }
+        } else {
+            if (customTopicType == customtopic_t::BOTH ||
+                customTopicType == customtopic_t::ON) {
+                pSched->publish(customTopic, "on");
+            }
+        }
     }
 
     int readState() {
@@ -64,12 +75,6 @@ class Switch {
             lastChangeMs = millis();
             lastChangeTime = time(nullptr);
             publishState();
-            if (state == LOW) {
-                if (customTopicType == customtopic_t::BOTH ||
-                    customTopicType == customtopic_t::OFF)
-            } else {
-            }
-            return state;
         } else {
             if (state == newstate)
                 return state;

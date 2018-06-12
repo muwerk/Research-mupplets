@@ -97,7 +97,7 @@ class NeoCandle {
         if (pTm->tm_hour < 18)
             m1 = 0.0;
         else {
-            m1 = (23.0 - (pTm->tm_hour + pTm->tm_min / 60.0)) / (24.0 - 18.0);
+            m1 = (24.0 - (pTm->tm_hour + pTm->tm_min / 60.0)) / (24.0 - 18.0);
         }
         if (bUnitBrightness) {
             if (m1 > 0.0) {

@@ -75,6 +75,7 @@ class Switch {
             lastChangeMs = millis();
             lastChangeTime = time(nullptr);
             publishState();
+            return state;
         } else {
             if (state == newstate)
                 return state;

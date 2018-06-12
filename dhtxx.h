@@ -60,17 +60,21 @@ class Dht {
         double t = pDht->readTemperature();
         double h = pDht->readHumidity();
 
-        if (dhtTemp.filter(&t)) {
-            dhtTempVal = t;
-            char buf[32];
-            sprintf(buf, "%5.1f", dhtTempVal);
-            pSched->publish(name + "/temperature", buf);
+        if (!isnan(t)) {
+            if (dhtTemp.filter(&t)) {
+                dhtTempVal = t;
+                char buf[32];
+                sprintf(buf, "%5.1f", dhtTempVal);
+                pSched->publish(name + "/temperature", buf);
+            }
         }
-        if (dhtHumid.filter(&h)) {
-            dhtHumidVal = h;
-            char buf[32];
-            sprintf(buf, "%5.1f", dhtHumidVal);
-            pSched->publish(name + "/humidity", buf);
+        if (!isnan(h)) {
+            if (dhtHumid.filter(&h)) {
+                dhtHumidVal = h;
+                char buf[32];
+                sprintf(buf, "%5.1f", dhtHumidVal);
+                pSched->publish(name + "/humidity", buf);
+            }
         }
     }
 

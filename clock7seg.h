@@ -24,9 +24,12 @@ class Clock7Seg {
     bool bStarted = false;
     Adafruit_7segment *pClockDisplay;
     unsigned long timerCounter = 0;
+    int maxAlarmDuration = 60;
     time_t timerStart = 0;
+    time_t alarmStart = 0;
     bool bAutobrightness = true;
     String brightnessTopic = "";
+    int oldBuzzState = 0;
 
     Clock7Seg(String name, uint8_t i2cAddress = DISPLAY_ADDRESS,
               uint8_t buzzerPin = 0xff, bool bAutobrightness = true,
@@ -71,14 +74,6 @@ class Clock7Seg {
         old_now = now;
         struct tm *pTm = localtime(&now);
 
-        /*
-        uint8_t hr = pTm->tm_hour;
-        if (hr > 21 || hr < 7)
-            setBrightness(0.3);
-        else
-            setBrightness(1.0);
-        */
-
         uint8_t dots = ((pTm->tm_sec + 1) % 2) || extraDots;
         if ((timerCounter > 0 && ((pTm->tm_sec % 5) > 1)) ||
             (timerCounter > 0 && timerCounter - (now - timerStart) < 15)) {
@@ -88,14 +83,32 @@ class Clock7Seg {
                 if (buzzerPin != 0xff) {
                     analogWrite(buzzerPin, 128);
                 }
+                alarmStart = time(nullptr);
                 timerStart = 0;
                 timerCounter = 0;
             } else {
                 displayClockDigits(curt / 60, curt % 60, 1);
             }
-
         } else {
             displayClockDigits(pTm->tm_hour, pTm->tm_min, dots);
+        }
+        if (alarmStart > 0) {
+            if (time(nullptr) - alarmStart > maxAlarmDuration) {
+                if (buzzerPin != 0xff) {
+                    analogWrite(buzzerPin, 0);
+                }
+                alarmStart = 0;
+                timerStart = 0;
+                timerCounter = 0;
+            } else {
+                if (buzzerPin != 0xff) {
+                    int buzzState = (time(nullptr) - alarmStart + 1) % 2;
+                    if (buzzState != oldBuzzState) {
+                        oldBuzzState = buzzState;
+                        analogWrite(buzzerPin, 128 * buzzState);
+                    }
+                }
+            }
         }
     }
 
@@ -126,6 +139,7 @@ class Clock7Seg {
         if (buzzerPin != 0xff) {
             analogWrite(buzzerPin, 0);
         }
+        alarmStart = 0;
         std::function<void()> ft = [=]() { this->loop(); };
         tID = pSched->add(ft, name, 50000);
 
@@ -167,10 +181,12 @@ class Clock7Seg {
             if (buzzerPin != 0xff) {
                 analogWrite(buzzerPin, 0);
             }
+            alarmStart = 0;
         }
         if (topic == name + "/timer/stop" || topic == name + "/alarm/stop") {
             timerCounter = 0;
             timerStart = 0;
+            alarmStart = 0;
             if (buzzerPin != 0xff) {
                 analogWrite(buzzerPin, 0);
             }
@@ -178,6 +194,7 @@ class Clock7Seg {
         if (topic == name + "/alarm/start") {
             timerCounter = 0;
             timerStart = 0;
+            alarmStart = time(nullptr);
             if (buzzerPin != 0xff) {
                 analogWrite(buzzerPin, 128);
             }

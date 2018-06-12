@@ -51,19 +51,19 @@ class Switch {
     void publishState() {
         String textState;
         if (state == LOW)
-            textState = "off";
-        else
             textState = "on";
+        else
+            textState = "off";
         pSched->publish(name + "/state", textState);
         if (state == LOW) {
             if (customTopicType == customtopic_t::BOTH ||
-                customTopicType == customtopic_t::OFF) {
-                pSched->publish(customTopic, "off");
+                customTopicType == customtopic_t::ON) {
+                pSched->publish(customTopic, "on");
             }
         } else {
             if (customTopicType == customtopic_t::BOTH ||
-                customTopicType == customtopic_t::ON) {
-                pSched->publish(customTopic, "on");
+                customTopicType == customtopic_t::OFF) {
+                pSched->publish(customTopic, "off");
             }
         }
     }

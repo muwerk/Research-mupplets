@@ -17,7 +17,7 @@ class Lumin {
     double luminvalue = 0.0;
     double unitLuminvalue = 0.0;
     double maxLuminLux = 800.0;
-    ustd::sensorprocessor luminsens = ustd::sensorprocessor(10, 60, 2.0);
+    ustd::sensorprocessor luminsens = ustd::sensorprocessor(20, 600, 5.0);
     Adafruit_TSL2561_Unified *pTsl;
     bool bActive = false;
     tsl2561Gain_t tGain = TSL2561_GAIN_1X;
@@ -76,7 +76,7 @@ class Lumin {
             /* If event.light = 0 lux the sensor is probably saturated
                and no reliable data could be generated! */
 #ifdef USE_SERIAL_DBG
-            Serial.println("Sensor overload");
+            Serial.println("Luminosity-sensor overload");
 #endif
         }
         return val;

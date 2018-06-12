@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../butterlamp/src/Adafruit_NeoPixel.h"
+#include "../.piolibdeps/Adafruit NeoPixel_ID28/Adafruit_NeoPixel.h"
 #include "scheduler.h"
 
 // Neopixel default hardware:

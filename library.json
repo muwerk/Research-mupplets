@@ -1,7 +1,11 @@
 {
     "name": "tinkers",
     "keywords": "muwerk",
-    "description": "muwerk sensor drivers and reusable applets",
+    "description": "muwerk applets: sensor drivers and reusable applets",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/muwerk/mupplets.git"
+    },
     "authors": [{
         "name": "Dominik Schlösser",
         "email": "dsc@dosc.net",

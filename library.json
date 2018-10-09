@@ -15,11 +15,15 @@
         "email": "leo@yeasoft.com",
         "maintainer": true
     }],
-    "dependencies": {
+    "dependencies": [{
+        "name": "ustd",
+        "authors": "Dominik Schösser, Leo Moll",
+        "frameworks": "arduino"
+    }, {
         "name": "muwerk",
         "authors": "Dominik Schösser, Leo Moll",
         "frameworks": "arduino"
-    },
+    }],
     "version": "0.1.0",
     "frameworks": "arduino",
     "platforms": "*"

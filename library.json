@@ -1,15 +1,19 @@
 {
     "name": "tinkers",
-    "keywords": "hardware",
-    "description": "hardware apps",
+    "keywords": "muwerk",
+    "description": "muwerk sensor drivers and reusable applets",
     "authors": [{
         "name": "Dominik Schlösser",
         "email": "dsc@dosc.net",
         "maintainer": true
+    }, {
+        "name": "Leo Moll",
+        "email": "leo@yeasoft.com",
+        "maintainer": true
     }],
     "dependencies": {
-        "name": "ustd",
-        "authors": "Dominik Schösser",
+        "name": "muwerk",
+        "authors": "Dominik Schösser, Leo Moll",
         "frameworks": "arduino"
     },
     "version": "0.1.0",

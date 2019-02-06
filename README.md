@@ -18,4 +18,4 @@ muwerk applets: functional units that support specific hardware or reusable appl
 
 ## ldr.h
 
-![LDR Fritzing](Resources/ldr.png){:height="50%" width="50%"}
+<img src="https://github.com/muwerk/mupplets/blob/master/Resources/ldr.png" width="30%" height="30%">

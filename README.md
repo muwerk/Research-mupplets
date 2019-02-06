@@ -2,6 +2,11 @@
 
 muwerk applets: functional units that support specific hardware or reusable applications
 
+## Dependencies
+
+* Note: **All** mupplets require the libraries [ustd](https://github.com/muwerk/ustd) and [muwerk](https://github.com/muwerk/muwerk). If you are using ESP8266 or ESP32, it's recommended to use [munet](https://github.com/muwerk/munet) for network connectivity.
+
+### Additional hardware-dependent libraries
 
 | mupplet     | Function | Hardware | Dependencies |
 | ----------- | -------- | -------- | ------------ |
@@ -16,6 +21,13 @@ muwerk applets: functional units that support specific hardware or reusable appl
 | switch.h    |
 
 
-## ldr.h
+## Application notes
+
+### ldr.h
+
+The ldr mupplet measures luminosity using a simple analog LDR (light dependent resistor)
+
+The mupplet sends messages with topic `<mupplet-name>/unitluminosity`, the message body contains a float (string encoded) with values between [0.0-1.0].
 
 <img src="https://github.com/muwerk/mupplets/blob/master/Resources/ldr.png" width="30%" height="30%">
+Hardware: LDR, 10kΩ resistor

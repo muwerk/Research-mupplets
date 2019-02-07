@@ -5,7 +5,7 @@
 
 namespace ustd {
 class Ldr {
-  public:
+  private:
     Scheduler *pSched;
     int tID;
     String name;
@@ -13,6 +13,7 @@ class Ldr {
     double ldrvalue;
     ustd::sensorprocessor ldrsens = ustd::sensorprocessor(4, 600, 0.005);
 
+  public:
     Ldr(String name, uint8_t port) : name(name), port(port) {
     }
 
@@ -38,6 +39,7 @@ class Ldr {
         pSched->subscribe(tID, name + "/unitluminosity/#", fnall);
     }
 
+  private:
     void loop() {
         double val = analogRead(port) / 1023.0;
         if (ldrsens.filter(&val)) {

@@ -4,7 +4,12 @@ muwerk applets: functional units that support specific hardware or reusable appl
 
 ## Dependencies
 
-* Note: **All** mupplets require the libraries [ustd](https://github.com/muwerk/ustd) and [muwerk](https://github.com/muwerk/muwerk). If you are using ESP8266 or ESP32, it's recommended to use [munet](https://github.com/muwerk/munet) for network connectivity.
+* Note: **All** mupplets require the libraries [ustd](https://github.com/muwerk/ustd) and [muwerk](https://github.com/muwerk/muwerk).
+
+Currently, mupplets work only with ESP8266 or ESP32, due to usage of `std::function<>` to register member tasks. This restriction will
+change in a later release.
+
+It is recommended to use [munet](https://github.com/muwerk/munet) for network connectivity.
 
 ### Additional hardware-dependent libraries
 
@@ -19,7 +24,6 @@ muwerk applets: functional units that support specific hardware or reusable appl
 | neocandle.h |
 | pressure.h  |
 | switch.h    |
-
 
 ## Application notes
 

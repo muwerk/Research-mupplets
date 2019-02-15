@@ -1,7 +1,7 @@
 {
     "name": "tinkers",
     "keywords": "muwerk",
-    "description": "muwerk applets: sensor drivers and reusable applets",
+    "description": "muwerk applets: sensor drivers and reusable applets for ESP32 and ESP8266",
     "repository": {
         "type": "git",
         "url": "https://github.com/muwerk/mupplets.git"
@@ -26,5 +26,5 @@
     }],
     "version": "0.1.0",
     "frameworks": "arduino",
-    "platforms": "*"
+    "platforms": "espressif8266,espressif32"
 }

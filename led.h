@@ -27,7 +27,12 @@ class Led {
         pSched = _pSched;
 
         pinMode(port, OUTPUT);
-        digitalWrite(port, HIGH);  // OFF
+        if (activeLogic) {
+            digitalWrite(port, HIGH);  // OFF
+
+        } else {
+            digitalWrite(port, HIGH);  // OFF
+        }
 
         // give a c++11 lambda as callback scheduler task registration of
         // this.loop():

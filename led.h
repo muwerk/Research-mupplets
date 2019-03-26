@@ -12,10 +12,12 @@ class Led {
     uint8_t port;
     double brightlevel;
     bool state;
+    bool activeLogic;
 
     uint8_t mode;
 
-    Led(String name, uint8_t port) : name(name), port(port) {
+    Led(String name, uint8_t port, bool activeLogic = false)
+        : name(name), port(port), activeLogic(activeLogic) {
     }
 
     ~Led() {
@@ -40,10 +42,12 @@ class Led {
     }
 
     void set(bool state) {
-        if (state) {
-            digitalWrite(port, LOW);
-        } else {
+        if (state == activeLogic) {
             digitalWrite(port, HIGH);
+            pSched->publish(name + "/led/unitluminosity", "1.0");
+        } else {
+            digitalWrite(port, LOW);
+            pSched->publish(name + "/led/unitluminosity", "0.0");
         }
     }
 
@@ -54,7 +58,13 @@ class Led {
         if (bright > 1.0)
             bright = 1.0;
         bri = (uint8_t)(bright * 255);
+        if (activeLogic)
+            bri = 255 - bri;
         analogWrite(port, bri);
+
+        char buf[32];
+        sprintf(buf, "%5.3f", bright);
+        pSched->publish(name + "/led/unitluminosity", buf);
     }
 
     void loop() {
@@ -62,9 +72,39 @@ class Led {
 
     void subsMsg(String topic, String msg, String originator) {
         if (topic == name + "/led/set") {
+            char buff[32];
+            int l;
+            int len = msg.length();
+            double br = 0.0;
+            memset(buff, 0, 32);
+            if (len > 31)
+                l = 31;
+            else
+                l = len;
+            strncpy(buff, (const char *)msg.c_str(), l);
+
+            if (l >= 2 && !strncmp((const char *)buff, "on", 2)) {
+                br = 1.0;
+            } else {
+                if (l >= 3 && !strncmp((const char *)buff, "off", 3)) {
+                    br = 0;
+                } else {
+                    if (l >= 4 && !strncmp((const char *)buff, "pct ", 4)) {
+                        br = atoi((char *)(buff + 4)) / 1.0;
+                    } else {
+                        br = atof((char *)buff);
+                    }
+                }
+            }
+            brightness(br);
+        }
+        if (topic == name + "/led/get") {
             char buf[32];
             sprintf(buf, "%5.3f", brightlevel);
-            pSched->publish(name + "/unitluminosity", buf);
+            pSched->publish(name + "/led/unitluminosity", buf);
+        }
+        if (topic == name + "/off") {
+            brightness(0.0);
         }
     };
 };  // Led

@@ -1,6 +1,10 @@
 # mupplets [WIP]
 
+**Note:** This is very much a work-in-progress.
+
 muwerk applets: functional units that support specific hardware or reusable applications
+muwerk applets use muwerks messaging to pass information. Access via external MQTT is transpartent:
+any mupplet can be accessed via MQTT.
 
 ## Dependencies
 

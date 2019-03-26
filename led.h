@@ -70,41 +70,52 @@ class Led {
     void loop() {
     }
 
-    void subsMsg(String topic, String msg, String originator) {
-        if (topic == name + "/led/set") {
-            char buff[32];
-            int l;
-            int len = msg.length();
-            double br = 0.0;
-            memset(buff, 0, 32);
-            if (len > 31)
-                l = 31;
-            else
-                l = len;
-            strncpy(buff, (const char *)msg.c_str(), l);
+    double parseBrightness(String msg) {
+        char buff[32];
+        int l;
+        int len = msg.length();
+        double br = 0.0;
+        memset(buff, 0, 32);
+        if (len > 31)
+            l = 31;
+        else
+            l = len;
+        strncpy(buff, (const char *)msg.c_str(), l);
 
-            if (l >= 2 && !strncmp((const char *)buff, "on", 2)) {
-                br = 1.0;
+        if ((!strcmp((const char *)buff, "on")) ||
+            (!strcmp((const char *)buff, "true"))) {
+            br = 1.0;
+        } else {
+            if ((!strcmp((const char *)buff, "off")) ||
+                (!strcmp((const char *)buff, "false"))) {
+                br = 0.0;
             } else {
-                if (l >= 3 && !strncmp((const char *)buff, "off", 3)) {
-                    br = 0;
+                if ((strlen(buff) > 4) &&
+                    (!strncmp((const char *)buff, "pct ", 4))) {
+                    br = atoi((char *)(buff + 4)) / 100.0;
                 } else {
-                    if (l >= 4 && !strncmp((const char *)buff, "pct ", 4)) {
-                        br = atoi((char *)(buff + 4)) / 1.0;
+                    if (strlen(buff) > 1 && buff[strlen(buff) - 1] == '%') {
+                        buff[strlen(buff) - 1] = 0;
+                        br = atoi((char *)buff) / 100.0;
                     } else {
                         br = atof((char *)buff);
                     }
                 }
             }
+        }
+        return br;
+    }
+
+    void subsMsg(String topic, String msg, String originator) {
+        if (topic == name + "/led/set") {
+            double br;
+            br = parseBrightness(msg);
             brightness(br);
         }
-        if (topic == name + "/led/get") {
+        if (topic == name + "/led/unitluminosity/get") {
             char buf[32];
             sprintf(buf, "%5.3f", brightlevel);
             pSched->publish(name + "/led/unitluminosity", buf);
-        }
-        if (topic == name + "/off") {
-            brightness(0.0);
         }
     };
 };  // Led

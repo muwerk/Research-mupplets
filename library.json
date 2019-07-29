@@ -1,5 +1,5 @@
 {
-    "name": "tinkers",
+    "name": "mupplets",
     "keywords": "muwerk",
     "description": "muwerk applets: sensor drivers and reusable applets for ESP32 and ESP8266",
     "repository": {

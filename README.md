@@ -39,3 +39,10 @@ The mupplet sends messages with topic `<mupplet-name>/unitluminosity`, the messa
 
 <img src="https://github.com/muwerk/mupplets/blob/master/Resources/ldr.png" width="30%" height="30%">
 Hardware: LDR, 10kΩ resistor
+
+### led.h
+
+Allows to set LEDs via digital logic or PWM brightness.
+
+<img src="https://github.com/muwerk/mupplets/blob/master/Resources/led.png" width="30%" height="30%">
+Hardware: 330Ω resistor

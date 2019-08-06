@@ -13,7 +13,7 @@ class Led {
     double brightlevel;
     bool state;
     bool activeLogic;
-
+    uint16_t pwmrange;
     uint8_t mode;
 
     Led(String name, uint8_t port, bool activeLogic = false)
@@ -27,10 +27,15 @@ class Led {
         pSched = _pSched;
 
         pinMode(port, OUTPUT);
-        if (activeLogic) {
-            digitalWrite(port, HIGH);  // OFF
+        #ifdef __ESP__
+        pwmrange=1023;
+        #else
+        pwmrange=255;
+        #endif
+        if (activeLogic) { // activeLogic true: HIGH is ON
+            digitalWrite(port, LOW);  // OFF
 
-        } else {
+        } else { // activeLogic false: LOW is ON
             digitalWrite(port, HIGH);  // OFF
         }
 
@@ -47,6 +52,7 @@ class Led {
     }
 
     void set(bool state) {
+        this->state=state;
         if (state == activeLogic) {
             digitalWrite(port, HIGH);
             pSched->publish(name + "/led/unitluminosity", "1.0");
@@ -57,14 +63,27 @@ class Led {
     }
 
     void brightness(double bright) {
-        uint8_t bri;
+        uint16_t bri;
+        
+        if (bright==1.0) {
+            set(true);
+            return;
+        }
+        if (bright==0.0) {
+            set(false);
+            return;
+        }
+
         if (bright < 0.0)
             bright = 0.0;
         if (bright > 1.0)
             bright = 1.0;
-        bri = (uint8_t)(bright * 255);
-        if (activeLogic)
-            bri = 255 - bri;
+        brightlevel=bright;
+        bri = (uint16_t)(bright * (double)pwmrange);
+        if (!bri) state=false;
+        else state=true;
+        if (!activeLogic)
+            bri = pwmrange - bri;
         analogWrite(port, bri);
 
         char buf[32];

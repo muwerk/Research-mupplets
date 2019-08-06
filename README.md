@@ -68,3 +68,22 @@ Hardware: 330Ω resistor, led.
 
 Example: sending an MQTT message with topic `<led-name>/mode/set` and message `pulse 1000` causes the led to softly pulse between on and off every 1000ms.
 
+### Sample code
+
+```cpp
+#include "led.h"
+
+ustd::Led led("myLed",D5,false); 
+            // Led connected to pin D5, 
+            // false: led is on when D5 low
+            // (inverted logic)
+            // messages are sent/received to myLed/...
+
+void setup() {
+
+    led.begin(&sched);
+    led.setmode(led.Mode::PULSE, 1000);
+            // soft pwm pulsing in 1000ms intervals
+            // same can be accomplished by publishing
+            // topic myLed/led/setmode  msg "pulse 1000"
+```

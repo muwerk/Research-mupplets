@@ -59,16 +59,21 @@ class Led {
         pSched->subscribe(tID, name + "/led/#", fnall);
     }
 
-    void set(bool state) {
+    void set(bool state, bool _automatic=false) {
         this->state=state;
+        if (!_automatic) mode=Mode::PASSIVE;
         if (state == activeLogic) {
             digitalWrite(port, HIGH);
-            pSched->publish(name + "/led/unitluminosity", "1.0");
-            pSched->publish(name + "/led/state", "on");
+            if (!_automatic) {
+                pSched->publish(name + "/led/unitluminosity", "1.0");
+                pSched->publish(name + "/led/state", "on");
+            }
         } else {
             digitalWrite(port, LOW);
-            pSched->publish(name + "/led/unitluminosity", "0.0");
-            pSched->publish(name + "/led/state", "off");
+           if (!_automatic) {
+                pSched->publish(name + "/led/unitluminosity", "0.0");
+                pSched->publish(name + "/led/state", "off");
+           }
         }
     }
 
@@ -80,15 +85,16 @@ class Led {
         if (interval>100000) interval=100000;
     }
 
-    void brightness(double bright) {
+    void brightness(double bright, bool _automatic=false) {
         uint16_t bri;
         
+        if (!_automatic) mode=Mode::PASSIVE;
         if (bright==1.0) {
-            set(true);
+            set(true, _automatic);
             return;
         }
         if (bright==0.0) {
-            set(false);
+            set(false, _automatic);
             return;
         }
 
@@ -106,7 +112,7 @@ class Led {
 
         char buf[32];
         sprintf(buf, "%5.3f", bright);
-        if (mode==Mode::PASSIVE) {
+        if (!_automatic) {
             pSched->publish(name + "/led/unitluminosity", buf);
         }
     }
@@ -116,12 +122,12 @@ class Led {
         if (mode==Mode::BLINK) {
             if (millis()-last > interval) {
                 last=millis();
-                set(!state);
+                set(!state, true);
             } 
         }
         if (mode==Mode::PULSE) {
             if (millis()-last>2*interval) {
-                set(false);
+                set(false, true);
                 last=millis();
             } else {
                 double br=0.0;
@@ -131,7 +137,7 @@ class Led {
                 } else {
                     br=(double)(2*interval - dt)/(double)interval;
                 }
-                brightness(br);
+                brightness(br, true);
             }
         }
     }

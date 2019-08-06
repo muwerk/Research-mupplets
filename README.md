@@ -35,7 +35,12 @@ It is recommended to use [munet](https://github.com/muwerk/munet) for network co
 
 The ldr mupplet measures luminosity using a simple analog LDR (light dependent resistor)
 
-The mupplet sends messages with topic `<mupplet-name>/unitluminosity`, the message body contains a float (string encoded) with values between [0.0-1.0].
+#### Messages sent by ldr mupplet:
+
+| topic | message body | comment
+| ----- | ------------ | -------
+| `<mupplet-name>/unitluminosity` | luminosity [0.0-1.0] | 
+
 
 <img src="https://github.com/muwerk/mupplets/blob/master/Resources/ldr.png" width="30%" height="30%">
 Hardware: LDR, 10kΩ resistor
@@ -45,4 +50,21 @@ Hardware: LDR, 10kΩ resistor
 Allows to set LEDs via digital logic or PWM brightness.
 
 <img src="https://github.com/muwerk/mupplets/blob/master/Resources/led.png" width="30%" height="30%">
-Hardware: 330Ω resistor
+Hardware: 330Ω resistor, led.
+
+#### Messages send by led mupplet:
+
+| topic | message body | comment
+| ----- | ------------ | -------
+| `<mupplet-name>/unitluminosity` | luminosity [0.0-1.0] | Not send on automatic changes (e.g. pulse mode)
+| `<mupplet-name>/state` | `on` or `off` | current led state (`on` is not sent on pwm intermediate values)
+
+#### Message received by led mupplet:
+
+| topic | message body | comment
+| ----- | ------------ | -------
+| `<mupplet-name>/set` | `on`, `off`, `true`, `false`, `pct 34`, `34%`, `0.34` | Led can be set fully on or off with on/true and off/false. A fractional brightness of 0.34 (within interval [0.0, 1.0]) can be sent as either `pct 34`, or `0.34`, or `34%`.
+| `<mupplet-name>/mode/set` | `passive`, `blink <intervall_ms>`, or `pulse <intervall_ms>` | Mode passive does no automatic led state changes, `blink` changes the led state very `interval_ms` on/off, `pulse` uses pwm to for soft changes between on and off states.
+
+Example: sending an MQTT message with topic `<led-name>/mode/set` and message `pulse 1000` causes the led to softly pulse between on and off every 1000ms.
+

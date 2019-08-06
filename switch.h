@@ -6,25 +6,26 @@
 namespace ustd {
 class Switch {
   public:
-    enum customtopic_t { NONE, BOTH, ON, OFF };
+    enum Mode { NONE, BOTH, ON, OFF };
     Scheduler *pSched;
     int tID;
+
     String name;
     uint8_t port;
+    bool activeLogic;
+    unsigned long debounceTimeMs;
+    Mode mode;
+    String topic;
+
     unsigned long lastChangeMs = 0;
     time_t lastChangeTime = 0;
-    unsigned long debounceTimeMs;
     int state = -1;
-    customtopic_t customTopicType;
-    String customTopic;
 
-    uint8_t mode;
-
-    Switch(String name, uint8_t port, unsigned long debounceTimeMs = 20,
-           customtopic_t customTopicType = customtopic_t::NONE,
-           String customTopic = "")
-        : name(name), port(port), debounceTimeMs(debounceTimeMs),
-          customTopicType(customTopicType), customTopic(customTopic) {
+    Switch(String name, uint8_t port, bool activeLogic = false, unsigned long debounceTimeMs = 20,
+           Mode mode = Mode::NONE,
+           String topic = "")
+        : name(name), port(port), activeLogic(activeLogic), debounceTimeMs(debounceTimeMs),
+          mode(mode), topic(topic) {
     }
 
     ~Switch() {
@@ -39,7 +40,7 @@ class Switch {
         // give a c++11 lambda as callback scheduler task registration of
         // this.loop():
         std::function<void()> ft = [=]() { this->loop(); };
-        tID = pSched->add(ft, name, 10000);
+        tID = pSched->add(ft, name, 50000);
 
         std::function<void(String, String, String)> fnall =
             [=](String topic, String msg, String originator) {
@@ -50,26 +51,29 @@ class Switch {
 
     void publishState() {
         String textState;
-        if (state == LOW)
+        if (state == true)
             textState = "on";
         else
             textState = "off";
         pSched->publish(name + "/state", textState);
         if (state == LOW) {
-            if (customTopicType == customtopic_t::BOTH ||
-                customTopicType == customtopic_t::ON) {
-                pSched->publish(customTopic, "on");
+            if (mode == Mode::BOTH ||
+                mode == Mode::ON) {
+                pSched->publish(topic, "on");
             }
         } else {
-            if (customTopicType == customtopic_t::BOTH ||
-                customTopicType == customtopic_t::OFF) {
-                pSched->publish(customTopic, "off");
+            if (mode == Mode::BOTH ||
+                mode == Mode::OFF) {
+                pSched->publish(topic, "off");
             }
         }
     }
 
     int readState() {
         int newstate = digitalRead(port);
+        if (newstate==HIGH) newstate=true;
+        else newstate=false;
+        if (!activeLogic) newstate=!newstate;
         if (state == -1) {
             state = newstate;
             lastChangeMs = millis();
@@ -80,8 +84,7 @@ class Switch {
             if (state == newstate)
                 return state;
             else {
-                if (time(nullptr) - lastChangeTime > 2 ||
-                    timeDiff(lastChangeMs, millis()) > debounceTimeMs) {
+                if (timeDiff(lastChangeMs, millis()) > debounceTimeMs) {
                     state = newstate;
                     lastChangeMs = millis();
                     lastChangeTime = time(nullptr);

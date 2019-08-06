@@ -39,7 +39,7 @@ The ldr mupplet measures luminosity using a simple analog LDR (light dependent r
 
 | topic | message body | comment
 | ----- | ------------ | -------
-| `<mupplet-name>/unitluminosity` | luminosity [0.0-1.0] | 
+| `<mupplet-name>/unitluminosity` | luminosity [0.0-1.0] | Float value encoded as string
 
 
 <img src="https://github.com/muwerk/mupplets/blob/master/Resources/ldr.png" width="30%" height="30%">
@@ -76,7 +76,7 @@ Hardware: 330Ω resistor, led.
 
 | topic | message body | comment
 | ----- | ------------ | -------
-| `<mupplet-name>/unitluminosity` | luminosity [0.0-1.0] | Not send on automatic changes (e.g. pulse mode)
+| `<mupplet-name>/unitluminosity` | luminosity [0.0-1.0] | `0.34`: Float value encoded as string. Not send on automatic changes (e.g. pulse mode)
 | `<mupplet-name>/state` | `on` or `off` | current led state (`on` is not sent on pwm intermediate values)
 
 #### Message received by led mupplet:
@@ -106,4 +106,44 @@ void setup() {
             // soft pwm pulsing in 1000ms intervals
             // same can be accomplished by publishing
             // topic myLed/led/setmode  msg "pulse 1000"
+```
+
+## Switch
+
+Support sitches with automatic debouncing.
+
+<img src="https://github.com/muwerk/mupplets/blob/master/Resources/switch.png" width="50%" height="30%">
+Hardware: 330Ω resistor, led, switch.
+
+#### Messages send by switch mupplet:
+
+| topic | message body | comment
+| ----- | ------------ | -------
+| `<mupplet-name>/state` | `on` or `off` | switch state
+
+### Sample code
+
+```cpp
+#include "led.h"
+#include "switch.h"
+
+ustd::Scheduler sched;
+ustd::Led led("myLed",D5,false);
+ustd::Switch toggleswitch("mySwitch",D6, false);
+
+void switch_messages(String topic, String msg, String originator) {
+    if (topic == "mySwitch/state") {
+        if (msg=="on") {
+            led.set(true);
+        } else {
+            led.set(false);
+        }
+    }
+}
+
+void setup() {
+    led.begin(&sched);
+    toggleswitch.begin(&sched);
+    sched.subscribe(tID, "mySwitch/state", switch_messages);
+}
 ```

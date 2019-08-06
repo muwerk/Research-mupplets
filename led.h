@@ -13,16 +13,16 @@ class Led {
     int tID;
     String name;
     uint8_t port;
+    bool activeLogic = false;
     double brightlevel;
     bool state;
-    bool activeLogic;
     uint16_t pwmrange;
     Mode mode;
     uint interval;
     unsigned long last;
 
 
-    Led(String name, uint8_t port, bool activeLogic = false)
+    Led(String name, uint8_t port, bool activeLogic=false )
         : name(name), port(port), activeLogic(activeLogic) {
     }
 
@@ -62,14 +62,14 @@ class Led {
     void set(bool state, bool _automatic=false) {
         this->state=state;
         if (!_automatic) mode=Mode::PASSIVE;
-        if (state == activeLogic) {
-            digitalWrite(port, HIGH);
+        if (state) {
+            digitalWrite(port, activeLogic);
             if (!_automatic) {
                 pSched->publish(name + "/led/unitluminosity", "1.0");
                 pSched->publish(name + "/led/state", "on");
             }
         } else {
-            digitalWrite(port, LOW);
+            digitalWrite(port, !activeLogic);
            if (!_automatic) {
                 pSched->publish(name + "/led/unitluminosity", "0.0");
                 pSched->publish(name + "/led/state", "off");

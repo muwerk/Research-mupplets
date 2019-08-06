@@ -4,8 +4,11 @@
 #include "scheduler.h"
 
 namespace ustd {
+
 class Led {
   public:
+    enum Mode { PASSIVE, BLINK, PULSE};
+
     Scheduler *pSched;
     int tID;
     String name;
@@ -14,7 +17,10 @@ class Led {
     bool state;
     bool activeLogic;
     uint16_t pwmrange;
-    uint8_t mode;
+    Mode mode;
+    uint interval;
+    unsigned long last;
+
 
     Led(String name, uint8_t port, bool activeLogic = false)
         : name(name), port(port), activeLogic(activeLogic) {
@@ -38,11 +44,13 @@ class Led {
         } else { // activeLogic false: LOW is ON
             digitalWrite(port, HIGH);  // OFF
         }
-
+        mode=Mode::PASSIVE;
+        interval=1000; //ms
+        last=millis();
         // give a c++11 lambda as callback scheduler task registration of
         // this.loop():
         std::function<void()> ft = [=]() { this->loop(); };
-        tID = pSched->add(ft, name, 200000);
+        tID = pSched->add(ft, name, 50000);
 
         std::function<void(String, String, String)> fnall =
             [=](String topic, String msg, String originator) {
@@ -56,10 +64,20 @@ class Led {
         if (state == activeLogic) {
             digitalWrite(port, HIGH);
             pSched->publish(name + "/led/unitluminosity", "1.0");
+            pSched->publish(name + "/led/state", "on");
         } else {
             digitalWrite(port, LOW);
             pSched->publish(name + "/led/unitluminosity", "0.0");
+            pSched->publish(name + "/led/state", "off");
         }
+    }
+
+    void setmode(Mode newmode, uint interval_ms=1000) {
+        mode=newmode;
+        if (mode==Mode::PASSIVE) return;
+        interval=interval_ms;
+        if (interval<100) interval=100;
+        if (interval>100000) interval=100000;
     }
 
     void brightness(double bright) {
@@ -88,10 +106,34 @@ class Led {
 
         char buf[32];
         sprintf(buf, "%5.3f", bright);
-        pSched->publish(name + "/led/unitluminosity", buf);
+        if (mode==Mode::PASSIVE) {
+            pSched->publish(name + "/led/unitluminosity", buf);
+        }
     }
 
     void loop() {
+        if (mode==Mode::PASSIVE) return;
+        if (mode==Mode::BLINK) {
+            if (millis()-last > interval) {
+                last=millis();
+                set(!state);
+            } 
+        }
+        if (mode==Mode::PULSE) {
+            if (millis()-last>2*interval) {
+                set(false);
+                last=millis();
+            } else {
+                double br=0.0;
+                long dt=millis()-last;
+                if (dt<(long)interval) {
+                    br=(double)dt/(interval);
+                } else {
+                    br=(double)(2*interval - dt)/(double)interval;
+                }
+                brightness(br);
+            }
+        }
     }
 
     double parseBrightness(String msg) {
@@ -131,10 +173,30 @@ class Led {
     }
 
     void subsMsg(String topic, String msg, String originator) {
+        char msgbuf[32];
+        memset(msgbuf,0,32);
+        strncpy(msgbuf,msg.c_str(),31);
         if (topic == name + "/led/set") {
             double br;
             br = parseBrightness(msg);
             brightness(br);
+        }
+        if (topic == name+"/led/mode/set") {
+            char *p=strchr(msgbuf,' ');
+            if (p) {
+                *p=0;
+                ++p;
+            }
+            int t=1000;
+            if (!strcmp(msgbuf, "passive")) {
+                setmode(Mode::PASSIVE);
+            } else if (!strcmp(msgbuf, "blink")) {
+                if (p) t=atoi(p);
+                setmode(Mode::BLINK, t);
+            } else if (!strcmp(msgbuf, "pulse")) {
+                if (p) t=atoi(p);
+                setmode(Mode::PULSE, t);
+            }
         }
         if (topic == name + "/led/unitluminosity/get") {
             char buf[32];

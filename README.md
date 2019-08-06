@@ -45,6 +45,26 @@ The ldr mupplet measures luminosity using a simple analog LDR (light dependent r
 <img src="https://github.com/muwerk/mupplets/blob/master/Resources/ldr.png" width="30%" height="30%">
 Hardware: LDR, 10kΩ resistor
 
+#### Sample code
+```cpp
+#include "ldr.h"
+
+ustd::Scheduler sched;
+ustd::Ldr ldr("myLDR",A0);
+
+void task0(String topic, String msg, String originator) {
+    if (topic == "myLDR/unitluminosity") {
+        Serial.print("Lumin: ");
+        Serial.prinln(msg);  // String float [0.0, 1.0]
+    }
+}
+
+void setup() {
+   ldr.begin(&sched);
+
+   sched.subscribe(tID, "myLDR/unitluminosity", task0);
+}
+```
 ### led.h
 
 Allows to set LEDs via digital logic or PWM brightness.

@@ -2,9 +2,13 @@
 
 **Note:** This is very much a work-in-progress.
 
-muwerk applets: functional units that support specific hardware or reusable applications
-muwerk applets use muwerks messaging to pass information. Access via external MQTT is transpartent:
-any mupplet can be accessed via MQTT.
+**mu**werk a**pplets**; mupplets: functional units that support specific hardware or reusable applications.
+
+**mupplets** use muwerks MQTT-style messaging to pass information between each other on the same device. If connected to an MQTT-server via munet, all functionallity is externally available.
+
+See [mupplet led and switch example](https://github.com/muwerk/Examples/led) for a complete example that illustrates how a
+switch mupplet (interfacing to a physical button) and a led mupplet (infacing to a physical led) communicate using muwerk.
+Both switch and led are also accessible via external MQTT without extra code.
 
 ## Dependencies
 
@@ -108,6 +112,8 @@ void setup() {
             // topic myLed/led/setmode  msg "pulse 1000"
 ```
 
+See [mupplet led and switch example](https://github.com/muwerk/Examples/led) for complete example.
+
 ## Switch
 
 Support sitches with automatic debouncing.
@@ -155,3 +161,5 @@ void setup() {
     sched.subscribe(tID, "mySwitch/switch/state", switch_messages);
 }
 ```
+
+See [mupplet led and switch example](https://github.com/muwerk/Examples/led) for complete example.

@@ -6,7 +6,7 @@
 
 **mupplets** use muwerks MQTT-style messaging to pass information between each other on the same device. If connected to an MQTT-server via munet, all functionallity is externally available.
 
-See [mupplet led and switch example](https://github.com/muwerk/Examples/led) for a complete example that illustrates how a
+See [mupplet led and switch example](https://github.com/muwerk/Examples/tree/master/led) for a complete example that illustrates how a
 switch mupplet (interfacing to a physical button) and a led mupplet (infacing to a physical led) communicate using muwerk.
 Both switch and led are also accessible via external MQTT without extra code.
 

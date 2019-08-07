@@ -76,15 +76,15 @@ Hardware: 330Ω resistor, led.
 
 | topic | message body | comment
 | ----- | ------------ | -------
-| `<mupplet-name>/unitluminosity` | luminosity [0.0-1.0] | `0.34`: Float value encoded as string. Not send on automatic changes (e.g. pulse mode)
-| `<mupplet-name>/state` | `on` or `off` | current led state (`on` is not sent on pwm intermediate values)
+| `<mupplet-name>/led/unitluminosity` | luminosity [0.0-1.0] | `0.34`: Float value encoded as string. Not send on automatic changes (e.g. pulse mode)
+| `<mupplet-name>/led/state` | `on` or `off` | current led state (`on` is not sent on pwm intermediate values)
 
 #### Message received by led mupplet:
 
 | topic | message body | comment
 | ----- | ------------ | -------
-| `<mupplet-name>/set` | `on`, `off`, `true`, `false`, `pct 34`, `34%`, `0.34` | Led can be set fully on or off with on/true and off/false. A fractional brightness of 0.34 (within interval [0.0, 1.0]) can be sent as either `pct 34`, or `0.34`, or `34%`.
-| `<mupplet-name>/mode/set` | `passive`, `blink <intervall_ms>`, or `pulse <intervall_ms>` | Mode passive does no automatic led state changes, `blink` changes the led state very `interval_ms` on/off, `pulse` uses pwm to for soft changes between on and off states.
+| `<mupplet-name>/led/set` | `on`, `off`, `true`, `false`, `pct 34`, `34%`, `0.34` | Led can be set fully on or off with on/true and off/false. A fractional brightness of 0.34 (within interval [0.0, 1.0]) can be sent as either `pct 34`, or `0.34`, or `34%`.
+| `<mupplet-name>/led/mode/set` | `passive`, `blink <intervall_ms>`, or `pulse <intervall_ms>` | Mode passive does no automatic led state changes, `blink` changes the led state very `interval_ms` on/off, `pulse` uses pwm to for soft changes between on and off states.
 
 Example: sending an MQTT message with topic `<led-name>/mode/set` and message `pulse 1000` causes the led to softly pulse between on and off every 1000ms.
 
@@ -119,7 +119,15 @@ Hardware: 330Ω resistor, led, switch.
 
 | topic | message body | comment
 | ----- | ------------ | -------
-| `<mupplet-name>/state` | `on` or `off` | switch state
+| `<mupplet-name>/switch/state` | `on` or `off` | switch state
+| `<mupplet-name>/switch/debounce` | <time-in-ms> | reply to `<mupplet-name>/switch/debounce/get`, switch debounce time in ms [0..1000]ms
+
+#### Message received by switch mupplet:
+
+| topic | message body | comment
+| ----- | ------------ | -------
+| `<mupplet-name>/switch/set` | `on`, `off`, `true`, `false`, `toggle` | Override switch setting. When setting the switch state via message, the hardware port remains overridden until the hardware changes state (e.g. button is physically pressed). Sending a `switch/set` message puts the switch in override-mode: e.g. when sending `switch/set` `on`, the state of the button is signalled `on`, even so the physical button might be off. Next time the physical button is pressed (or changes state), override mode is stopped, and the state of the actual physical button is published again.  
+| `<mupplet-name>/switch/debounce/set` | <time-in-ms> | String encoded switch debounce time in ms, [0..1000]ms. Default is 20ms.
 
 ### Sample code
 
@@ -144,6 +152,6 @@ void switch_messages(String topic, String msg, String originator) {
 void setup() {
     led.begin(&sched);
     toggleswitch.begin(&sched);
-    sched.subscribe(tID, "mySwitch/state", switch_messages);
+    sched.subscribe(tID, "mySwitch/switch/state", switch_messages);
 }
 ```

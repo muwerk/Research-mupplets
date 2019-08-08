@@ -25,7 +25,7 @@ It is recommended to use [munet](https://github.com/muwerk/munet) for network co
 | ----------- | -------- | -------- | ------------ |
 | airqual.h   | Air quality sensor CO<sub>2</sub>, VOC | [CCS811](https://www.sparkfun.com/products/14193) | [SparkFun CCS811 Arduino Library](https://github.com/sparkfun/SparkFun_CCS811_Arduino_Library) |
 | clock7seg.h | Simple 4 digit clock with timer | [4x 7segment display with HT16K33](https://www.adafruit.com/product/881) | [Adafruit GFX Library](https://github.com/adafruit/Adafruit-GFX-Library) [Adafruit LED Backpack Library](https://github.com/adafruit/Adafruit_LED_Backpack) |
-| dhtxx.h     | Temperature, humidity sensor | DHT 11, DHT 21, DHT 22 | [DHT sensor library](https://github.com/adafruit/DHT-sensor-library) |
+| dhtxx.h     | Temperature, humidity sensor | DHT 11, DHT 21, DHT 22 | [DHT sensor library](https://github.com/adafruit/DHT-sensor-library), [Adafruit unified sensor](https://github.com/adafruit/Adafruit_Sensor) |
 | ldr.h       | Luminosity | LDR connected to analog port | |
 | led.h       | LED diode | Digital out or PWM connected to led: [D-out]--[led<]--(Vcc) | |
 | lumin.h     |
@@ -112,7 +112,7 @@ void setup() {
             // topic myLed/led/setmode  msg "pulse 1000"
 ```
 
-See [mupplet led and switch example](https://github.com/muwerk/Examples/led) for complete example.
+See [mupplet led and switch example](https://github.com/muwerk/Examples/led) for a complete example.
 
 ## Switch
 
@@ -162,4 +162,46 @@ void setup() {
 }
 ```
 
-See [mupplet led and switch example](https://github.com/muwerk/Examples/led) for complete example.
+See [mupplet led and switch example](https://github.com/muwerk/Examples/led) for a complete example.
+
+## DHT22, DHT11, DHT21 temperature and humidity sensors
+
+Measures temperature and humidity.
+
+<img src="https://github.com/muwerk/mupplets/blob/master/Resources/dht.png" width="30%" height="30%">
+Hardware: 10kΩ, DHT22 sensor.
+
+#### Messages send by switch mupplet:
+
+| topic | message body | comment
+| ----- | ------------ | -------
+| `<mupplet-name>/temperature` | `<temperature>` | Float, encoded as String, temperature in Celsius. "23.3"
+| `<mupplet-name>/humidity` | `<humidity>` | Float, encoded as String, humidity in percent. "55.6"
+
+### Sample code
+
+```cpp
+#include "dht.h"
+
+ustd::Scheduler sched(10,16,32);
+ustd::Dht dht("myDht",D4);
+
+void sensor_messages(String topic, String msg, String originator) {
+    if (topic == "myDht/temperature") {
+        Serial.println("Temperature: "+msg);
+    }
+    if (topic == "myDht/humidity") {
+        Serial.println("Humidity: "+msg);
+    }
+}
+
+
+void setup() {
+    Serial.begin(115200);
+    dht.begin(&sched);
+
+    sched.subscribe(tID, "myDht/#", sensor_messages);
+}
+```
+
+See [Temperature and humidity](https://github.com/muwerk/Examples/dht) for a complete example.

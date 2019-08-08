@@ -2,6 +2,7 @@
 #pragma once
 
 #include "DHT.h"   // from "DHT sensor library", https://github.com/adafruit/DHT-sensor-library
+                   // and "Adafruit Unified Sensor", https://github.com/adafruit/Adafruit_Sensor
 #include "scheduler.h"
 #include "sensors.h"
 

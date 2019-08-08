@@ -1,8 +1,7 @@
 // dht.h
 #pragma once
 
-//#include "../.piolibdeps/DHT sensor library_ID19/DHT.h"
-#include "DHT.h"
+#include "DHT.h"   // from "DHT sensor library", https://github.com/adafruit/DHT-sensor-library
 #include "scheduler.h"
 #include "sensors.h"
 

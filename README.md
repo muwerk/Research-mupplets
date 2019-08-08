@@ -112,7 +112,7 @@ void setup() {
             // topic myLed/led/setmode  msg "pulse 1000"
 ```
 
-See [mupplet led and switch example](https://github.com/muwerk/Examples/led) for a complete example.
+See [mupplet led and switch example](https://github.com/muwerk/Examples/tree/master/led) for a complete example.
 
 ## Switch
 
@@ -162,7 +162,7 @@ void setup() {
 }
 ```
 
-See [mupplet led and switch example](https://github.com/muwerk/Examples/led) for a complete example.
+See [mupplet led and switch example](https://github.com/muwerk/Examples/tree/master/led) for a complete example.
 
 ## DHT22, DHT11, DHT21 temperature and humidity sensors
 
@@ -204,4 +204,4 @@ void setup() {
 }
 ```
 
-See [Temperature and humidity](https://github.com/muwerk/Examples/dht) for a complete example.
+See [Temperature and humidity](https://github.com/muwerk/Examples/tree/master/dht) for a complete example.

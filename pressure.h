@@ -57,6 +57,20 @@ class Pressure {
         pSched->subscribe(tID, name + "/pressure/get", fnall);
     }
 
+    void publishPressure() {
+        char buf[32];
+        sprintf(buf, "%5.1f", pressureVal);
+        pSched->publish(name + "/pressure", buf);
+
+    }
+
+    void publishPressureTemperature() {
+        char buf[32];
+        sprintf(buf, "%5.1f", pressureTempVal);
+        pSched->publish(name + "/temperature", buf);
+
+    }
+
     void loop() {
         if (bActive) {
             sensors_event_t event;
@@ -71,15 +85,11 @@ class Pressure {
 
                 if (pressureTemp.filter(&t)) {
                     pressureTempVal = t;
-                    char buf[32];
-                    sprintf(buf, "%5.1f", pressureTempVal);
-                    pSched->publish(name + "/temperature", buf);
+                    publishPressureTemperature();
                 }
                 if (pressure.filter(&p)) {
                     pressureVal = p;
-                    char buf[32];
-                    sprintf(buf, "%5.1f", pressureVal);
-                    pSched->publish(name + "/pressure", buf);
+                    publishPressure();
                 }
             }
         }
@@ -87,14 +97,10 @@ class Pressure {
 
     void subsMsg(String topic, String msg, String originator) {
         if (topic == name + "/temperature/get") {
-            char buf[32];
-            sprintf(buf, "%5.3f", pressureTempVal);
-            pSched->publish(name + "/temperature", buf);
+            publishPressureTemperature();
         }
         if (topic == name + "/pressure/get") {
-            char buf[32];
-            sprintf(buf, "%5.3f", pressureVal);
-            pSched->publish(name + "/pressure", buf);
+            publishPressure();
         }
     };
 };  // Pressure

@@ -30,8 +30,8 @@ It is recommended to use [munet](https://github.com/muwerk/munet) for network co
 | led.h       | LED diode | Digital out or PWM connected to led: [D-out]--[led<]--(Vcc) | |
 | lumin.h     |
 | neocandle.h |
-| pressure.h  |
-| switch.h    |
+| pressure.h  | Air pressure and temperature sensor | BMP085 | [Adafruit BMP085 unified](https://github.com/adafruit/Adafruit_BMP085_Unified), [Adafruit unified sensor](https://github.com/adafruit/Adafruit_Sensor) |
+| switch.h    | any push button | 
 
 ## Application notes
 

@@ -2,6 +2,7 @@
 #pragma once
 
 #include "scheduler.h"
+#include "mup_util.h"
 
 namespace ustd {
 
@@ -77,7 +78,7 @@ class Led {
         }
     }
 
-    void setmode(Mode newmode, uint interval_ms=1000) {
+    void setMode(Mode newmode, uint interval_ms=1000) {
         mode=newmode;
         if (mode==Mode::PASSIVE) return;
         interval=interval_ms;
@@ -142,49 +143,13 @@ class Led {
         }
     }
 
-    double parseBrightness(String msg) {
-        char buff[32];
-        int l;
-        int len = msg.length();
-        double br = 0.0;
-        memset(buff, 0, 32);
-        if (len > 31)
-            l = 31;
-        else
-            l = len;
-        strncpy(buff, (const char *)msg.c_str(), l);
-
-        if ((!strcmp((const char *)buff, "on")) ||
-            (!strcmp((const char *)buff, "true"))) {
-            br = 1.0;
-        } else {
-            if ((!strcmp((const char *)buff, "off")) ||
-                (!strcmp((const char *)buff, "false"))) {
-                br = 0.0;
-            } else {
-                if ((strlen(buff) > 4) &&
-                    (!strncmp((const char *)buff, "pct ", 4))) {
-                    br = atoi((char *)(buff + 4)) / 100.0;
-                } else {
-                    if (strlen(buff) > 1 && buff[strlen(buff) - 1] == '%') {
-                        buff[strlen(buff) - 1] = 0;
-                        br = atoi((char *)buff) / 100.0;
-                    } else {
-                        br = atof((char *)buff);
-                    }
-                }
-            }
-        }
-        return br;
-    }
-
     void subsMsg(String topic, String msg, String originator) {
         char msgbuf[32];
         memset(msgbuf,0,32);
         strncpy(msgbuf,msg.c_str(),31);
         if (topic == name + "/led/set") {
             double br;
-            br = parseBrightness(msg);
+            br = parseUnitLevel(msg);
             brightness(br);
         }
         if (topic == name+"/led/mode/set") {
@@ -195,13 +160,13 @@ class Led {
             }
             int t=1000;
             if (!strcmp(msgbuf, "passive")) {
-                setmode(Mode::PASSIVE);
+                setMode(Mode::PASSIVE);
             } else if (!strcmp(msgbuf, "blink")) {
                 if (p) t=atoi(p);
-                setmode(Mode::BLINK, t);
+                setMode(Mode::BLINK, t);
             } else if (!strcmp(msgbuf, "pulse")) {
                 if (p) t=atoi(p);
-                setmode(Mode::PULSE, t);
+                setMode(Mode::PULSE, t);
             }
         }
         if (topic == name + "/led/unitluminosity/get") {

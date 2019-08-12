@@ -55,6 +55,7 @@ class NeoCandle {
     ~NeoCandle() {
     }
 
+// XXX: replace parseUnitLevel...
     int parseValue(const byte *msg, unsigned int len) {
         char buff[32];
         int l;

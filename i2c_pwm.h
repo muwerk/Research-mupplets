@@ -15,6 +15,10 @@ class I2CPWM {
     enum Mode { GPIO, PWM, SERVO};
     Mode mode;
     int frequency;
+    int servoMin=150; // out of 4096
+    int servoMax=600;
+    int servoFrequency=60;
+    int ledFrequency=1000;
 
     Adafruit_PWMServoDriver pPwm;
     bool bActive = false;
@@ -22,9 +26,9 @@ class I2CPWM {
     I2CPWM(String name, int mode=Mode::PWM, uint8_t i2c_address=0x40) : name(name), 
             mode(mode), address(i2c_address) {
         if (mode==Mode::SERVO) {
-            frequency=1000;
+            frequency=servoFrequency;
         } else {
-            frequency=50;
+            frequency=ledFrequency;
         }
     }
 
@@ -33,7 +37,14 @@ class I2CPWM {
 
     void setFrequency(int freq) {
         frequency=freq;
-        pPwm->setPWMFreq(1000);
+        pPwm->setPWMFreq(frequency);
+    }
+
+    setServoMinMax(int minP=150, maxP=600) { // pulses out of 4096 at 60hz (frequency)
+        if (minP<0) minP=0;
+        if (maxP>4096) maxP=4096;
+        servoMin=minP;
+        servoMax=maxP;
     }
 
     void begin(Scheduler *_pSched) {
@@ -78,7 +89,11 @@ class I2CPWM {
         if (mode!=Mode::SERVO) {
             int l1=(int)(4096.0*level);
             int l2=4096-l1;
-            pwm.setPWM(pin, l1, l2);  // turns pin fully on
+            pwm.setPWM(pin, l1, l2);
+        } else { // Servo
+            int pulseLen=(int)((double)(servoMax-servoMin)*level))+servoMin;
+            pwm.setPWM(pin, 0, pulseLen);
+        }
     }
 
     double parseUnitLevel(String msg) {
@@ -120,7 +135,7 @@ class I2CPWM {
     }
 
     void subsMsg(String topic, String msg, String originator) {
-        String wct=name+"/i2cpwm/*";
+        String wct=name+"/i2cpwm/set/*";
         int port;
         if (pSched->mqttmatch(topic,wct ) {
             if (topic.length() >= wct.length()) {

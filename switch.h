@@ -18,10 +18,16 @@ class Switch {
     unsigned long debounceTimeMs;
 
     unsigned long lastChangeMs = 0;
-    time_t lastChangeTime = 0;
-    int state = -1;
-    bool overridden_state=false;
-    bool override_active=false;
+//    time_t lastChangeTime = 0;
+//    int state = -1;
+    int physicalState=-1;
+    int logicalState=-1;
+    bool overriddenPhysicalState=false;
+    bool overridePhysicalActive=false;
+
+
+  //  bool overridden_state=false;
+  //  bool override_active=false;
     bool flipflop = false;
     unsigned long activeTimer=0;
     unsigned long timerDuration=1000; //ms
@@ -62,6 +68,7 @@ class Switch {
         pSched->subscribe(tID, name + "/switch/#", fnall);
     }
 
+/*
     void publishState() {
         String textState;
         if (state == true)
@@ -107,11 +114,12 @@ class Switch {
                 break;
         }
     }
-
+*/
+/*
     void setState(bool newstate, bool override=false) {
         if (override) {
             overridden_state=state;
-            override_active=true;
+            override_active=true;   xxxx
         }
         if (!(newstate==false && mode==Mode::Timer) && mode!=Mode::Flipflop) {
             state = newstate;
@@ -119,14 +127,10 @@ class Switch {
         }
         publishState();
     }
-
-    int readState() {
-        int newstate = digitalRead(port);
-        if (newstate==HIGH) newstate=true;
-        else newstate=false;
-        if (!activeLogic) newstate=!newstate;
-
-        if (override_active) {
+*/
+/*
+    int inputSignal(bool signal, bool override=false) {
+        if (override_active && !override) {
             if (newstate==overridden_state) return state;
             override_active=false;
         }
@@ -149,6 +153,102 @@ class Switch {
                 }
             }
         }
+
+    }
+*/
+    void publishLogicalState(bool lState) {
+        String textState;
+        if (lState == true)
+            textState = "on";
+        else
+            textState = "off";
+        switch (mode) {
+            case Mode::Default:
+            case Mode::Flipflop:
+            case Mode::Timer:
+                pSched->publish(name + "/switch/state", textState);
+                if (customTopic!="") 
+                    pSched->publish(customTopic, textState);
+                break;
+            case Mode::Raising:
+                if (lState==true) {
+                    pSched->publish(name + "/switch/state", textState);
+                    if (customTopic!="") 
+                        pSched->publish(customTopic, textState);
+                }
+                break;
+            case Mode::Falling:
+                if (lState==false) {
+                    pSched->publish(name + "/switch/state", textState);
+                    if (customTopic!="") 
+                        pSched->publish(customTopic, textState);
+                }
+                break;
+        }
+    }
+
+    void setLogicalState(bool newLogicalState) {
+        if (logicalState!=newLogicalState) {
+            logicalState=newLogicalState;
+            publishLogicalState(logicalState);
+        }
+    }
+
+    void decodeLogicalState(bool physicalState) {
+        switch (mode) {
+            case Mode::Default:
+            case Mode::Raising:
+            case Mode::Falling:
+                setLogicalState(physicalState);
+                break;
+            case Mode::Flipflop:
+                if (physicalState==false) {
+                    flipflop = !flipflop;
+                    setLogicalState(flipflop);
+                }
+                break;
+            case Mode::Timer:
+                if (physicalState==false) {
+                    activeTimer=Millis();
+                } else {
+                    setLogicalState(true);
+                }
+                break;
+        }
+
+    }
+
+    void setPhysicalState(bool newState, bool override) {
+        if (mode!=Mode::Timer) {
+            activeTimer=0;
+        }
+        if (override) {
+            overriddenPhysicalState=physicalState;
+            overridePhysicalActive=true;
+            if (newState!=physicalState) {
+                physicalState=newState;
+                decodeLogicalState(newState);
+            }
+        } else {
+            if (overridePhysicalActive) {
+                overridePhysicalActive=false;
+                if (newState!=physicalState) {
+                    decodeLogicalState(newState);                
+                }
+            } else {
+                if (newState != physicalState) {
+                    decodeLogicalState(newState);
+                }
+            }
+        }
+    }
+
+    int readState() {
+        int newstate = digitalRead(port);
+        if (newstate==HIGH) newstate=true;
+        else newstate=false;
+        if (!activeLogic) newstate=!newstate;
+        setPhysicalState(newstate,false);
     }
 
     void loop() {
@@ -156,13 +256,10 @@ class Switch {
         if (mode==Mode::Timer && activeTimer) {
             if (timeDiff(activeTimer, Millis()) > timerDuration) {
                 activeTimer=0;
-                state=false;
-                lastChangeTime = time(nullptr);
-                pSched->publish(name + "/switch/state", "off");
-                if (customTopic!="") 
-                    pSched->publish(customTopic, "off");
+                setLogicalState(false);
             }
         }
+        */
     }
 
     void subsMsg(String topic, String msg, String originator) {
@@ -177,13 +274,17 @@ class Switch {
             memset(buf,0,32);
             strncpy(buf,msg.c_str(),31);
             if (!strcmp(buf,"on") || !strcmp(buf,"true")) {
-                setState(true, true);
+                setPhysicalState(true, true);
             }
             if (!strcmp(buf,"off") || !strcmp(buf,"false")) {
-                setState(false, true);
+                setPhysicalState(false, true);
             }
             if (!strcmp(buf,"toggle")) {
-                setState(!state, true);
+                setPhysicalState(!physicalState, true);
+            }
+            if (!strcmp(buf,"pulse")) {
+                setPhysicalState(true, true);
+                setPhysicalState(false, true);
             }
         }
         if (topic == name + "/switch/debounce/get") {

@@ -31,7 +31,8 @@ It is recommended to use [munet](https://github.com/muwerk/munet) for network co
 | lumin.h     |
 | neocandle.h |
 | pressure.h  | Air pressure and temperature sensor | BMP085 | [Adafruit BMP085 unified](https://github.com/adafruit/Adafruit_BMP085_Unified), [Adafruit unified sensor](https://github.com/adafruit/Adafruit_Sensor) |
-| switch.h    | any push button | 
+| switch.h    | any push button |   |
+| i2c_pwm.h   | 16 channel PWM via I2C | [PCA9685 based I2C 16 channel board](https://www.adafruit.com/products/815) | https://github.com/adafruit/Adafruit-PWM-Servo-Driver-Library
 
 ## Application notes
 

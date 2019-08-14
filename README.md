@@ -205,3 +205,48 @@ void setup() {
 ```
 
 See [Temperature and humidity](https://github.com/muwerk/Examples/tree/master/dht) for a complete example.
+
+## I2C 16 channel PWM module based on PCA9685
+
+Allows to control up to 16 PWM leds or servos.
+
+<img src="https://github.com/muwerk/mupplets/blob/master/Resources/i2c_pwm_servo.png" width="70%" height="30%">
+Hardware: PCA9685 based I2C-PWM board.
+
+#### Notes
+
+* This mupplet can either be in mode `Mode::PWM` or `Mode::SERVO`. In `PWM` mode, the pwm frequency is 1000Hz by default,
+in `SERVO` mode, frequency is 60Hz. All 16 channels share the same mode. The global pwm frequency can be overriden with `setFrequency(freq)`.
+* Servo minma and maxima can be configured with `void setServoMinMax(int minP=150, int maxP=600) { // pulses out of 4096 at 60hz (frequency)`. See [Adafruit's excellent documentation](https://learn.adafruit.com/16-channel-pwm-servo-driver/using-the-adafruit-library) for more details on servo callibration.
+* Max 25mA per channel!
+
+
+#### Messages received by switch mupplet:
+
+| topic | message body | comment
+| ----- | ------------ | -------
+| `<mupplet-name>/i2cpwm/set/<channel-no>` |  `on`, `off`, `true`, `false`, `pct 34`, `34%`, `0.34` | For leds, results in set fully on or off with on/true and off/false. A fractional brightness of 0.34 (within interval [0.0, 1.0]) can be sent as either `pct 34`, or `0.34`, or `34%`. For `Mode::SERVO` this results in a servo-position proportional to the value [0..1]. 
+
+### Sample code
+
+```cpp
+#include "i2c_pwm.h"
+
+ustd::Scheduler sched(10,16,32);
+ustd::I2CPWM servo("myServo",ustd::I2CPWM::Mode::SERVO);
+
+double count=0.0;
+void appLoop() { // change servo every 500ms
+    servo.setUnitLevel(15,count);  // change servo at channel 15.
+    count+=0.2;
+    if (count>1.0) count=0.0;
+}
+
+void setup() {
+    int tID = sched.add(appLoop, "main", 500000); // 500ms schedule for appLoop task
+    servo.begin(&sched);
+}
+
+```
+
+See [Servo](https://github.com/muwerk/Examples/tree/master/servo) for a complete example.

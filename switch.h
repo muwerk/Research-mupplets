@@ -6,30 +6,29 @@
 namespace ustd {
 class Switch {
   public:
-    enum ModeOld { NONE, BOTH, ON, OFF };
-    enum Mode { DEFAULT, RAISING, FALLING, FLIPFLOP, TIMER}
-    enum StatMode {}
+    enum Mode { Default, Raising, Falling, Flipflop, Timer};
     Scheduler *pSched;
     int tID;
 
     String name;
     uint8_t port;
-    bool activeLogic;
-    unsigned long debounceTimeMs;
     Mode mode;
+    bool activeLogic;
     String customTopic;
+    unsigned long debounceTimeMs;
 
     unsigned long lastChangeMs = 0;
     time_t lastChangeTime = 0;
     int state = -1;
     bool overridden_state=false;
     bool override_active=false;
+    bool flipflop = false;
+    unsigned long activeTimer=0;
+    unsigned long timerDuration=1000; //ms
 
-    Switch(String name, uint8_t port, bool activeLogic = false, unsigned long debounceTimeMs = 20,
-           Mode mode = Mode::NONE,
-           String customTopic = "")
-        : name(name), port(port), activeLogic(activeLogic), debounceTimeMs(debounceTimeMs),
-          mode(mode), customTopic(customTopic) {
+    Switch(String name, uint8_t port, Mode mode = Mode::Default, bool activeLogic = false, String customTopic = "", unsigned long debounceTimeMs = 20)
+        : name(name), port(port), mode(mode), activeLogic(activeLogic),
+          customTopic(customTopic), debounceTimeMs(debounceTimeMs) {
     }
 
     ~Switch() {
@@ -39,6 +38,10 @@ class Switch {
         if (ms<0) ms=0;
         if (ms>1000) ms=1000;
         debounceTimeMs=(unsigned long)ms;
+    }
+
+    void setTimerDuration(unsigned long ms) {
+        timerDuration=ms;
     }
 
     void begin(Scheduler *_pSched) {
@@ -66,19 +69,42 @@ class Switch {
         else
             textState = "off";
         //Serial.println("SW:"+textState);
-        pSched->publish(name + "/switch/state", textState);
-        if (state == LOW) {
-            if (mode == Mode::BOTH ||
-                mode == Mode::ON) {
-                //Serial.println("SW:"+textState);
-                pSched->publish(customTopic, "on");
-            }
-        } else {
-            if (mode == Mode::BOTH ||
-                mode == Mode::OFF) {
-                //Serial.println("SW:"+textState);
-                pSched->publish(customTopic, "off");
-            }
+        if (mode!=Mode::Timer) {
+            activeTimer=0;
+        }
+        switch (mode) {
+            case Mode::Default:
+                pSched->publish(name + "/switch/state", textState);
+                if (customTopic!="") 
+                    pSched->publish(customTopic, textState);
+                break;
+            case Mode::Raising:
+                if (state==true) {
+                    pSched->publish(name + "/switch/state", textState);
+                    if (customTopic!="") 
+                        pSched->publish(customTopic, textState);
+                }
+                break;
+            case Mode::Falling:
+                if (state==false) {
+                    pSched->publish(name + "/switch/state", textState);
+                    if (customTopic!="") 
+                        pSched->publish(customTopic, textState);
+                }
+                break;
+            case Mode::Flipflop:
+                if (state==false) {
+                    flipflop = !flipflop;
+                    pSched->publish(name + "/switch/state", flipflop);
+                    if (customTopic!="") 
+                        pSched->publish(customTopic, flipflop);
+                }
+                break;
+            case Mode::Timer:
+                if (state==false) {
+                    activeTimer=Millis();
+                }
+                break;
         }
     }
 
@@ -87,8 +113,10 @@ class Switch {
             overridden_state=state;
             override_active=true;
         }
-        state = newstate;
-        lastChangeTime = time(nullptr);
+        if (!(newstate==false && mode==Mode::Timer) && mode!=Mode::Flipflop) {
+            state = newstate;
+            lastChangeTime = time(nullptr);
+        }
         publishState();
     }
 
@@ -125,6 +153,16 @@ class Switch {
 
     void loop() {
         readState();
+        if (mode==Mode::Timer && activeTimer) {
+            if (timeDiff(activeTimer, Millis()) > timerDuration) {
+                activeTimer=0;
+                state=false;
+                lastChangeTime = time(nullptr);
+                pSched->publish(name + "/switch/state", "off");
+                if (customTopic!="") 
+                    pSched->publish(customTopic, "off");
+            }
+        }
     }
 
     void subsMsg(String topic, String msg, String originator) {

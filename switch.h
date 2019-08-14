@@ -6,7 +6,9 @@
 namespace ustd {
 class Switch {
   public:
-    enum Mode { NONE, BOTH, ON, OFF };
+    enum ModeOld { NONE, BOTH, ON, OFF };
+    enum Mode { DEFAULT, RAISING, FALLING, FLIPFLOP, TIMER}
+    enum StatMode {}
     Scheduler *pSched;
     int tID;
 
@@ -15,7 +17,7 @@ class Switch {
     bool activeLogic;
     unsigned long debounceTimeMs;
     Mode mode;
-    String topic;
+    String customTopic;
 
     unsigned long lastChangeMs = 0;
     time_t lastChangeTime = 0;
@@ -25,9 +27,9 @@ class Switch {
 
     Switch(String name, uint8_t port, bool activeLogic = false, unsigned long debounceTimeMs = 20,
            Mode mode = Mode::NONE,
-           String topic = "")
+           String customTopic = "")
         : name(name), port(port), activeLogic(activeLogic), debounceTimeMs(debounceTimeMs),
-          mode(mode), topic(topic) {
+          mode(mode), customTopic(customTopic) {
     }
 
     ~Switch() {
@@ -69,13 +71,13 @@ class Switch {
             if (mode == Mode::BOTH ||
                 mode == Mode::ON) {
                 //Serial.println("SW:"+textState);
-                pSched->publish(topic, "on");
+                pSched->publish(customTopic, "on");
             }
         } else {
             if (mode == Mode::BOTH ||
                 mode == Mode::OFF) {
                 //Serial.println("SW:"+textState);
-                pSched->publish(topic, "off");
+                pSched->publish(customTopic, "off");
             }
         }
     }
@@ -86,7 +88,6 @@ class Switch {
             override_active=true;
         }
         state = newstate;
-        lastChangeMs = millis();
         lastChangeTime = time(nullptr);
         publishState();
     }
@@ -112,6 +113,7 @@ class Switch {
                 return state;
             else {
                 if (timeDiff(lastChangeMs, millis()) > debounceTimeMs) {
+                    lastChangeMs = millis();
                     setState(newstate);
                     return state;
                 } else {

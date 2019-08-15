@@ -235,8 +235,9 @@ class Switch {
             }
             if (newState != physicalState) {
                 if (timeDiff(lastChangeMs, millis()) > debounceTimeMs) {
-                lastChangeMs = millis();
-                decodeLogicalState(newState);
+                    lastChangeMs = millis();
+                    decodeLogicalState(newState);
+                }
             }
         }
     }

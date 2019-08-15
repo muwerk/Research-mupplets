@@ -54,7 +54,7 @@ class Switch {
         pSched = _pSched;
 
         pinMode(port, INPUT_PULLUP);
-        state = readState();
+        readState();
 
         // give a c++11 lambda as callback scheduler task registration of
         // this.loop():
@@ -68,94 +68,6 @@ class Switch {
         pSched->subscribe(tID, name + "/switch/#", fnall);
     }
 
-/*
-    void publishState() {
-        String textState;
-        if (state == true)
-            textState = "on";
-        else
-            textState = "off";
-        //Serial.println("SW:"+textState);
-        if (mode!=Mode::Timer) {
-            activeTimer=0;
-        }
-        switch (mode) {
-            case Mode::Default:
-                pSched->publish(name + "/switch/state", textState);
-                if (customTopic!="") 
-                    pSched->publish(customTopic, textState);
-                break;
-            case Mode::Raising:
-                if (state==true) {
-                    pSched->publish(name + "/switch/state", textState);
-                    if (customTopic!="") 
-                        pSched->publish(customTopic, textState);
-                }
-                break;
-            case Mode::Falling:
-                if (state==false) {
-                    pSched->publish(name + "/switch/state", textState);
-                    if (customTopic!="") 
-                        pSched->publish(customTopic, textState);
-                }
-                break;
-            case Mode::Flipflop:
-                if (state==false) {
-                    flipflop = !flipflop;
-                    pSched->publish(name + "/switch/state", flipflop);
-                    if (customTopic!="") 
-                        pSched->publish(customTopic, flipflop);
-                }
-                break;
-            case Mode::Timer:
-                if (state==false) {
-                    activeTimer=Millis();
-                }
-                break;
-        }
-    }
-*/
-/*
-    void setState(bool newstate, bool override=false) {
-        if (override) {
-            overridden_state=state;
-            override_active=true;   xxxx
-        }
-        if (!(newstate==false && mode==Mode::Timer) && mode!=Mode::Flipflop) {
-            state = newstate;
-            lastChangeTime = time(nullptr);
-        }
-        publishState();
-    }
-*/
-/*
-    int inputSignal(bool signal, bool override=false) {
-        if (override_active && !override) {
-            if (newstate==overridden_state) return state;
-            override_active=false;
-        }
-        if (state == -1) {
-            state = newstate;
-            lastChangeMs = millis();
-            lastChangeTime = time(nullptr);
-            publishState();
-            return state;
-        } else {
-            if (state == newstate)
-                return state;
-            else {
-                if (timeDiff(lastChangeMs, millis()) > debounceTimeMs) {
-                    lastChangeMs = millis();
-                    setState(newstate);
-                    return state;
-                } else {
-                    return state;
-                }
-            }
-        }
-
-    }
-*/
     void publishLogicalState(bool lState) {
         String textState;
         if (lState == true)
@@ -209,7 +121,7 @@ class Switch {
                 break;
             case Mode::Timer:
                 if (physicalState==false) {
-                    activeTimer=Millis();
+                    activeTimer=millis();
                 } else {
                     setLogicalState(true);
                 }
@@ -243,7 +155,7 @@ class Switch {
         }
     }
 
-    int readState() {
+    void readState() {
         int newstate = digitalRead(port);
         if (newstate==HIGH) newstate=true;
         else newstate=false;
@@ -254,20 +166,25 @@ class Switch {
     void loop() {
         readState();
         if (mode==Mode::Timer && activeTimer) {
-            if (timeDiff(activeTimer, Millis()) > timerDuration) {
+            if (timeDiff(activeTimer, millis()) > timerDuration) {
                 activeTimer=0;
                 setLogicalState(false);
             }
         }
-        */
     }
 
     void subsMsg(String topic, String msg, String originator) {
         if (topic == name + "/switch/state/get") {
             char buf[32];
-            if (state) sprintf(buf,"on");
+            if (logicalState) sprintf(buf,"on");
             else sprintf(buf,"off");
             pSched->publish(name + "/switch/state", buf);
+        }
+        if (topic == name + "/switch/physicalstate/get") {
+            char buf[32];
+            if (physicalState) sprintf(buf,"on");
+            else sprintf(buf,"off");
+            pSched->publish(name + "/switch/physicalstate", buf);
         }
         if (topic == name + "/switch/set") {
             char buf[32];

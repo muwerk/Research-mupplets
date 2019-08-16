@@ -1,10 +1,10 @@
 # mupplets [WIP]
 
-**Note:** This is very much a work-in-progress.
+**Note:** This is very much a work-in-progress. Interface and messages are NOT stable or final.
 
 **mu**werk a**pplets**; mupplets: functional units that support specific hardware or reusable applications.
 
-**mupplets** use muwerks MQTT-style messaging to pass information between each other on the same device. If connected to an MQTT-server via munet, all functionallity is externally available.
+**mupplets** use muwerks MQTT-style messaging to pass information between each other on the same device. If connected to an MQTT-server via munet, all functionallity is externally available through an MQTT server such as Mosquitto.
 
 See [mupplet led and switch example](https://github.com/muwerk/Examples/tree/master/led) for a complete example that illustrates how a
 switch mupplet (interfacing to a physical button) and a led mupplet (infacing to a physical led) communicate using muwerk.
@@ -89,7 +89,7 @@ Hardware: 330Ω resistor, led.
 | topic | message body | comment
 | ----- | ------------ | -------
 | `<mupplet-name>/led/set` | `on`, `off`, `true`, `false`, `pct 34`, `34%`, `0.34` | Led can be set fully on or off with on/true and off/false. A fractional brightness of 0.34 (within interval [0.0, 1.0]) can be sent as either `pct 34`, or `0.34`, or `34%`.
-| `<mupplet-name>/led/mode/set` | `passive`, `blink <intervall_ms>`, or `pulse <intervall_ms>` | Mode passive does no automatic led state changes, `blink` changes the led state very `interval_ms` on/off, `pulse` uses pwm to for soft changes between on and off states.
+| `<mupplet-name>/led/mode/set` | `passive`, `blink <intervall_ms>[,<phase-shift>]`, or `wave <intervall_ms>[,<phase-shift>]` | Mode passive does no automatic led state changes, `blink` changes the led state very `interval_ms` on/off, `wave` uses pwm to for soft changes between on and off states. Optional comma-speratated phase [0.0, ..., 1.0] can be added as a phase-shift. Two leds, one with `pulse 1000` and one with `pulse 1000,0.5` blink inverse.
 
 Example: sending an MQTT message with topic `<led-name>/mode/set` and message `pulse 1000` causes the led to softly pulse between on and off every 1000ms.
 
@@ -102,7 +102,7 @@ ustd::Led led("myLed",D5,false);
             // Led connected to pin D5, 
             // false: led is on when D5 low
             // (inverted logic)
-            // messages are sent/received to myLed/...
+            // messages are sent/received to myLed/led/...
 
 void setup() {
 
@@ -144,10 +144,10 @@ Hardware: 330Ω resistor, led, switch.
 
 ustd::Scheduler sched;
 ustd::Led led("myLed",D5,false);
-ustd::Switch toggleswitch("mySwitch",D6, false);
+ustd::Switch toggleswitch("mySwitch",D6, ustd::Switch:Mode:Default, false);
 
 void switch_messages(String topic, String msg, String originator) {
-    if (topic == "mySwitch/state") {
+    if (topic == "mySwitch/switch/state") {
         if (msg=="on") {
             led.set(true);
         } else {

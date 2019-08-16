@@ -89,9 +89,11 @@ Hardware: 330Ω resistor, led.
 | topic | message body | comment
 | ----- | ------------ | -------
 | `<mupplet-name>/led/set` | `on`, `off`, `true`, `false`, `pct 34`, `34%`, `0.34` | Led can be set fully on or off with on/true and off/false. A fractional brightness of 0.34 (within interval [0.0, 1.0]) can be sent as either `pct 34`, or `0.34`, or `34%`.
-| `<mupplet-name>/led/mode/set` | `passive`, `blink <intervall_ms>[,<phase-shift>]`, or `wave <intervall_ms>[,<phase-shift>]` | Mode passive does no automatic led state changes, `blink` changes the led state very `interval_ms` on/off, `wave` uses pwm to for soft changes between on and off states. Optional comma-speratated phase [0.0, ..., 1.0] can be added as a phase-shift. Two leds, one with `pulse 1000` and one with `pulse 1000,0.5` blink inverse.
+| `<mupplet-name>/led/mode/set` | `passive`, `blink <intervall_ms>[,<phase-shift>]`, or `wave <intervall_ms>[,<phase-shift>]` | Mode passive does no automatic led state changes, `blink` changes the led state very `interval_ms` on/off, `wave` uses pwm to for soft changes between on and off states. Optional comma-speratated phase [0.0, ..., 1.0] can be added as a phase-shift. Two leds, one with `wave 1000` and one with `wave 1000,0.5` blink inverse.
 
-Example: sending an MQTT message with topic `<led-name>/mode/set` and message `pulse 1000` causes the led to softly pulse between on and off every 1000ms.
+Example: sending an MQTT message with topic `<led-name>/mode/set` and message `wave 1000` causes the led to softly pulse between on and off every 1000ms.
+
+Multiple leds are time and phase synchronized.
 
 ### Sample code
 
@@ -126,14 +128,18 @@ Hardware: 330Ω resistor, led, switch.
 
 | topic | message body | comment
 | ----- | ------------ | -------
-| `<mupplet-name>/switch/state` | `on` or `off` | switch state
+| `<mupplet-name>/switch/state` | `on`, `off` or `trigger` | switch state, usually `on` or `off`. In modes `falling` and `raising` only `trigger`
+messages are sent on raising or falling signal.
 | `<mupplet-name>/switch/debounce` | <time-in-ms> | reply to `<mupplet-name>/switch/debounce/get`, switch debounce time in ms [0..1000]ms
+| `<custom-topic>` |  | `on`, `off` or `trigger` | If a custom-topic is given during switch init, an addtional message is publish on switch state changes with that topic, The message is identical to ../switch/state', usually `on` or `off`. In modes `falling` and `raising` only `trigger`.
 
 #### Message received by switch mupplet:
 
 | topic | message body | comment
 | ----- | ------------ | -------
 | `<mupplet-name>/switch/set` | `on`, `off`, `true`, `false`, `toggle` | Override switch setting. When setting the switch state via message, the hardware port remains overridden until the hardware changes state (e.g. button is physically pressed). Sending a `switch/set` message puts the switch in override-mode: e.g. when sending `switch/set` `on`, the state of the button is signalled `on`, even so the physical button might be off. Next time the physical button is pressed (or changes state), override mode is stopped, and the state of the actual physical button is published again.  
+| `<mupplet-name>/switch/mode/set` | `default`, `raising`, `falling`, `flipflop`, `timer <time-in-ms>` | Mode `default` sends `on` when a button is pushed, `off` on release. `falling` and `raising` send `trigger` on corresponding signal change. `flipflop` changes the state of the logical switch on each change from button on to off. `timer` keeps
+the switch on for the specified duration (ms). 
 | `<mupplet-name>/switch/debounce/set` | <time-in-ms> | String encoded switch debounce time in ms, [0..1000]ms. Default is 20ms.
 
 ### Sample code
@@ -159,6 +165,7 @@ void switch_messages(String topic, String msg, String originator) {
 void setup() {
     led.begin(&sched);
     toggleswitch.begin(&sched);
+    toggleswitch.setMode(ustd::Mode::Flipflop);
     sched.subscribe(tID, "mySwitch/switch/state", switch_messages);
 }
 ```

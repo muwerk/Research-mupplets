@@ -45,6 +45,18 @@ class Switch {
         timerDuration=ms;
     }
 
+    void setMode(Mode newmode, unsigned long duration=0) {
+        flipflop = true;  // This starts with 'off', since state is initially changed once.
+        activeTimer=0;
+        timerDuration=duration;
+        physicalState=-1;
+        logicalState=-1;
+        overriddenPhysicalState=false;
+        overridePhysicalActive=false;
+        lastChangeMs=0;
+        mode=newmode;
+    }
+
     void begin(Scheduler *_pSched) {
         pSched = _pSched;
 
@@ -79,16 +91,16 @@ class Switch {
                 break;
             case Mode::Raising:
                 if (lState==true) {
-                    pSched->publish(name + "/switch/state", textState);
+                    pSched->publish(name + "/switch/state", "trigger");
                     if (customTopic!="") 
-                        pSched->publish(customTopic, textState);
+                        pSched->publish(customTopic, "trigger");
                 }
                 break;
             case Mode::Falling:
                 if (lState==false) {
-                    pSched->publish(name + "/switch/state", textState);
+                    pSched->publish(name + "/switch/state", "trigger");
                     if (customTopic!="") 
-                        pSched->publish(customTopic, textState);
+                        pSched->publish(customTopic, "trigger");
                 }
                 break;
         }
@@ -180,6 +192,29 @@ class Switch {
             if (physicalState) sprintf(buf,"on");
             else sprintf(buf,"off");
             pSched->publish(name + "/switch/physicalstate", buf);
+        }
+        if (topic ==name+"/switch/mode/set") {
+            char buf[32];
+            memset(buf,0,32);
+            strncpy(buf,msg.c_str(),31);
+            char *p=strchr(buf,' ');
+            if (p) {
+                *p=0;
+                ++p;
+            }
+            if (!strcmp(buf,"default")) {
+                setMode(Mode::Default);
+            } else if (!strcmp(buf,"raising")) {
+                setMode(Mode::Raising);
+            } else if (!strcmp(buf,"falling")) {
+                setMode(Mode::Falling);
+            } else if (!strcmp(buf,"flipflop")) {
+                setMode(Mode::Flipflop);
+            } else if (!strcmp(buf,"timer")) {
+                unsigned long dur=1000;
+                if (p) dur=atol(p);
+                setMode(Mode::Timer, dur);
+            }
         }
         if (topic == name + "/switch/set") {
             char buf[32];

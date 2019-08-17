@@ -24,6 +24,8 @@ class Led {
     unsigned long uPhase=0;
     unsigned long oPeriod=0;
     unsigned long startPulse=0;
+    String pattern;
+    unsigned int patternPointer=0;
 
     Led(String name, uint8_t port, bool activeLogic=false )
         : name(name), port(port), activeLogic(activeLogic) {
@@ -156,13 +158,39 @@ class Led {
             }
             brightness(br, true);
         }
+        if (mode==Mode::Pattern) {
+            if (period<oPeriod) {
+                if (patternPointer<pattern.length()) {
+                    char c=pattern[patternPointer];
+                    if (c=='r') {
+                        patternPointer=0;
+                        c=pattern[patternPointer];
+                    }
+                    if (c=='+') {
+                        set(true, true);
+                    }
+                    if (c=='-') {
+                        set (false, true);
+                    }
+                    if (c>='0' && c<='9') {
+                        double br=(double)(c-'0')*0.1111;
+                        brightness(br, true);
+                    }
+                    ++patternPointer;
+                } else {
+                    patternPointer=0;
+                    set(false, true);
+                    setMode(Mode::Passive);                    
+                }
+            }
+        }
         oPeriod=period;
     }
 
     void subsMsg(String topic, String msg, String originator) {
-        char msgbuf[32];
-        memset(msgbuf,0,32);
-        strncpy(msgbuf,msg.c_str(),31);
+        char msgbuf[128];
+        memset(msgbuf,0,128);
+        strncpy(msgbuf,msg.c_str(),127);
         if (topic == name + "/led/set") {
             double br;
             br = parseUnitLevel(msg);
@@ -171,6 +199,7 @@ class Led {
         if (topic == name+"/led/mode/set") {
             char *p=strchr(msgbuf,' ');
             char *p2=nullptr;
+            char *p3=nullptr;
             if (p) {
                 *p=0;
                 ++p;
@@ -178,6 +207,11 @@ class Led {
                 if (p2) {
                     *p2=0;
                     ++p2;
+                    p3=strchr(p2,',');
+                    if (p3) {
+                        *p3=0;
+                        ++p3;
+                    }
                 }
             }
             int t=1000;
@@ -195,6 +229,14 @@ class Led {
                 if (p) t=atoi(p);
                 if (p2) phs=atof(p2);
                 setMode(Mode::Wave, t, phs);
+            } else if (!strcmp(msgbuf, "pattern")) {
+                if (p && strlen(p)>0) {
+                    pattern=String(p);
+                    patternPointer=0;
+                    if (p2) t=atoi(p2);
+                    if (p3) phs=atof(p3);
+                    setMode(Mode::Pattern, t, phs);
+                }
             }
         }
         if (topic == name + "/led/unitluminosity/get") {

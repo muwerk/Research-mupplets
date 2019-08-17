@@ -51,7 +51,7 @@ unsigned long getResetIrqCount(uint8_t irqno) {
 
 class Switch {
   public:
-    enum Mode { Default, Raising, Falling, Flipflop, Timer, Duration, Statistics};
+    enum Mode { Default, Rising, Falling, Flipflop, Timer, Duration, Statistics};
     Scheduler *pSched;
     int tID;
 
@@ -80,7 +80,17 @@ class Switch {
         : name(name), port(port), mode(mode), activeLogic(activeLogic),
           customTopic(customTopic), interruptIndex(interruptIndex), debounceTimeMs(debounceTimeMs) {
               if (interruptIndex>=0 && interruptIndex<USTD_MAX_IRQS) {
-                  attachInterrupt(digitalPinToInterrupt(port), ustd_irq_table[interruptIndex], CHANGE);
+                  switch (mode) {
+                        case Mode::Rising:
+                            attachInterrupt(digitalPinToInterrupt(port), ustd_irq_table[interruptIndex], RISING);
+                            break;
+                        case Mode::Falling:
+                            attachInterrupt(digitalPinToInterrupt(port), ustd_irq_table[interruptIndex], FALLING);
+                            break;
+                        default:
+                            attachInterrupt(digitalPinToInterrupt(port), ustd_irq_table[interruptIndex], CHANGE);
+                            break;
+                  }
                   debounceMs[interruptIndex]=debounceTimeMs;
                   useInterrupt=true;
               }
@@ -146,7 +156,7 @@ class Switch {
                 if (customTopic!="") 
                     pSched->publish(customTopic, textState);
                 break;
-            case Mode::Raising:
+            case Mode::Rising:
                 if (lState==true) {
                     pSched->publish(name + "/switch/state", "trigger");
                     if (customTopic!="") 
@@ -194,7 +204,7 @@ class Switch {
     void decodeLogicalState(bool physicalState) {
         switch (mode) {
             case Mode::Default:
-            case Mode::Raising:
+            case Mode::Rising:
             case Mode::Falling:
             case Mode::Duration:
                 setLogicalState(physicalState);
@@ -313,8 +323,8 @@ class Switch {
             }
             if (!strcmp(buf,"default")) {
                 setMode(Mode::Default);
-            } else if (!strcmp(buf,"raising")) {
-                setMode(Mode::Raising);
+            } else if (!strcmp(buf,"rising")) {
+                setMode(Mode::Rising);
             } else if (!strcmp(buf,"falling")) {
                 setMode(Mode::Falling);
             } else if (!strcmp(buf,"flipflop")) {

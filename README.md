@@ -119,7 +119,7 @@ See [mupplet led and switch example](https://github.com/muwerk/Examples/tree/mas
 
 ## Switch
 
-Support sitches with automatic debouncing.
+Support switches with automatic debouncing.
 
 <img src="https://github.com/muwerk/mupplets/blob/master/Resources/switch.png" width="50%" height="30%">
 Hardware: 330Ω resistor, led, switch.
@@ -150,7 +150,7 @@ the switch on for the specified duration (ms).
 
 ustd::Scheduler sched;
 ustd::Led led("myLed",D5,false);
-ustd::Switch toggleswitch("mySwitch",D6, ustd::Switch:Mode:Default, false);
+ustd::Switch toggleswitch("mySwitch",D6, ustd::Switch::Mode::Default, false);
 
 void switch_messages(String topic, String msg, String originator) {
     if (topic == "mySwitch/switch/state") {
@@ -179,7 +179,7 @@ Measures temperature and humidity.
 <img src="https://github.com/muwerk/mupplets/blob/master/Resources/dht.png" width="30%" height="30%">
 Hardware: 10kΩ, DHT22 sensor.
 
-#### Messages send by switch mupplet:
+#### Messages send by dht mupplet:
 
 | topic | message body | comment
 | ----- | ------------ | -------
@@ -229,7 +229,7 @@ in `SERVO` mode, frequency is 60Hz. All 16 channels share the same mode. The glo
 * Max 25mA per channel!
 
 
-#### Messages received by switch mupplet:
+#### Messages received by i2c_pwm mupplet:
 
 | topic | message body | comment
 | ----- | ------------ | -------

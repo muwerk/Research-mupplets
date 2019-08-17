@@ -7,11 +7,21 @@ namespace ustd {
 
 #define USTD_MAX_IRQS (10)
 
-unsigned long irqcounter[USTD_MAX_IRQS];
+unsigned long irqcounter[USTD_MAX_IRQS]={0,0,0,0,0,0,0,0,0,0};
+unsigned long lastIrq[USTD_MAX_IRQS]={0,0,0,0,0,0,0,0,0,0};
+unsigned long debounceMs[USTD_MAX_IRQS]={0,0,0,0,0,0,0,0,0,0};
 
 void ICACHE_RAM_ATTR ustd_irq_master(uint8_t irqno) {
+    unsigned long curr=millis();
     noInterrupts();
-    if (irqno < USTD_MAX_IRQS) ++irqcounter[irqno];
+    if (debounceMs[irqno]) {
+        if (timeDiff(lastIrq[irqno],curr)<debounceMs[irqno]) {
+            interrupts();
+            return;
+        }
+    }
+    ++irqcounter[irqno];
+    lastIrq[irqno]=curr;
     interrupts();
 }
 
@@ -66,11 +76,12 @@ class Switch {
     unsigned long startEvent=0; //ms
     unsigned long durations[2]={3000,30000};
 
-    Switch(String name, uint8_t port, Mode mode = Mode::Default, bool activeLogic = false, String customTopic = "", int8_t interruptIndex=-1, unsigned long debounceTimeMs = 20)
+    Switch(String name, uint8_t port, Mode mode = Mode::Default, bool activeLogic = false, String customTopic = "", int8_t interruptIndex=-1, unsigned long debounceTimeMs = 0)
         : name(name), port(port), mode(mode), activeLogic(activeLogic),
           customTopic(customTopic), interruptIndex(interruptIndex), debounceTimeMs(debounceTimeMs) {
               if (interruptIndex>=0 && interruptIndex<USTD_MAX_IRQS) {
                   attachInterrupt(digitalPinToInterrupt(port), ustd_irq_table[interruptIndex], FALLING);
+                  debounceMs[interruptIndex]=debounceTimeMs;
                   useInterrupt=true;
               }
     }

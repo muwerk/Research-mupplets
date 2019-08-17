@@ -119,7 +119,7 @@ See [mupplet led and switch example](https://github.com/muwerk/Examples/tree/mas
 
 ## Switch
 
-Support sitches with automatic debouncing.
+Support switches with automatic debouncing.
 
 <img src="https://github.com/muwerk/mupplets/blob/master/Resources/switch.png" width="50%" height="30%">
 Hardware: 330Ω resistor, led, switch.
@@ -150,7 +150,7 @@ the switch on for the specified duration (ms).
 
 ustd::Scheduler sched;
 ustd::Led led("myLed",D5,false);
-ustd::Switch toggleswitch("mySwitch",D6, ustd::Switch:Mode:Default, false);
+ustd::Switch toggleswitch("mySwitch",D6, ustd::Switch::Mode::Default, false);
 
 void switch_messages(String topic, String msg, String originator) {
     if (topic == "mySwitch/switch/state") {

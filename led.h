@@ -88,9 +88,12 @@ class Led {
         interval=interval_ms;
         if (interval<100) interval=100;
         if (interval>100000) interval=100000;
-        uPhase=(unsigned long)(2.0*(double)interval*phase);
-        oPeriod=(millis()+uPhase)%interval;
-        //last=millis(); //-interval+((millis()%interval)+((unsigned long)((double)interval*phase))%interval);
+        if (mode==Mode::Pulse) {
+            oPeriod=millis();
+        } else {
+            uPhase=(unsigned long)(2.0*(double)interval*phase);
+            oPeriod=(millis()+uPhase)%interval;
+        }
     }
 
     void brightness(double bright, bool _automatic=false) {
@@ -128,6 +131,14 @@ class Led {
     void loop() {
         if (mode==Mode::Passive) return;
         unsigned long period=(millis()+uPhase)%(2*interval);
+        if (mode==Mode::Pulse) {
+            if (period<oPeriod) {
+                set(true, true);
+            } else {
+                set(false, true);
+                setMode(Mode::Passive);
+            }
+        }
         if (mode==Mode::Blink) {
             if (period<oPeriod) {
                 set(false, true);
@@ -175,6 +186,9 @@ class Led {
             double phs=0.0;
             if (!strcmp(msgbuf, "passive")) {
                 setMode(Mode::Passive);
+            } else if (!strcmp(msgbuf,"pulse")) {
+                if (p) t=atoi(p);
+                setMode(Mode::Pulse,t);
             } else if (!strcmp(msgbuf, "blink")) {
                 if (p) t=atoi(p);
                 if (p2) phs=atof(p2);

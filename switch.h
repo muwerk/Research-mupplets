@@ -4,9 +4,44 @@
 #include "scheduler.h"
 
 namespace ustd {
+
+#define USTD_MAX_IRQS (10)
+
+unsigned long irqcounter[USTD_MAX_IRQS];
+
+void ICACHE_RAM_ATTR ustd_irq_master(uint8_t irqno) {
+    noInterrupts();
+    if (irqno < USTD_MAX_IRQS) ++irqcounter[irqno];
+    interrupts();
+}
+
+void ICACHE_RAM_ATTR ustd_irq0() {ustd_irq_master(0);}
+void ICACHE_RAM_ATTR ustd_irq1() {ustd_irq_master(1);}
+void ICACHE_RAM_ATTR ustd_irq2() {ustd_irq_master(2);}
+void ICACHE_RAM_ATTR ustd_irq3() {ustd_irq_master(3);}
+void ICACHE_RAM_ATTR ustd_irq4() {ustd_irq_master(4);}
+void ICACHE_RAM_ATTR ustd_irq5() {ustd_irq_master(5);}
+void ICACHE_RAM_ATTR ustd_irq6() {ustd_irq_master(6);}
+void ICACHE_RAM_ATTR ustd_irq7() {ustd_irq_master(7);}
+void ICACHE_RAM_ATTR ustd_irq8() {ustd_irq_master(8);}
+void ICACHE_RAM_ATTR ustd_irq9() {ustd_irq_master(9);}
+
+void ICACHE_RAM_ATTR (*ustd_irq_table[USTD_MAX_IRQS])()={ustd_irq0, ustd_irq1,ustd_irq2,ustd_irq3,ustd_irq4,ustd_irq5,ustd_irq6,ustd_irq7,ustd_irq8, ustd_irq9};
+
+unsigned long getResetIrqCount(uint8_t irqno) {
+    unsigned long count=(unsigned long)-1;
+    noInterrupts();
+    if (irqno < USTD_MAX_IRQS) {
+        count=irqcounter[irqno];
+        irqcounter[irqno]=0;
+    }
+    interrupts();
+    return count;
+}
+
 class Switch {
   public:
-    enum Mode { Default, Raising, Falling, Flipflop, Timer};
+    enum Mode { Default, Raising, Falling, Flipflop, Timer, Duration, Statistics};
     Scheduler *pSched;
     int tID;
 
@@ -15,8 +50,10 @@ class Switch {
     Mode mode;
     bool activeLogic;
     String customTopic;
+    int8_t interruptIndex;
     unsigned long debounceTimeMs;
 
+    bool useInterrupt=false;
     unsigned long lastChangeMs = 0;
     int physicalState=-1;
     int logicalState=-1;
@@ -26,13 +63,21 @@ class Switch {
     bool flipflop = true;  // This starts with 'off', since state is initially changed once.
     unsigned long activeTimer=0;
     unsigned long timerDuration=1000; //ms
+    unsigned long startEvent=0; //ms
+    unsigned long durations[2]={3000,30000};
 
-    Switch(String name, uint8_t port, Mode mode = Mode::Default, bool activeLogic = false, String customTopic = "", unsigned long debounceTimeMs = 20)
+    Switch(String name, uint8_t port, Mode mode = Mode::Default, bool activeLogic = false, String customTopic = "", int8_t interruptIndex=-1, unsigned long debounceTimeMs = 20)
         : name(name), port(port), mode(mode), activeLogic(activeLogic),
-          customTopic(customTopic), debounceTimeMs(debounceTimeMs) {
+          customTopic(customTopic), interruptIndex(interruptIndex), debounceTimeMs(debounceTimeMs) {
+              if (interruptIndex>=0 && interruptIndex<USTD_MAX_IRQS) {
+                  attachInterrupt(digitalPinToInterrupt(port), ustd_irq_table[interruptIndex], FALLING);
+                  useInterrupt=true;
+              }
     }
 
     ~Switch() {
+        if (useInterrupt)
+            detachInterrupt(digitalPinToInterrupt(port));
     }
 
     void setDebounce(long ms) {
@@ -55,6 +100,7 @@ class Switch {
         overridePhysicalActive=false;
         lastChangeMs=0;
         mode=newmode;
+        startEvent=0;
     }
 
     void begin(Scheduler *_pSched) {
@@ -103,6 +149,13 @@ class Switch {
                         pSched->publish(customTopic, "trigger");
                 }
                 break;
+            case Mode::Duration:
+                if (lState==true) {
+                    startEvent=millis();
+                }
+                break;
+            case Mode::Statistics:
+                break;
         }
     }
 
@@ -132,6 +185,10 @@ class Switch {
                 } else {
                     setLogicalState(true);
                 }
+                break;
+            case Mode::Duration:
+                break;
+            case Mode::Statistics:
                 break;
         }
 
@@ -163,11 +220,29 @@ class Switch {
     }
 
     void readState() {
-        int newstate = digitalRead(port);
-        if (newstate==HIGH) newstate=true;
-        else newstate=false;
-        if (!activeLogic) newstate=!newstate;
-        setPhysicalState(newstate,false);
+        if (useInterrupt) {
+            unsigned long count=getResetIrqCount(interruptIndex);
+            char msg[32];
+            if (count) {
+                sprintf(msg,"%ld",count);
+                pSched->publish("mySwitch/switch/irqcount/0",msg);
+            }
+            for (unsigned long i=0; i<count; i++) {
+                if (activeLogic) {
+                    setPhysicalState(true, false);
+                    setPhysicalState(false, false);
+                } else {
+                    setPhysicalState(false, false);
+                    setPhysicalState(true, false);
+                }
+            }
+        } else {
+            int newstate = digitalRead(port);
+            if (newstate==HIGH) newstate=true;
+            else newstate=false;
+            if (!activeLogic) newstate=!newstate;
+            setPhysicalState(newstate,false);
+        }
     }
 
     void loop() {
@@ -198,9 +273,15 @@ class Switch {
             memset(buf,0,32);
             strncpy(buf,msg.c_str(),31);
             char *p=strchr(buf,' ');
+            char *p2=nullptr;
             if (p) {
                 *p=0;
                 ++p;
+                p2=strchr(p,',');
+                if (p2) {
+                    *p2=0;
+                    ++p2;
+                }
             }
             if (!strcmp(buf,"default")) {
                 setMode(Mode::Default);
@@ -214,6 +295,16 @@ class Switch {
                 unsigned long dur=1000;
                 if (p) dur=atol(p);
                 setMode(Mode::Timer, dur);
+            } else if (!strcmp(buf,"duration")) {
+                durations[0]=3000;
+                durations[1]=30000;
+                if (p) {
+                    durations[0]=atol(p);
+                    if (p2) durations[1]=atol(p2);
+                }
+                if (durations[0]>durations[1]) {
+                    durations[1]=(unsigned long)-1;
+                }
             }
         }
         if (topic == name + "/switch/set") {

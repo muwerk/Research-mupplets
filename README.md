@@ -60,7 +60,7 @@ ustd::Ldr ldr("myLDR",A0);
 void task0(String topic, String msg, String originator) {
     if (topic == "myLDR/unitluminosity") {
         Serial.print("Lumin: ");
-        Serial.prinln(msg);  // String float [0.0, 1.0]
+        Serial.prinln(msg);  // String float [0.0, ..., 1.0]
     }
 }
 
@@ -89,7 +89,7 @@ Hardware: 330Ω resistor, led.
 | topic | message body | comment
 | ----- | ------------ | -------
 | `<mupplet-name>/led/set` | `on`, `off`, `true`, `false`, `pct 34`, `34%`, `0.34` | Led can be set fully on or off with on/true and off/false. A fractional brightness of 0.34 (within interval [0.0, 1.0]) can be sent as either `pct 34`, or `0.34`, or `34%`.
-| `<mupplet-name>/led/mode/set` | `passive`, `blink <intervall_ms>[,<phase-shift>]`, or `wave <intervall_ms>[,<phase-shift>]` | Mode passive does no automatic led state changes, `blink` changes the led state very `interval_ms` on/off, `wave` uses pwm to for soft changes between on and off states. Optional comma-speratated phase [0.0, ..., 1.0] can be added as a phase-shift. Two leds, one with `wave 1000` and one with `wave 1000,0.5` blink inverse.
+| `<mupplet-name>/led/mode/set` | `passive`, `blink <intervall_ms>[,<phase-shift>]`, or `wave <intervall_ms>[,<phase-shift>]` | Mode passive does no automatic led state changes, `blink` changes the led state very `interval_ms` on/off, `wave` uses pwm to for soft changes between on and off states. Optional comma-speratated phase [0.0, ..., 1.0] can be added as a phase-shift. Two leds, one with `blink 1000` and one with `blink 1000,0.5` blink inverse.
 
 Example: sending an MQTT message with topic `<led-name>/mode/set` and message `wave 1000` causes the led to softly pulse between on and off every 1000ms.
 
@@ -109,10 +109,10 @@ ustd::Led led("myLed",D5,false);
 void setup() {
 
     led.begin(&sched);
-    led.setmode(led.Mode::PULSE, 1000);
+    led.setmode(led.Mode::WAVE, 1000);
             // soft pwm pulsing in 1000ms intervals
             // same can be accomplished by publishing
-            // topic myLed/led/setmode  msg "pulse 1000"
+            // topic myLed/led/setmode  msg "wave 1000"
 ```
 
 See [mupplet led and switch example](https://github.com/muwerk/Examples/tree/master/led) for a complete example.

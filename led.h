@@ -23,7 +23,7 @@ class Led {
     double phase=0.0;
     unsigned long uPhase=0;
     unsigned long oPeriod=0;
-
+    unsigned long startPulse=0;
 
     Led(String name, uint8_t port, bool activeLogic=false )
         : name(name), port(port), activeLogic(activeLogic) {
@@ -62,6 +62,7 @@ class Led {
     }
 
     void set(bool state, bool _automatic=false) {
+        if (state==this->state) return;
         this->state=state;
         if (!_automatic) mode=Mode::Passive;
         if (state) {
@@ -88,9 +89,9 @@ class Led {
         interval=interval_ms;
         if (interval<100) interval=100;
         if (interval>100000) interval=100000;
+        startPulse=millis();
         uPhase=(unsigned long)(2.0*(double)interval*phase);
         oPeriod=(millis()+uPhase)%interval;
-        //last=millis(); //-interval+((millis()%interval)+((unsigned long)((double)interval*phase))%interval);
     }
 
     void brightness(double bright, bool _automatic=false) {
@@ -128,6 +129,14 @@ class Led {
     void loop() {
         if (mode==Mode::Passive) return;
         unsigned long period=(millis()+uPhase)%(2*interval);
+        if (mode==Mode::Pulse) {
+            if (millis()-startPulse < interval) {
+                set(true, true);
+            } else {
+                set(false, true);
+                setMode(Mode::Passive);
+            }
+        }
         if (mode==Mode::Blink) {
             if (period<oPeriod) {
                 set(false, true);
@@ -175,6 +184,9 @@ class Led {
             double phs=0.0;
             if (!strcmp(msgbuf, "passive")) {
                 setMode(Mode::Passive);
+            } else if (!strcmp(msgbuf,"pulse")) {
+                if (p) t=atoi(p);
+                setMode(Mode::Pulse,t);
             } else if (!strcmp(msgbuf, "blink")) {
                 if (p) t=atoi(p);
                 if (p2) phs=atof(p2);
@@ -182,7 +194,7 @@ class Led {
             } else if (!strcmp(msgbuf, "wave")) {
                 if (p) t=atoi(p);
                 if (p2) phs=atof(p2);
-                setMode(Mode::Blink, t, phs);
+                setMode(Mode::Wave, t, phs);
             }
         }
         if (topic == name + "/led/unitluminosity/get") {

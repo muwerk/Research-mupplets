@@ -179,7 +179,7 @@ Measures temperature and humidity.
 <img src="https://github.com/muwerk/mupplets/blob/master/Resources/dht.png" width="30%" height="30%">
 Hardware: 10kΩ, DHT22 sensor.
 
-#### Messages send by switch mupplet:
+#### Messages send by dht mupplet:
 
 | topic | message body | comment
 | ----- | ------------ | -------
@@ -229,7 +229,7 @@ in `SERVO` mode, frequency is 60Hz. All 16 channels share the same mode. The glo
 * Max 25mA per channel!
 
 
-#### Messages received by switch mupplet:
+#### Messages received by i2c_pwm mupplet:
 
 | topic | message body | comment
 | ----- | ------------ | -------

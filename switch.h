@@ -80,7 +80,7 @@ class Switch {
         : name(name), port(port), mode(mode), activeLogic(activeLogic),
           customTopic(customTopic), interruptIndex(interruptIndex), debounceTimeMs(debounceTimeMs) {
               if (interruptIndex>=0 && interruptIndex<USTD_MAX_IRQS) {
-                  attachInterrupt(digitalPinToInterrupt(port), ustd_irq_table[interruptIndex], FALLING);
+                  attachInterrupt(digitalPinToInterrupt(port), ustd_irq_table[interruptIndex], CHANGE);
                   debounceMs[interruptIndex]=debounceTimeMs;
                   useInterrupt=true;
               }
@@ -111,7 +111,7 @@ class Switch {
         overridePhysicalActive=false;
         lastChangeMs=0;
         mode=newmode;
-        startEvent=0;
+        startEvent=(unsigned long)-1;
     }
 
     void begin(Scheduler *_pSched) {
@@ -163,6 +163,20 @@ class Switch {
             case Mode::Duration:
                 if (lState==true) {
                     startEvent=millis();
+                } else {
+                    if (startEvent!=(unsigned long)-1) {
+                        unsigned long dt=timeDiff(startEvent, millis());
+                        char msg[32];
+                        sprintf(msg,"%ld",dt);
+                        pSched->publish(name + "/switch/duration", msg);
+                        if (dt<durations[0]) {
+                            pSched->publish(name + "/switch/shortpress", "trigger");
+                        } else if (dt<durations[1]) {
+                            pSched->publish(name + "/switch/longpress", "trigger");
+                        } else {
+                            pSched->publish(name + "/switch/verylongpress", "trigger");
+                        }   
+                    }
                 }
                 break;
             case Mode::Statistics:
@@ -182,6 +196,7 @@ class Switch {
             case Mode::Default:
             case Mode::Raising:
             case Mode::Falling:
+            case Mode::Duration:
                 setLogicalState(physicalState);
                 break;
             case Mode::Flipflop:
@@ -196,8 +211,6 @@ class Switch {
                 } else {
                     setLogicalState(true);
                 }
-                break;
-            case Mode::Duration:
                 break;
             case Mode::Statistics:
                 break;
@@ -233,18 +246,22 @@ class Switch {
     void readState() {
         if (useInterrupt) {
             unsigned long count=getResetIrqCount(interruptIndex);
+            int curstate = digitalRead(port);
             char msg[32];
             if (count) {
                 sprintf(msg,"%ld",count);
                 pSched->publish("mySwitch/switch/irqcount/0",msg);
-            }
-            for (unsigned long i=0; i<count; i++) {
-                if (activeLogic) {
-                    setPhysicalState(true, false);
-                    setPhysicalState(false, false);
-                } else {
-                    setPhysicalState(false, false);
-                    setPhysicalState(true, false);
+                if (curstate==HIGH) curstate=true;
+                else curstate=false;
+                bool iState=((count%2)==0);
+                if (curstate) iState=!iState;
+                for (unsigned long i=0; i<count; i++) {
+                    if (activeLogic) {
+                        setPhysicalState(iState, false);
+                    } else {
+                        setPhysicalState(!iState, false);
+                    }
+                    iState=!iState;
                 }
             }
         } else {
@@ -316,6 +333,7 @@ class Switch {
                 if (durations[0]>durations[1]) {
                     durations[1]=(unsigned long)-1;
                 }
+                setMode(Mode::Duration);
             }
         }
         if (topic == name + "/switch/set") {

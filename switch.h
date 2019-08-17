@@ -243,7 +243,7 @@ class Switch {
             if (overridePhysicalActive) {
                 overridePhysicalActive=false;
             }
-            if (newState != physicalState) {
+            if (newState != physicalState || mode==Mode::Falling || mode==Mode::Rising) {
                 if (timeDiff(lastChangeMs, millis()) > debounceTimeMs) {
                     lastChangeMs = millis();
                     physicalState=newState;
@@ -263,15 +263,34 @@ class Switch {
                 pSched->publish("mySwitch/switch/irqcount/0",msg);
                 if (curstate==HIGH) curstate=true;
                 else curstate=false;
-                bool iState=((count%2)==0);
-                if (curstate) iState=!iState;
-                for (unsigned long i=0; i<count; i++) {
-                    if (activeLogic) {
-                        setPhysicalState(iState, false);
-                    } else {
-                        setPhysicalState(!iState, false);
-                    }
-                    iState=!iState;
+                switch (mode) {
+                    case Mode::Rising:
+                        for (unsigned long i=0; i<count; i++) {
+                            if (activeLogic) {
+                                setPhysicalState(true, false);
+                            } else {
+                                setPhysicalState(false, false);
+                            }
+                        break;
+                    case Mode::Falling:
+                            if (activeLogic) {
+                                setPhysicalState(false, false);
+                            } else {
+                                setPhysicalState(true, false);
+                            }
+                        break;
+                    default:
+                        bool iState=((count%2)==0);
+                        if (curstate) iState=!iState;
+                        for (unsigned long i=0; i<count; i++) {
+                            if (activeLogic) {
+                                setPhysicalState(iState, false);
+                            } else {
+                                setPhysicalState(!iState, false);
+                            }
+                            iState=!iState;
+                        }
+                        break:
                 }
             }
         } else {

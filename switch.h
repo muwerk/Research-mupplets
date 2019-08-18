@@ -51,7 +51,7 @@ unsigned long getResetIrqCount(uint8_t irqno) {
 
 class Switch {
   public:
-    enum Mode { Default, Rising, Falling, Flipflop, Timer, Duration, Statistics};
+    enum Mode { Default, Rising, Falling, Flipflop, Timer, Duration};
     Scheduler *pSched;
     int tID;
 
@@ -193,8 +193,6 @@ class Switch {
                     }
                 }
                 break;
-            case Mode::Statistics:
-                break;
         }
     }
 
@@ -225,8 +223,6 @@ class Switch {
                 } else {
                     setLogicalState(true);
                 }
-                break;
-            case Mode::Statistics:
                 break;
         }
 

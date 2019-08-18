@@ -77,7 +77,7 @@ Allows to set LEDs via digital logic or PWM brightness.
 <img src="https://github.com/muwerk/mupplets/blob/master/Resources/led.png" width="30%" height="30%">
 Hardware: 330Ω resistor, led.
 
-#### Messages send by led mupplet:
+#### Messages sent by led mupplet:
 
 | topic | message body | comment
 | ----- | ------------ | -------
@@ -124,7 +124,7 @@ Support switches with automatic debouncing.
 <img src="https://github.com/muwerk/mupplets/blob/master/Resources/switch.png" width="50%" height="30%">
 Hardware: 330Ω resistor, led, switch.
 
-#### Messages send by switch mupplet:
+#### Messages sent by switch mupplet:
 
 | topic | message body | comment
 | ----- | ------------ | -------
@@ -132,14 +132,18 @@ Hardware: 330Ω resistor, led, switch.
 messages are sent on rising or falling signal.
 | `<mupplet-name>/switch/debounce` | <time-in-ms> | reply to `<mupplet-name>/switch/debounce/get`, switch debounce time in ms [0..1000]ms.
 | `<custom-topic>` |  | `on`, `off` or `trigger` | If a custom-topic is given during switch init, an addtional message is publish on switch state changes with that topic, The message is identical to ../switch/state', usually `on` or `off`. In modes `falling` and `rising` only `trigger`.
+| <mupplet-name>/switch/shortpress | `trigger` | Switch is in `duration` mode, and button is pressed for less than `<shortpress_ms>` (default 3000ms).
+| <mupplet-name>/switch/longpress | `trigger` | Switch is in `duration` mode, and button is pressed for less than `<longpress_ms>` (default 30000ms), yet longer than shortpress.
+| <mupplet-name>/switch/verylongtpress | `trigger` | Switch is in `duration` mode, and button is pressed for longer than `<longpress_ms>` (default 30000ms).
+| <mupplet-name>/switch/duration | `<ms>` | Switch is in `duration` mode, message contains the duration in ms the switch was pressed.
+
 
 #### Message received by switch mupplet:
 
 | topic | message body | comment
 | ----- | ------------ | -------
 | `<mupplet-name>/switch/set` | `on`, `off`, `true`, `false`, `toggle` | Override switch setting. When setting the switch state via message, the hardware port remains overridden until the hardware changes state (e.g. button is physically pressed). Sending a `switch/set` message puts the switch in override-mode: e.g. when sending `switch/set` `on`, the state of the button is signalled `on`, even so the physical button might be off. Next time the physical button is pressed (or changes state), override mode is stopped, and the state of the actual physical button is published again.  
-| `<mupplet-name>/switch/mode/set` | `default`, `rising`, `falling`, `flipflop`, `timer <time-in-ms>` | Mode `default` sends `on` when a button is pushed, `off` on release. `falling` and `rising` send `trigger` on corresponding signal change. `flipflop` changes the state of the logical switch on each change from button on to off. `timer` keeps
-the switch on for the specified duration (ms). 
+| `<mupplet-name>/switch/mode/set` | `default`, `rising`, `falling`, `flipflop`, `timer <time-in-ms>`, `duration [shortpress_ms[,longpress_ms]]` | Mode `default` sends `on` when a button is pushed, `off` on release. `falling` and `rising` send `trigger` on corresponding signal change. `flipflop` changes the state of the logical switch on each change from button on to off. `timer` keeps the switch on for the specified duration (ms). `duration` mode sends messages `switch/shortpress`, if button was pressed for less than `<shortpress_ms>` (default 3000ms), `switch/longpress` if pressed less than `<longpress_ms>`, and `switch/verylongpress` for longer presses.
 | `<mupplet-name>/switch/debounce/set` | <time-in-ms> | String encoded switch debounce time in ms, [0..1000]ms. Default is 20ms. This is especially need, when switch is created in interrupt mode (see comment in [example](https://github.com/muwerk/Examples/tree/master/led)).
 
 ### Sample code
@@ -179,7 +183,7 @@ Measures temperature and humidity.
 <img src="https://github.com/muwerk/mupplets/blob/master/Resources/dht.png" width="30%" height="30%">
 Hardware: 10kΩ, DHT22 sensor.
 
-#### Messages send by dht mupplet:
+#### Messages sent by dht mupplet:
 
 | topic | message body | comment
 | ----- | ------------ | -------

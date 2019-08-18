@@ -244,7 +244,7 @@ class Switch {
                 overridePhysicalActive=false;
             }
             if (newState != physicalState || mode==Mode::Falling || mode==Mode::Rising) {
-                if (timeDiff(lastChangeMs, millis()) > debounceTimeMs) {
+                if (timeDiff(lastChangeMs, millis()) > debounceTimeMs || useInterrupt) {
                     lastChangeMs = millis();
                     physicalState=newState;
                     decodeLogicalState(physicalState);
@@ -267,17 +267,24 @@ class Switch {
                     case Mode::Rising:
                         for (unsigned long i=0; i<count; i++) {
                             if (activeLogic) {
+                                setPhysicalState(false, false);
                                 setPhysicalState(true, false);
                             } else {
+                                setPhysicalState(true, false);
                                 setPhysicalState(false, false);
                             }
+                        }
                         break;
                     case Mode::Falling:
+                        for (unsigned long i=0; i<count; i++) {
                             if (activeLogic) {
+                                setPhysicalState(true, false);
                                 setPhysicalState(false, false);
                             } else {
+                                setPhysicalState(false, false);
                                 setPhysicalState(true, false);
                             }
+                        }
                         break;
                     default:
                         bool iState=((count%2)==0);
@@ -290,7 +297,7 @@ class Switch {
                             }
                             iState=!iState;
                         }
-                        break:
+                        break;
                 }
             }
         } else {

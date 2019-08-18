@@ -94,6 +94,7 @@ class Switch {
                   debounceMs[interruptIndex]=debounceTimeMs;
                   useInterrupt=true;
               }
+              setMode(mode);
     }
 
     ~Switch() {
@@ -112,7 +113,10 @@ class Switch {
     }
 
     void setMode(Mode newmode, unsigned long duration=0) {
-        flipflop = true;  // This starts with 'off', since state is initially changed once.
+        if (useInterrupt)
+            flipflop = false;  // This starts with 'off', since state is initially changed once.
+        else
+            flipflop = true;  // This starts with 'off', since state is initially changed once.
         activeTimer=0;
         timerDuration=duration;
         physicalState=-1;

@@ -92,6 +92,8 @@ class Pressure {
                     publishPressure();
                 }
             }
+        } else {
+            pSched->publish(name+"/error", "hardware not initialized");
         }
     }
 

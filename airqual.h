@@ -22,6 +22,7 @@ class AirQuality {
     double co2Val;
     double vocVal;
     bool bActive = false;
+    String errmsg="";
     ustd::sensorprocessor co2 = ustd::sensorprocessor(4, 600, 1.0);
     ustd::sensorprocessor voc = ustd::sensorprocessor(4, 600, 0.2);
     CCS811 *pAirQuality;
@@ -49,23 +50,26 @@ class AirQuality {
             Serial.print("SUCCESS");
             break;
         case CCS811Core::SENSOR_ID_ERROR:
-            Serial.print("ID_ERROR");
+            errmsg="ID_ERROR";
+            Serial.print(errmsg);
             break;
         case CCS811Core::SENSOR_I2C_ERROR:
-            Serial.println("I2C_ERROR (can be caused by missing delay in "
-                           ".begin() when used with ESP-chips");
+            errmsg="I2C_ERROR (can be caused by missing delay in .begin() when used with ESP-chips";
+            Serial.println(errmsg);
             Serial.println("You need a patch: "
-                           "https://github.com/sparkfun/"
-                           "SparkFun_CCS811_Arduino_Library/issues/6");
+                           "https://github.com/sparkfun/SparkFun_CCS811_Arduino_Library/issues/6");
             break;
         case CCS811Core::SENSOR_INTERNAL_ERROR:
-            Serial.print("INTERNAL_ERROR");
+            errmsg="INTERNAL_ERROR";
+            Serial.print(errmsg);
             break;
         case CCS811Core::SENSOR_GENERIC_ERROR:
-            Serial.print("GENERIC_ERROR");
+            errmsg="GENERIC_ERROR";
+            Serial.print(errmsg);
             break;
         default:
-            Serial.print("Unspecified error.");
+            errmsg="Unspecified error.";
+            Serial.print(errmsg);
         }
 #endif
     }
@@ -130,6 +134,9 @@ class AirQuality {
 #ifdef USE_SERIAL_DBG
             Serial.println("AirQuality sensor not active. Patch applied?");
 #endif
+        if (errmsg!="") {
+            pSched->publish(name+"/error",errmsg);
+        }
         }
     }
 

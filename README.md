@@ -14,10 +14,7 @@ Both switch and led are also accessible via external MQTT without extra code.
 
 * Note: **All** mupplets require the libraries [ustd](https://github.com/muwerk/ustd) and [muwerk](https://github.com/muwerk/muwerk).
 
-Currently, mupplets work only with ESP8266 or ESP32, due to usage of `std::function<>` to register member tasks. This restriction will
-change in a later release.
-
-It is recommended to use [munet](https://github.com/muwerk/munet) for network connectivity.
+For ESP8266 and ESP32, it is recommended to use [munet](https://github.com/muwerk/munet) for network connectivity.
 
 ### Additional hardware-dependent libraries
 

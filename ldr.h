@@ -29,10 +29,12 @@ class Ldr {
 
         // give a c++11 lambda as callback scheduler task registration of
         // this.loop():
-        std::function<void()> ft = [=]() { this->loop(); };
+        /* std::function<void()> */
+        auto ft = [=]() { this->loop(); };
         tID = pSched->add(ft, name, 200000);
 
-        std::function<void(String, String, String)> fnall =
+        /* std::function<void(String, String, String)> */
+        auto fnall =
             [=](String topic, String msg, String originator) {
                 this->subsMsg(topic, msg, originator);
             };

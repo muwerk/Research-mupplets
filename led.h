@@ -53,10 +53,10 @@ class Led {
         interval=1000; //ms
         // give a c++11 lambda as callback scheduler task registration of
         // this.loop():
-        std::function<void()> ft = [=]() { this->loop(); };
+        /* std::function<void()> */ auto ft = [=]() { this->loop(); };
         tID = pSched->add(ft, name, 50000);
 
-        std::function<void(String, String, String)> fnall =
+        /* std::function<void(String, String, String)> */ auto fnall =
             [=](String topic, String msg, String originator) {
                 this->subsMsg(topic, msg, originator);
             };
@@ -82,7 +82,7 @@ class Led {
         }
     }
 
-    void setMode(Mode newmode, uint interval_ms=1000, double phase_unit=0.0) {
+    void setMode(Mode newmode, unsigned int interval_ms=1000, double phase_unit=0.0) {
         mode=newmode;
         if (mode==Mode::Passive) return;
         phase=phase_unit;

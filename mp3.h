@@ -1,5 +1,5 @@
 // specific Chinese MP3 player hardware
-// WARNING: there are several similar but different once.
+// WARNING: there are several similar but different ones.
 // These MP3 player protocols are a complete mess.
 
 #pragma once

@@ -1,3 +1,7 @@
+// specific Chinese MP3 player hardware
+// WARNING: there are several similar but different once.
+// These MP3 player protocols are a complete mess.
+
 #pragma once
 
 #include "scheduler.h"

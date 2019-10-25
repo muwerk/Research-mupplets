@@ -1,6 +1,8 @@
 // specific Chinese MP3 player hardware
 // WARNING: there are several similar but different ones.
 // These MP3 player protocols are a complete mess.
+// This: http://geekmatic.in.ua/pdf/Catalex_MP3_board.pdf
+// Others: http://ioxhop.info/files/OPEN-SMART-Serial-MP3-Player-A/Serial%20MP3%20Player%20A%20v1.1%20Manual.pdf
 
 #pragma once
 
@@ -12,14 +14,20 @@
 #define MP3_DATA_SELDSD_TF 0x02
 #define MP3_CMD_VOL 0x06
 
+
+#ifdef USE_SERIAL_DBG
+#error You cannot use define USE_SERIAL_DBG with MP3 mupplet, since the serial port is needed for the communication with the MP3 hardware!
+#endif
+
 class Mp3 {
   private:
     Scheduler *pSched;
     int tID;
     String name;
+    uint8_t serialPortNo;
 
   public:
-    Mp3(String name, uint8_t port) : name(name), port(port) {
+    Mp3(String name, uint8_t serialPortNo) : name(name), serialPortNo(serialPortNo) {
     }
 
     ~Mp3() {
@@ -27,6 +35,8 @@ class Mp3 {
 
     void begin(Scheduler *_pSched) {
         pSched = _pSched;
+        
+        Serial.begin(9600);
 
         // give a c++11 lambda as callback scheduler task registration of
         // this.loop():

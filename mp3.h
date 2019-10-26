@@ -14,10 +14,47 @@
 #define MP3_DATA_SELDSD_TF 0x02
 #define MP3_CMD_VOL 0x06
 
+class otherMP3 { // Unused!
+    void sendMP3(uint8_t cmd, uint8_t d1 = 0, uint8_t d2 = 0) {
+        uint8_t buf[8] = {0x7e, 0xff, 0x06, 0x00, 0x00, 0x00, 0x00, 0xef};
+        buf[3] = cmd;
+        buf[5] = d1;
+        buf[6] = d2;
+        for (int i = 0; i < 8; i++)
+            Serial.write(buf[i]);
+        // Serial.write(buf, 8);
+    }
+
+    void selectSD() {
+        sendMP3(MP3_CMD_SELSD, 0, MP3_DATA_SELDSD_TF);
+    }
+
+    void playFolderTrack(uint8_t folder = 0, uint8_t track = 0) {
+        sendMP3(MP3_CMD_PLAYFOLDERTRACK, folder, track);
+    }
+
+    void playIndex(uint8_t index = 1) {
+        sendMP3(MP3_CMD_PLAYINDEX, 0, index);
+    }
+
+    void pause() {
+        sendMP3(0x0e, 0, 0);
+    }
+    void resume() {
+        sendMP3(0x0d, 0, 0);
+    }
+
+    void volume(uint8_t vol) {
+        if (vol > 30)
+            vol = 30;
+        sendMP3(MP3_CMD_VOL, 0, vol);
+    }   
+}
 
 #ifdef USE_SERIAL_DBG
 #error You cannot use define USE_SERIAL_DBG with MP3 mupplet, since the serial port is needed for the communication with the MP3 hardware!
 #endif
+
 
 class Mp3 {
   private:
@@ -54,41 +91,6 @@ class Mp3 {
         delay(20);
         vol(10);
         delay(20);
-    }
-
-    void sendMP3(uint8_t cmd, uint8_t d1 = 0, uint8_t d2 = 0) {
-        uint8_t buf[8] = {0x7e, 0xff, 0x06, 0x00, 0x00, 0x00, 0x00, 0xef};
-        buf[3] = cmd;
-        buf[5] = d1;
-        buf[6] = d2;
-        for (int i = 0; i < 8; i++)
-            Serial.write(buf[i]);
-        // Serial.write(buf, 8);
-    }
-
-    void selectSD() {
-        sendMP3(MP3_CMD_SELSD, 0, MP3_DATA_SELDSD_TF);
-    }
-
-    void playFolderTrack(uint8_t folder = 0, uint8_t track = 0) {
-        sendMP3(MP3_CMD_PLAYFOLDERTRACK, folder, track);
-    }
-
-    void playIndex(uint8_t index = 1) {
-        sendMP3(MP3_CMD_PLAYINDEX, 0, index);
-    }
-
-    void pause() {
-        sendMP3(0x0e, 0, 0);
-    }
-    void resume() {
-        sendMP3(0x0d, 0, 0);
-    }
-
-    void volume(uint8_t vol) {
-        if (vol > 30)
-            vol = 30;
-        sendMP3(MP3_CMD_VOL, 0, vol);
     }
 
     void sel() {
@@ -131,12 +133,23 @@ class Mp3 {
     void loop() {
     }
 
-    // TODO: test stuff:
     void subsMsg(String topic, String msg, String originator) {
-        if (topic == name + "/mp3/get") {
+        if (topic == name + "/mp3/track/set") {
             char buf[32];
-            sprintf(buf, "%5.3f", ldrvalue);
-            pSched->publish(name + "/mp3", buf);
+            memset(buf,0,32);
+            strncmp(buf,msg.c_str(),31);
+            char *p=strchr(buf,',');
+            int folder=-1;
+            int track=-1;
+            if (p) {
+                *p=0;
+                ++p;
+                folder=atoi(buf);
+                track=atoi(p);
+            }
+            if ((track!=-1) && (folder!=-1)) {
+                playFolderTrack(folder,track);
+            }
         }
     };
 };  // Mp3

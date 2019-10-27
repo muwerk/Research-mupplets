@@ -56,38 +56,44 @@ class MP3PlayerCatalex : Mp3PlayerProtocol { // Untested!
     }
 
   public:
-    Serial *pSer
-    Mp3Player(Serial *pSer) : pSer(pSer) {}
+    Stream *pSer
+    Mp3Player(Stream *pSer) : pSer(pSer) {}
 
     virtual bool begin() override {
         _selectSD();
+        return true;
     }
     virtual bool playFolderTrack(uint8_t folder = 0, uint8_t track = 0) override {
         sendMP3(MP3_CMD::PLAYFOLDERTRACK, folder, track);
+        return true;
     }
 
-    virtual bool playIndex(uint8_t index = 1) override {
-        sendMP3(MP3_CMD::PLAYINDEX, 0, index);
+    virtual bool playIndex(uint16_index = 1) override {
+        sendMP3(MP3_CMD::PLAYINDEX, index/256, index%256);
+        return true;
     }
 
     virtual bool pause() override {
         sendMP3(MP3_CMD::PAUSE, 0, 0);
+        return true;
     }
     virtual bool resume() override {
         sendMP3(MP3_CMD::PLAY, 0, 0);
+        return true;
     }
 
     virtual bool setVolume(uint8_t vol) override {
         if (vol > 30)
             vol = 30;
         sendMP3(MP3_CMD_VOL, 0, vol);
+        return true;
     }   
 }
 
 
 
 // Other: http://ioxhop.info/files/OPEN-SMART-Serial-MP3-Player-A/Serial%20MP3%20Player%20A%20v1.1%20Manual.pdf
-class Mp3OpenSmart : Mp3PlayerProtocol {
+class Mp3PlayerOpenSmart : Mp3PlayerProtocol {
   public:
     enum MP3_CMD {
             PLAY=0x01,
@@ -126,26 +132,32 @@ class Mp3OpenSmart : Mp3PlayerProtocol {
     }
 
   public:
-    Serial *pSer
-    Mp3Player(Serial *pSer) : pSer(pSer) {}
+    Stream *pSer
+    Mp3Player(Stream *pSer) : pSer(pSer) {}
 
     virtual bool begin() override {
         _selectSD();
+        return true;
     }
+
     virtual bool playFolderTrack(uint8_t folder = 0, uint8_t track = 0) override {
         sendMP3(MP3_CMD::PLAYFOLDERTRACK, folder, track);
+        return true;
     }
 
     virtual bool playIndex(uint16_t index = 1) override {
         sendMP3(MP3_CMD::PLAYINDEX, 0, index);
+        return true;
     }
 
     virtual bool pause() override {
-        sendMP3(0x0e, 0, 0);
+        sendMP3(0x0e, 0, 0);S
+        return true;
     }
+    
     virtual bool play() override {
         uint8_t cmd[4] = {0x7e, 0x02, 0x01, 0xef};
-    }
+    S}
 
     virtual bool setVolume(uint8_t vol) override {
         if (vol > 30)
@@ -195,10 +207,25 @@ class Mp3PlayerThatOne {
     Scheduler *pSched;
     int tID;
     String name;
-    uint8_t serialPortNo;
+    MP3_PLAYER_TYPE mp3type;
+    Mp3PlayerProtocol *mp3prot;
+    Stream *pSerial;
 
   public:
-    Mp3(String name, uint8_t serialPortNo) : name(name), serialPortNo(serialPortNo) {
+    enum MP3_PLAYER_TYPE {CATALEX, OPENSMART};
+
+    Mp3(String name, Stream *pSerial, MP3_PLAYER_TYPE mp3type=MP3_PLAYER_TYPE::OPENSMART) : name(name), mp3type(mp3type), pSerial(pSerial)  {
+        switch (mp3type) {
+            case MP3_PLAYER_TYPE::CATALEX:
+                mp3prot=Mp3PlayerCatalex(pSerial);
+            break;
+            case MP3_PLAYER_TYPE::OPENSMART:
+                mp3prot=Mp3PlayerOpenSmart(pSerial);
+            break;
+            defaut:
+                mp3prot=nullptr;
+            break;   
+        }
     }
 
     ~Mp3() {
@@ -220,11 +247,7 @@ class Mp3PlayerThatOne {
         };
         pSched->subscribe(tID, name + "/mp3/#", fnall);
 
-        delay(20);
-        sel();
-        delay(20);
-        vol(10);
-        delay(20);
+        mp3prot->begin();
     }
 
 
@@ -247,7 +270,7 @@ class Mp3PlayerThatOne {
                 track=atoi(p);
             }
             if ((track!=-1) && (folder!=-1)) {
-                playFolderTrack(folder,track);
+                mp3prot->playFolderTrack(folder,track);
             }
         }
     };

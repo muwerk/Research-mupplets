@@ -11,12 +11,14 @@
 #error You cannot use define USE_SERIAL_DBG with MP3 mupplet, since the serial port is needed for the communication with the MP3 hardware!
 #endif
 
+namespace ustd {
+
 class Mp3PlayerProtocol {
   public:
     enum RepeatMode {once, loop};
 
     virtual ~Mp3PlayerProtocol() {}; // Otherwise destructor of derived classes is never called!
-    virtual bool begin { return false;}
+    virtual bool begin() { return false;}
     virtual bool setVolume(uint8_t volumePercent) { return false;}
     virtual bool playFolderTrack(uint8_t folder, uint8_t track) { return false;}
     virtual bool repeatLoopFolderTrack(uint8_t folder, uint8_t track) { return false;}
@@ -25,11 +27,11 @@ class Mp3PlayerProtocol {
     virtual bool setRepeatMode(RepeatMode mode=RepeatMode::once) {return false;}
     virtual bool pause() { return false;}
     virtual bool play() { return false; }
-}
+};
 
 
 // This: http://geekmatic.in.ua/pdf/Catalex_MP3_board.pdf
-class MP3PlayerCatalex : Mp3PlayerProtocol { // Untested!
+class Mp3PlayerCatalex : Mp3PlayerProtocol { // Untested!
   public:
     enum MP3_CMD {
             PLAYINDEX=0x03,
@@ -38,10 +40,10 @@ class MP3PlayerCatalex : Mp3PlayerProtocol { // Untested!
             PLAY=0x0d,
             PAUSE=0x0e,
             PLAYFOLDERTRACK=0x0f
-        }
+        };
     enum MP3_SUBCMD {
             SELECT_SD_TF=0x02
-        }
+        };
 
   private:
     void _sendMP3(uint8_t cmd, uint8_t d1 = 0, uint8_t d2 = 0) {
@@ -55,43 +57,43 @@ class MP3PlayerCatalex : Mp3PlayerProtocol { // Untested!
     }
 
     void _selectSD() {
-        sendMP3(MP3_CMD::SELECT_SD, 0, MP3_SUBCMD::SELECT_SD_TF);
+        _sendMP3(MP3_CMD::SELECT_SD, 0, MP3_SUBCMD::SELECT_SD_TF);
     }
 
   public:
-    Stream *pSer
-    Mp3Player(Stream *pSer) : pSer(pSer) {}
+    Stream *pSer;
+    Mp3PlayerCatalex(Stream *pSer) : pSer(pSer) {}
 
     virtual bool begin() override {
         _selectSD();
         return true;
     }
     virtual bool playFolderTrack(uint8_t folder = 0, uint8_t track = 0) override {
-        sendMP3(MP3_CMD::PLAYFOLDERTRACK, folder, track);
+        _sendMP3(MP3_CMD::PLAYFOLDERTRACK, folder, track);
         return true;
     }
 
     virtual bool playIndex(uint16_t index = 1) override {
-        sendMP3(MP3_CMD::PLAYINDEX, index/256, index%256);
+        _sendMP3(MP3_CMD::PLAYINDEX, index/256, index%256);
         return true;
     }
 
     virtual bool pause() override {
-        sendMP3(MP3_CMD::PAUSE, 0, 0);
+        _sendMP3(MP3_CMD::PAUSE, 0, 0);
         return true;
     }
     virtual bool play() override {
-        sendMP3(MP3_CMD::PLAY, 0, 0);
+        _sendMP3(MP3_CMD::PLAY, 0, 0);
         return true;
     }
 
     virtual bool setVolume(uint8_t vol) override {
         if (vol > 30)
             vol = 30;
-        sendMP3(MP3_CMD_VOL, 0, vol);
+        _sendMP3(MP3_CMD::VOLUME, 0, vol);
         return true;
     }   
-}
+};
 
 
 // Other: http://ioxhop.info/files/OPEN-SMART-Serial-MP3-Player-A/Serial%20MP3%20Player%20A%20v1.1%20Manual.pdf
@@ -102,7 +104,6 @@ class Mp3PlayerOpenSmart : Mp3PlayerProtocol {
             PAUSE=0x02,
             NEXT=0x03,
             PREVIOUS=0x04,
-            PLAYINDEX=0x03,
             STOPPLAY=0x0e,
             STOPINJECT=0x0f,
 
@@ -112,12 +113,12 @@ class Mp3PlayerOpenSmart : Mp3PlayerProtocol {
             PLAYINDEX=0x41,
             PLAYFOLDERTRACK=0x42,
             INJECTFOLDERTRACK=0x44
-        }
+        };
     enum MP3_SUBCMD {
             REPEAT_LOOP=0x00,
             REPEAT_SINGLE=0x01,
             SELECT_SD_TF=0x01
-        }
+        };
 
   private:
     void _sendMP3(uint8_t *pData, uint8_t dataLen=0) {
@@ -128,14 +129,14 @@ class Mp3PlayerOpenSmart : Mp3PlayerProtocol {
     }
 
     void _selectSD() {
-        uint8_t len=0x02;
+        const uint8_t len=0x02;
         uint8_t cmd[len] = {MP3_CMD::SELECT_SD, MP3_SUBCMD::SELECT_SD_TF};
         _sendMP3(cmd, len);
     }
 
   public:
-    Stream *pSer
-    Mp3Player(Stream *pSer) : pSer(pSer) {}
+    Stream *pSer;
+    Mp3PlayerOpenSmart(Stream *pSer) : pSer(pSer) {}
 
     virtual bool begin() override {
         _selectSD();
@@ -143,29 +144,31 @@ class Mp3PlayerOpenSmart : Mp3PlayerProtocol {
     }
 
     virtual bool playFolderTrack(uint8_t folder = 0, uint8_t track = 0) override {
-        uint8_t len=0x03;
+        const uint8_t len=0x03;
         uint8_t cmd[len] = {MP3_CMD::PLAYFOLDERTRACK, folder, track};
         _sendMP3(cmd, len);
         return true;
     }
 
     virtual bool playIndex(uint16_t index = 1) override {
-        uint8_t len0x03;
-        uint8_t cmd={MP3_CMD::PLAYINDEX, index/256, index%256};
+        const uint8_t len=0x03;
+        uint8_t index_hi=index/256;
+        uint8_t index_lo=index%256;
+        uint8_t cmd[len]={MP3_CMD::PLAYINDEX, index_hi, index_lo};
         _sendMP3(cmd, len);
         return true;
     }
 
     virtual bool pause() override {
-        uint8_t len0x01;
-        uint8_t cmd={MP3_CMD::PAUSE};
+        const uint8_t len=0x01;
+        uint8_t cmd[len]={MP3_CMD::PAUSE};
         _sendMP3(cmd, len);
         return true;
     }
     
     virtual bool play() override {
-        uint8_t len0x01;
-        uint8_t cmd={MP3_CMD::PLAY};
+        const uint8_t len=0x01;
+        uint8_t cmd[len]={MP3_CMD::PLAY};
         _sendMP3(cmd, len);
         return true;
     }
@@ -173,54 +176,54 @@ class Mp3PlayerOpenSmart : Mp3PlayerProtocol {
     virtual bool setVolume(uint8_t vol) override {
         if (vol > 30)
             vol = 30;
-        uint8_t len=0x02;
+        const uint8_t len=0x02;
         uint8_t cmd[len] = {MP3_CMD::VOLUME, vol};
         _sendMP3(cmd, len);
         return true;
     }   
 
-    void interleaveFolderTrack(uint8_t folder, uint8_t track) {
-        uint8_t len=0x03;
+    virtual bool interleaveFolderTrack(uint8_t folder, uint8_t track) override {
+        const uint8_t len=0x03;
         uint8_t cmd[len] = {MP3_CMD::INJECTFOLDERTRACK, folder, track};
         _sendMP3(cmd, len);
         return true;
     }
 
-    void repeatLoopFolderTrack(uint8_t folder, uint8_t track) {
-        uint8_t len=0x03;
+    virtual bool repeatLoopFolderTrack(uint8_t folder, uint8_t track) override {
+        const uint8_t len=0x03;
         uint8_t cmd[len] = {MP3_CMD::REPEATMODE, folder, track};
         _sendMP3(cmd, len);
         return true;
     }
-}
+};
 
 class Mp3Player {
   private:
     Scheduler *pSched;
     int tID;
-    String name;
-    MP3_PLAYER_TYPE mp3type;
-    Stream *pSerial;
 
   public:
     Mp3PlayerProtocol *mp3prot;
     enum MP3_PLAYER_TYPE {CATALEX, OPENSMART};
+    String name;
+    Stream *pSerial;
+    MP3_PLAYER_TYPE mp3type;
 
-    Mp3(String name, Stream *pSerial, MP3_PLAYER_TYPE mp3type=MP3_PLAYER_TYPE::OPENSMART) : name(name), mp3type(mp3type), pSerial(pSerial)  {
+    Mp3Player(String name, Stream *pSerial, MP3_PLAYER_TYPE mp3type=MP3_PLAYER_TYPE::OPENSMART) : name(name), pSerial(pSerial), mp3type(mp3type)  {
         switch (mp3type) {
             case MP3_PLAYER_TYPE::CATALEX:
-                mp3prot=Mp3PlayerCatalex(pSerial);
+                mp3prot=(Mp3PlayerProtocol *)new Mp3PlayerCatalex(pSerial);
             break;
             case MP3_PLAYER_TYPE::OPENSMART:
-                mp3prot=Mp3PlayerOpenSmart(pSerial);
+                mp3prot=(Mp3PlayerProtocol *)new Mp3PlayerOpenSmart(pSerial);
             break;
-            defaut:
+            default:
                 mp3prot=nullptr;
             break;   
         }
     }
 
-    ~Mp3() {
+    ~Mp3Player() {
     }
 
     void begin(Scheduler *_pSched) {
@@ -242,12 +245,12 @@ class Mp3Player {
         mp3prot->begin();
     }
 
-    bool setVolume(uint8_t volumePercent) { return mp3Prot->setVolume(volumePercent); }
-    bool playFolderTrack(uint8_t folder, uint8_t track) { return mp3Prot->playFolderTrack(uint8_t folder, uint8_t track); }
-    bool repeatLoopFolderTrack(uint8_t folder, uint8_t track) { return mp3Prot->repeatLoopFolderTrack(uint8_t folder, uint8_t track); }
-    bool playIndex(uint16_t index) { return mp3prot->playIndex(uint16_t index); }
-    bool interleaveFolderTrack(uint8_t folder, uint8_t track) { return mp3Prot->interleaveFolderTrack(uint8_t folder, uint8_t track);}
-    bool setRepeatMode(RepeatMode mode=RepeatMode::once) {return setRepeatMode(RepeatMode mode=RepeatMode::once); }
+    bool setVolume(uint8_t volumePercent) { return mp3prot->setVolume(volumePercent); }
+    bool playFolderTrack(uint8_t folder, uint8_t track) { return mp3prot->playFolderTrack(folder, track); }
+    bool repeatLoopFolderTrack(uint8_t folder, uint8_t track) { return mp3prot->repeatLoopFolderTrack(folder, track); }
+    bool playIndex(uint16_t index) { return mp3prot->playIndex(index); }
+    bool interleaveFolderTrack(uint8_t folder, uint8_t track) { return mp3prot->interleaveFolderTrack(folder, track);}
+    bool setRepeatMode(Mp3PlayerProtocol::RepeatMode mode=Mp3PlayerProtocol::RepeatMode::once) {return mp3prot->setRepeatMode(mode=Mp3PlayerProtocol::RepeatMode::once); }
     bool pause() { return mp3prot->pause(); }
     bool play() { return mp3prot->play(); }
 

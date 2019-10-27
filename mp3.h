@@ -1,6 +1,6 @@
 // specific Chinese MP3 player hardware
 // WARNING: there are several similar but different ones.
-// Different hardware almost certainly use slight (or not so slight) protocol variations.
+// Different hardware almost certainly use slightly (or not so slightly) different protocol variations.
 
 #pragma once
 
@@ -26,6 +26,7 @@ class Mp3PlayerProtocol {
     virtual bool pause() { return false;}
     virtual bool play() { return false; }
 }
+
 
 // This: http://geekmatic.in.ua/pdf/Catalex_MP3_board.pdf
 class MP3PlayerCatalex : Mp3PlayerProtocol { // Untested!
@@ -91,7 +92,6 @@ class MP3PlayerCatalex : Mp3PlayerProtocol { // Untested!
         return true;
     }   
 }
-
 
 
 // Other: http://ioxhop.info/files/OPEN-SMART-Serial-MP3-Player-A/Serial%20MP3%20Player%20A%20v1.1%20Manual.pdf
@@ -186,18 +186,12 @@ class Mp3PlayerOpenSmart : Mp3PlayerProtocol {
         return true;
     }
 
-
     void repeatLoopFolderTrack(uint8_t folder, uint8_t track) {
         uint8_t len=0x03;
         uint8_t cmd[len] = {MP3_CMD::REPEATMODE, folder, track};
         _sendMP3(cmd, len);
         return true;
     }
-
-    // TODO: test track:
-    //void bim() {
-    //    inject(1, 3);
-    //}
 }
 
 class Mp3Player {
@@ -248,6 +242,14 @@ class Mp3Player {
         mp3prot->begin();
     }
 
+    bool setVolume(uint8_t volumePercent) { return mp3Prot->setVolume(volumePercent); }
+    bool playFolderTrack(uint8_t folder, uint8_t track) { return mp3Prot->playFolderTrack(uint8_t folder, uint8_t track); }
+    bool repeatLoopFolderTrack(uint8_t folder, uint8_t track) { return mp3Prot->repeatLoopFolderTrack(uint8_t folder, uint8_t track); }
+    bool playIndex(uint16_t index) { return mp3prot->playIndex(uint16_t index); }
+    bool interleaveFolderTrack(uint8_t folder, uint8_t track) { return mp3Prot->interleaveFolderTrack(uint8_t folder, uint8_t track);}
+    bool setRepeatMode(RepeatMode mode=RepeatMode::once) {return setRepeatMode(RepeatMode mode=RepeatMode::once); }
+    bool pause() { return mp3prot->pause(); }
+    bool play() { return mp3prot->play(); }
 
   private:
     void loop() {

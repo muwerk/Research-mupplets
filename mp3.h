@@ -1,6 +1,6 @@
 // specific Chinese MP3 player hardware
 // WARNING: there are several similar but different ones.
-// These MP3 player protocols are a complete mess.
+// Different hardware almost certainly use slight (or not so slight) protocol variations.
 
 #pragma once
 
@@ -17,12 +17,14 @@ class Mp3PlayerProtocol {
 
     virtual ~Mp3PlayerProtocol() {}; // Otherwise destructor of derived classes is never called!
     virtual bool begin { return false;}
-    virtual bool setVolume(int volumePercent) { return false;}
-    virtual bool playFolderTrack(int folder, int track) { return false;}
-    virtual bool interleaveFolderTrack(int folder, int track) { return false;}
+    virtual bool setVolume(uint8_t volumePercent) { return false;}
+    virtual bool playFolderTrack(uint8_t folder, uint8_t track) { return false;}
+    virtual bool repeatLoopFolderTrack(uint8_t folder, uint8_t track) { return false;}
+    virtual bool playIndex(uint16_t index) { return false;}
+    virtual bool interleaveFolderTrack(uint8_t folder, uint8_t track) { return false;}
     virtual bool setRepeatMode(RepeatMode mode=RepeatMode::once) {return false;}
     virtual bool pause() { return false;}
-    virtual bool resume() { return false; }
+    virtual bool play() { return false; }
 }
 
 // This: http://geekmatic.in.ua/pdf/Catalex_MP3_board.pdf
@@ -46,9 +48,9 @@ class MP3PlayerCatalex : Mp3PlayerProtocol { // Untested!
         buf[3] = cmd;
         buf[5] = d1;
         buf[6] = d2;
-        for (int i = 0; i < 8; i++)
-            pSer->write(buf[i]);
-        // pSer->write(buf, 8);
+        //for (int i = 0; i < 8; i++)
+        //    pSer->write(buf[i]);
+        pSer->write(buf, 8);
     }
 
     void _selectSD() {
@@ -68,7 +70,7 @@ class MP3PlayerCatalex : Mp3PlayerProtocol { // Untested!
         return true;
     }
 
-    virtual bool playIndex(uint16_index = 1) override {
+    virtual bool playIndex(uint16_t index = 1) override {
         sendMP3(MP3_CMD::PLAYINDEX, index/256, index%256);
         return true;
     }
@@ -77,7 +79,7 @@ class MP3PlayerCatalex : Mp3PlayerProtocol { // Untested!
         sendMP3(MP3_CMD::PAUSE, 0, 0);
         return true;
     }
-    virtual bool resume() override {
+    virtual bool play() override {
         sendMP3(MP3_CMD::PLAY, 0, 0);
         return true;
     }
@@ -141,77 +143,73 @@ class Mp3PlayerOpenSmart : Mp3PlayerProtocol {
     }
 
     virtual bool playFolderTrack(uint8_t folder = 0, uint8_t track = 0) override {
-        sendMP3(MP3_CMD::PLAYFOLDERTRACK, folder, track);
+        uint8_t len=0x03;
+        uint8_t cmd[len] = {MP3_CMD::PLAYFOLDERTRACK, folder, track};
+        _sendMP3(cmd, len);
         return true;
     }
 
     virtual bool playIndex(uint16_t index = 1) override {
-        sendMP3(MP3_CMD::PLAYINDEX, 0, index);
+        uint8_t len0x03;
+        uint8_t cmd={MP3_CMD::PLAYINDEX, index/256, index%256};
+        _sendMP3(cmd, len);
         return true;
     }
 
     virtual bool pause() override {
-        sendMP3(0x0e, 0, 0);S
+        uint8_t len0x01;
+        uint8_t cmd={MP3_CMD::PAUSE};
+        _sendMP3(cmd, len);
         return true;
     }
     
     virtual bool play() override {
-        uint8_t cmd[4] = {0x7e, 0x02, 0x01, 0xef};
-    S}
+        uint8_t len0x01;
+        uint8_t cmd={MP3_CMD::PLAY};
+        _sendMP3(cmd, len);
+        return true;
+    }
 
     virtual bool setVolume(uint8_t vol) override {
         if (vol > 30)
             vol = 30;
-        sendMP3(MP3_CMD_VOL, 0, vol);
+        uint8_t len=0x02;
+        uint8_t cmd[len] = {MP3_CMD::VOLUME, vol};
+        _sendMP3(cmd, len);
+        return true;
     }   
 
-
-
-
-        void sel() {
+    void interleaveFolderTrack(uint8_t folder, uint8_t track) {
+        uint8_t len=0x03;
+        uint8_t cmd[len] = {MP3_CMD::INJECTFOLDERTRACK, folder, track};
+        _sendMP3(cmd, len);
+        return true;
     }
 
-    void play() {
-        Serial.write(cmd, 4);
-    }
-    void playf(uint8_t folder, uint8_t track) {
-        uint8_t cmd[6] = {0x7e, 0x04, 0x42, folder, track, 0xef};
-        Serial.write(cmd, 6);
-    }
 
-    void inject(uint8_t folder, uint8_t track) {
-        uint8_t cmd[6] = {0x7e, 0x04, 0x44, folder, track, 0xef};
-        Serial.write(cmd, 6);
-    }
-
-    void vol(uint8_t vol) {
-        if (vol > 30)
-            vol = 30;
-        uint8_t cmd[5] = {0x7e, 0x03, 0x31, vol, 0xef};
-        Serial.write(cmd, 5);
-    }
-
-    void repeat(uint8_t folder, uint8_t track) {
-        uint8_t cmd[6] = {0x7e, 0x04, 0x33, folder, track, 0xef};
-        Serial.write(cmd, 6);
+    void repeatLoopFolderTrack(uint8_t folder, uint8_t track) {
+        uint8_t len=0x03;
+        uint8_t cmd[len] = {MP3_CMD::REPEATMODE, folder, track};
+        _sendMP3(cmd, len);
+        return true;
     }
 
     // TODO: test track:
-    void bim() {
-        inject(1, 3);
-    }
+    //void bim() {
+    //    inject(1, 3);
+    //}
 }
 
-class Mp3PlayerThatOne {
+class Mp3Player {
   private:
     Scheduler *pSched;
     int tID;
     String name;
     MP3_PLAYER_TYPE mp3type;
-    Mp3PlayerProtocol *mp3prot;
     Stream *pSerial;
 
   public:
+    Mp3PlayerProtocol *mp3prot;
     enum MP3_PLAYER_TYPE {CATALEX, OPENSMART};
 
     Mp3(String name, Stream *pSerial, MP3_PLAYER_TYPE mp3type=MP3_PLAYER_TYPE::OPENSMART) : name(name), mp3type(mp3type), pSerial(pSerial)  {

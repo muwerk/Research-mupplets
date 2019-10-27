@@ -26,6 +26,7 @@ class Mp3PlayerProtocol {
     virtual bool interleaveFolderTrack(uint8_t folder, uint8_t track) { return false;}
     virtual bool setRepeatMode(RepeatMode mode=RepeatMode::once) {return false;}
     virtual bool pause() { return false;}
+    virtual bool stopInterleave() { return false;}
     virtual bool play() { return false; }
 };
 
@@ -61,11 +62,13 @@ class Mp3PlayerCatalex : Mp3PlayerProtocol { // Untested!
     }
 
   public:
-    Stream *pSer;
-    Mp3PlayerCatalex(Stream *pSer) : pSer(pSer) {}
+    HardwareSerial *pSer;
+    Mp3PlayerCatalex(HardwareSerial *pSer) : pSer(pSer) {}
 
     virtual bool begin() override {
+        pSer->begin(9600);
         _selectSD();
+        delay(100);
         return true;
     }
     virtual bool playFolderTrack(uint8_t folder = 0, uint8_t track = 0) override {
@@ -135,11 +138,13 @@ class Mp3PlayerOpenSmart : Mp3PlayerProtocol {
     }
 
   public:
-    Stream *pSer;
-    Mp3PlayerOpenSmart(Stream *pSer) : pSer(pSer) {}
+    HardwareSerial *pSer;
+    Mp3PlayerOpenSmart(HardwareSerial *pSer) : pSer(pSer) {}
 
     virtual bool begin() override {
+        pSer->begin(9600);
         _selectSD();
+        delay(100);
         return true;
     }
 
@@ -162,6 +167,13 @@ class Mp3PlayerOpenSmart : Mp3PlayerProtocol {
     virtual bool pause() override {
         const uint8_t len=0x01;
         uint8_t cmd[len]={MP3_CMD::PAUSE};
+        _sendMP3(cmd, len);
+        return true;
+    }
+    
+    virtual bool stopInterleave() override {
+        const uint8_t len=0x01;
+        uint8_t cmd[len]={MP3_CMD::STOPINJECT};
         _sendMP3(cmd, len);
         return true;
     }
@@ -206,10 +218,10 @@ class Mp3Player {
     Mp3PlayerProtocol *mp3prot;
     enum MP3_PLAYER_TYPE {CATALEX, OPENSMART};
     String name;
-    Stream *pSerial;
+    HardwareSerial *pSerial;
     MP3_PLAYER_TYPE mp3type;
 
-    Mp3Player(String name, Stream *pSerial, MP3_PLAYER_TYPE mp3type=MP3_PLAYER_TYPE::OPENSMART) : name(name), pSerial(pSerial), mp3type(mp3type)  {
+    Mp3Player(String name, HardwareSerial *pSerial, MP3_PLAYER_TYPE mp3type=MP3_PLAYER_TYPE::OPENSMART) : name(name), pSerial(pSerial), mp3type(mp3type)  {
         switch (mp3type) {
             case MP3_PLAYER_TYPE::CATALEX:
                 mp3prot=(Mp3PlayerProtocol *)new Mp3PlayerCatalex(pSerial);
@@ -252,6 +264,7 @@ class Mp3Player {
     bool interleaveFolderTrack(uint8_t folder, uint8_t track) { return mp3prot->interleaveFolderTrack(folder, track);}
     bool setRepeatMode(Mp3PlayerProtocol::RepeatMode mode=Mp3PlayerProtocol::RepeatMode::once) {return mp3prot->setRepeatMode(mode=Mp3PlayerProtocol::RepeatMode::once); }
     bool pause() { return mp3prot->pause(); }
+    bool stopInterleave() { return mp3prot->stopInterleave(); }
     bool play() { return mp3prot->play(); }
 
   private:

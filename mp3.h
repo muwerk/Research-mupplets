@@ -27,9 +27,12 @@ class Mp3PlayerProtocol {
     virtual bool pause() { return false;}
     virtual bool stopInterleave() { return false;}
     virtual bool play() { return false; }
+    virtual bool stop() { return false; }
     virtual bool asyncCheckPlayMode() { return false; }
     virtual bool asyncCheckCardMode() { return false; }
+    virtual bool asyncCheckVolume() { return false; }
     virtual bool asyncReceive(Scheduler *, String) { return false; }
+    virtual bool asyncSend() { return false; }
 };
 
 
@@ -70,7 +73,6 @@ class Mp3PlayerCatalex : Mp3PlayerProtocol { // Untested!
     virtual bool begin() override {
         pSer->begin(9600);
         _selectSD();
-        delay(100);
         return true;
     }
     virtual bool playFolderTrack(uint8_t folder = 0, uint8_t track = 0) override {
@@ -138,12 +140,29 @@ class Mp3PlayerOpenSmart : Mp3PlayerProtocol {
     int curPlayState=-1;
     int curVolState=-1;
     int curSdState=-1;
+    unsigned long lastSend=0;
+    unsigned long minSendIntervall=150;
+
+    
+    ustd::queue<uint8_t *> asyncSendQueue = ustd::queue<uint8_t *>(16);
 
     void _sendMP3(uint8_t *pData, uint8_t dataLen=0) {
+        if (timeDiff(lastSend, millis()) < minSendIntervall) {
+            uint8_t *buf=(uint8_t *)malloc(dataLen+1);
+            if (buf) {
+                *buf=dataLen;
+                memcpy(&buf[1],pData,dataLen);
+                if (!asyncSendQueue.push(buf)) {
+                    free(buf);
+                }
+            }
+            return;
+        }
         pSer->write(0x7e);
         pSer->write(dataLen+1); // dataLength + len-field
         pSer->write(pData, dataLen);
         pSer->write(0xef);
+        lastSend=millis();
     }
 
     void _selectSD() {
@@ -156,10 +175,26 @@ class Mp3PlayerOpenSmart : Mp3PlayerProtocol {
     HardwareSerial *pSer;
     Mp3PlayerOpenSmart(HardwareSerial *pSer) : pSer(pSer) {}
 
+    virtual bool asyncSend() override {
+        if (timeDiff(lastSend, millis()) >= minSendIntervall) {
+            if (!asyncSendQueue.isEmpty()) {
+                uint8_t *buf=asyncSendQueue.pop();
+                if (buf) {
+                    uint8_t dataLen=*buf;
+                    _sendMP3(&buf[1], dataLen);
+                    free(buf);
+                }
+            }
+        }
+        return true;
+    }
+
     virtual bool begin() override {
         pSer->begin(9600);
         _selectSD();
-        delay(100);
+        lastSend=millis()+500;
+        asyncCheckCardMode();
+        asyncCheckVolume();
         return true;
     }
 
@@ -200,12 +235,20 @@ class Mp3PlayerOpenSmart : Mp3PlayerProtocol {
         return true;
     }
 
+    virtual bool stop() override {
+        const uint8_t len=0x01;
+        uint8_t cmd[len]={MP3_CMD::STOPPLAY};
+        _sendMP3(cmd, len);
+        return true;
+    }
+
     virtual bool setVolume(uint8_t vol) override {
         if (vol > 30)
             vol = 30;
         const uint8_t len=0x02;
         uint8_t cmd[len] = {MP3_CMD::VOLUME, vol};
         _sendMP3(cmd, len);
+        asyncCheckVolume();
         return true;
     }   
 
@@ -231,6 +274,20 @@ class Mp3PlayerOpenSmart : Mp3PlayerProtocol {
     virtual bool asyncCheckPlayMode() {
         const uint8_t len=0x01;
         uint8_t cmd[len]={MP3_CMD::CHECKSTATUS};
+        _sendMP3(cmd, len);
+        return true;
+    }
+
+    virtual bool asyncCheckCardMode() {
+        const uint8_t len=0x01;
+        uint8_t cmd[len]={MP3_CMD::GETDEVICE};
+        _sendMP3(cmd, len);
+        return true;
+    }
+
+    virtual bool asyncCheckVolume() {
+        const uint8_t len=0x01;
+        uint8_t cmd[len]={MP3_CMD::GETVOLUME};
         _sendMP3(cmd, len);
         return true;
     }
@@ -261,7 +318,9 @@ class Mp3PlayerOpenSmart : Mp3PlayerProtocol {
                                 pSched->publish(topic+"/state", "FASTREWIND");
                                 break;
                             default:
-                                pSched->publish(topic+"/state", "UNKOWN");
+                                char msg[32];
+                                sprintf(msg,"UNKNOWN 0x%02x",state);
+                                pSched->publish(topic+"/state", msg);
                                 break;
                         }
                     }
@@ -280,7 +339,7 @@ class Mp3PlayerOpenSmart : Mp3PlayerProtocol {
                     break;
                 case 0x18: // SD card state
                     uint8_t sdcard;
-                    sdcard=recBuf[3];
+                    sdcard=recBuf[2];
                     if (sdcard!=curSdState) {
                         curSdState=sdcard;
                         switch (sdcard) {
@@ -297,7 +356,9 @@ class Mp3PlayerOpenSmart : Mp3PlayerProtocol {
                                 pSched->publish(topic+"/storage", "SPI");
                             break;
                             default:
-                                pSched->publish(topic+"/storage", "UNKOWN");
+                                char msg[32];
+                                sprintf(msg,"UNKNOWN 0x%02x",sdcard);
+                                pSched->publish(topic+"/storage", msg);
                             break;
                         }
                     }
@@ -397,7 +458,7 @@ class Mp3Player {
         // give a c++11 lambda as callback scheduler task registration of
         // this.loop():
         auto ft = [=]() { this->loop(); };
-        tID = pSched->add(ft, name, 200000);
+        tID = pSched->add(ft, name, 50000);
 
         /* std::function<void(String, String, String)> */
         auto fnall = [=](String topic, String msg, String originator) {
@@ -416,18 +477,27 @@ class Mp3Player {
     bool pause() { return mp3prot->pause(); }
     bool stopInterleave() { return mp3prot->stopInterleave(); }
     bool play() { return mp3prot->play(); }
+    bool stop() { return mp3prot->stop(); }
 
   private:
+
+    int checker=0;
+
     void loop() {
-        mp3prot->asyncCheckPlayMode();
+        ++checker;
+        if (checker>20) {
+            checker=0;
+            mp3prot->asyncCheckPlayMode();
+        }
         mp3prot->asyncReceive(pSched, name+"/mp3");
+        mp3prot->asyncSend();
     }
 
     void subsMsg(String topic, String msg, String originator) {
         if (topic == name + "/mp3/track/set") {
             char buf[32];
             memset(buf,0,32);
-            strncmp(buf,msg.c_str(),31);
+            strncpy(buf,msg.c_str(),31);
             char *p=strchr(buf,',');
             int folder=-1;
             int track=-1;
@@ -438,8 +508,18 @@ class Mp3Player {
                 track=atoi(p);
             }
             if ((track!=-1) && (folder!=-1)) {
+                //mp3prot->stop();
                 mp3prot->playFolderTrack(folder,track);
             }
+        }
+        if (topic == name+"/mp3/volume/set") {
+            uint8 vol=atoi(msg.c_str());
+            mp3prot->setVolume(vol);
+        }
+        if (topic == name+"/mp3/state/set") {
+            if (msg=="stop") mp3prot->stop();
+            if (msg=="pause") mp3prot->pause();
+            if (msg=="play") mp3prot->play();
         }
     };
 };  // Mp3

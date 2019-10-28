@@ -21,13 +21,15 @@ class Mp3PlayerProtocol {
     virtual bool begin() { return false;}
     virtual bool setVolume(uint8_t volumePercent) { return false;}
     virtual bool playFolderTrack(uint8_t folder, uint8_t track) { return false;}
-    virtual bool repeatLoopFolderTrack(uint8_t folder, uint8_t track) { return false;}
     virtual bool playIndex(uint16_t index) { return false;}
     virtual bool interleaveFolderTrack(uint8_t folder, uint8_t track) { return false;}
     virtual bool setRepeatMode(RepeatMode mode=RepeatMode::once) {return false;}
     virtual bool pause() { return false;}
     virtual bool stopInterleave() { return false;}
     virtual bool play() { return false; }
+    virtual bool asyncCheckPlayMode() { return false; }
+    virtual bool asyncCheckCardMode() { return false; }
+    virtual bool asyncReceive(Scheduler *, String) { return false; }
 };
 
 
@@ -110,6 +112,10 @@ class Mp3PlayerOpenSmart : Mp3PlayerProtocol {
             STOPPLAY=0x0e,
             STOPINJECT=0x0f,
 
+            CHECKSTATUS=0x10,
+            GETVOLUME=0x11,
+            GETDEVICE=0x18,
+
             VOLUME=0x31,
             REPEATMODE=0x33,
             SELECT_SD=0x35,
@@ -124,6 +130,15 @@ class Mp3PlayerOpenSmart : Mp3PlayerProtocol {
         };
 
   private:
+    const uint8_t recBufLen=32;
+    uint8_t recBuf[32];
+    enum recStateType {none, started};
+    recStateType recState=recStateType::none;
+    uint8_t recBufPtr=0;
+    int curPlayState=-1;
+    int curVolState=-1;
+    int curSdState=-1;
+
     void _sendMP3(uint8_t *pData, uint8_t dataLen=0) {
         pSer->write(0x7e);
         pSer->write(dataLen+1); // dataLength + len-field
@@ -201,10 +216,146 @@ class Mp3PlayerOpenSmart : Mp3PlayerProtocol {
         return true;
     }
 
-    virtual bool repeatLoopFolderTrack(uint8_t folder, uint8_t track) override {
-        const uint8_t len=0x03;
-        uint8_t cmd[len] = {MP3_CMD::REPEATMODE, folder, track};
+    virtual bool setRepeatMode(RepeatMode rep) override {
+        const uint8_t len=0x02;
+        uint8_t cmd[len];
+        if (rep==RepeatMode::loop) {
+            cmd[0] = MP3_CMD::REPEATMODE; cmd[1]=MP3_SUBCMD::REPEAT_LOOP;
+        } else {
+            cmd[0] = MP3_CMD::REPEATMODE; cmd[1]=MP3_SUBCMD::REPEAT_SINGLE;
+        }
         _sendMP3(cmd, len);
+        return true;
+    }
+
+    virtual bool asyncCheckPlayMode() {
+        const uint8_t len=0x01;
+        uint8_t cmd[len]={MP3_CMD::CHECKSTATUS};
+        _sendMP3(cmd, len);
+        return true;
+    }
+
+    void parseRecBuf(Scheduler *pSched, String topic) {
+        bool known=false;
+        if (recBufPtr==3 && recBuf[0]==3) {
+            switch (recBuf[1]) {
+                case 0x10: // play state
+                    uint8_t state;
+                    state=recBuf[2];
+                    if (state!=curPlayState) {
+                        curPlayState=state;
+                        switch (state) {
+                            case 0:
+                                pSched->publish(topic+"/state", "STOP");
+                                break;
+                            case 1:
+                                pSched->publish(topic+"/state", "PLAY");
+                                break;
+                            case 2:
+                                pSched->publish(topic+"/state", "PAUSE");
+                                break;
+                            case 3:
+                                pSched->publish(topic+"/state", "FASTFORWARD");
+                                break;
+                            case 4:
+                                pSched->publish(topic+"/state", "FASTREWIND");
+                                break;
+                            default:
+                                pSched->publish(topic+"/state", "UNKOWN");
+                                break;
+                        }
+                    }
+                    known=true;
+                    break;
+                case 0x11: // replay to get volume
+                    uint8_t vol;
+                    vol=recBuf[2];
+                    if (vol!=curVolState) {
+                        curVolState=vol;
+                        char sval[32];
+                        sprintf(sval,"%d",vol);
+                        pSched->publish(topic+"/volume", sval);                       
+                    }
+                    known=true;
+                    break;
+                case 0x18: // SD card state
+                    uint8_t sdcard;
+                    sdcard=recBuf[3];
+                    if (sdcard!=curSdState) {
+                        curSdState=sdcard;
+                        switch (sdcard) {
+                            case 0:
+                                pSched->publish(topic+"/storage", "NONE");
+                            break;
+                            case 1:
+                                pSched->publish(topic+"/storage", "DISK");
+                            break;
+                            case 2:
+                                pSched->publish(topic+"/storage", "TF-CARD");
+                            break;
+                            case 3:
+                                pSched->publish(topic+"/storage", "SPI");
+                            break;
+                            default:
+                                pSched->publish(topic+"/storage", "UNKOWN");
+                            break;
+                        }
+                    }
+                    known=true;
+                    break;
+            }
+        }
+        if (recBufPtr==2 && recBuf[0]==2) {
+            // cmd echo
+            known=true;
+        }
+        if (!known) {
+            char scratch[256];
+            char part[10];
+            strcpy(scratch,"");
+            for (int i=0; i<recBufPtr; i++) {
+                sprintf(part," 0x%02x",recBuf[i]);
+                strcat(scratch,part);
+            }
+            pSched->publish(topic+"/xmessage", scratch);
+        }
+    }
+
+    virtual bool asyncReceive(Scheduler *pSched, String topic) override {
+        while (pSer->available()>0) {
+            uint8_t b=pSer->read();
+            switch (recState) {
+                case recStateType::none:
+                    if (b==0x7e) {
+                        recBufPtr=0;
+                        recState=recStateType::started;
+                    } else {
+                        recBufPtr=0;
+                    }
+                    continue;
+                break;
+                case recStateType::started:
+                    if (b==0xef) {
+                        parseRecBuf(pSched, topic);
+                        recBufPtr=0;
+                        recState=recStateType::none;
+                    } else {
+                        recBuf[recBufPtr]=b;
+                        ++recBufPtr;
+                        if (recBufPtr>=recBufLen) {
+                            recBufPtr=0;
+                            recState=recStateType::none;
+                        }
+                    }
+                    continue;
+                break;
+                default:
+                    recBufPtr=0;
+                    recState=recStateType::none;
+                    continue;
+                break;
+            }
+        }
         return true;
     }
 };
@@ -259,16 +410,17 @@ class Mp3Player {
 
     bool setVolume(uint8_t volumePercent) { return mp3prot->setVolume(volumePercent); }
     bool playFolderTrack(uint8_t folder, uint8_t track) { return mp3prot->playFolderTrack(folder, track); }
-    bool repeatLoopFolderTrack(uint8_t folder, uint8_t track) { return mp3prot->repeatLoopFolderTrack(folder, track); }
     bool playIndex(uint16_t index) { return mp3prot->playIndex(index); }
     bool interleaveFolderTrack(uint8_t folder, uint8_t track) { return mp3prot->interleaveFolderTrack(folder, track);}
-    bool setRepeatMode(Mp3PlayerProtocol::RepeatMode mode=Mp3PlayerProtocol::RepeatMode::once) {return mp3prot->setRepeatMode(mode=Mp3PlayerProtocol::RepeatMode::once); }
+    bool setRepeatMode(Mp3PlayerProtocol::RepeatMode mode=Mp3PlayerProtocol::RepeatMode::once) {return mp3prot->setRepeatMode(mode); }
     bool pause() { return mp3prot->pause(); }
     bool stopInterleave() { return mp3prot->stopInterleave(); }
     bool play() { return mp3prot->play(); }
 
   private:
     void loop() {
+        mp3prot->asyncCheckPlayMode();
+        mp3prot->asyncReceive(pSched, name+"/mp3");
     }
 
     void subsMsg(String topic, String msg, String originator) {

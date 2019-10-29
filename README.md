@@ -287,8 +287,8 @@ Hardware: OpenSmart MP3 player (e.g. AliExpress).
 
 | topic | message body | comment
 | ----- | ------------ | -------
-| `<mupplet-name>/mp3/track/set` | <folder-id>,<track-id> | To play file 01/002-mysong.mp3, message text should contain `1,2`.
-| `<mupplet-name>/mp3/state/set` | `play|pause|stop` | Stops, pauses or plays current song.
+| `<mupplet-name>/mp3/track/set` | `folder-id`,`track-id` | To play file 01/002-mysong.mp3, message text should contain `1,2`.
+| `<mupplet-name>/mp3/state/set` | `play`,`pause`,`stop` | Stops, pauses or plays current song.
 | `<mupplet-name>/mp3/volume/set` | 0...30  | Sets playback volume to between 0 and 30(max).
 
 #### Messages sent by mp3 mupplet:
@@ -296,9 +296,9 @@ Hardware: OpenSmart MP3 player (e.g. AliExpress).
 | topic | message body | comment
 | ----- | ------------ | -------
 | `<mupplet-name>/mp3/volume` | 0...30 | Current playback volume
-| `<mupplet-name>/mp3/storage` | `NONE|DISK|TF-CARD|SPI` | Active storage type
-| `<mupplet-name>/mp3/state` | `STOP|PLAY|PAUSE|FASTFORWARD|FASTREWIND|PLAYING` | Current player state. State `PLAYING` is not defined in documentation and seems to be followed always by state `PLAY`.
-| `<mupplet-name>/mp3/xmessage` | <hexdump> | Undocumented messages.
+| `<mupplet-name>/mp3/storage` | `NONE`,`DISK`,`TF-CARD`,`SPI` | Active storage type
+| `<mupplet-name>/mp3/state` | `STOP`,`PLAY`,`PAUSE`,`FASTFORWARD`,`FASTREWIND`,`PLAYING` | Current player state. State `PLAYING` is not defined in documentation and seems to be followed always by state `PLAY`.
+| `<mupplet-name>/mp3/xmessage` | `hexdump` | Undocumented messages.
 
 ### Sample code
 

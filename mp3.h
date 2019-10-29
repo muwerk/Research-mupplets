@@ -6,10 +6,6 @@
 
 #include "scheduler.h"
 
-// TODO: this won't hold for API configurable serials:
-#ifdef USE_SERIAL_DBG
-#error You cannot use define USE_SERIAL_DBG with MP3 mupplet, since the serial port is needed for the communication with the MP3 hardware!
-#endif
 
 namespace ustd {
 
@@ -103,7 +99,7 @@ class Mp3PlayerCatalex : Mp3PlayerProtocol { // Untested!
 };
 
 
-// Other: http://ioxhop.info/files/OPEN-SMART-Serial-MP3-Player-A/Serial%20MP3%20Player%20A%20v1.1%20Manual.pdf
+// OpenSmart: http://ioxhop.info/files/OPEN-SMART-Serial-MP3-Player-A/Serial%20MP3%20Player%20A%20v1.1%20Manual.pdf
 class Mp3PlayerOpenSmart : Mp3PlayerProtocol {
   public:
     enum MP3_CMD {
@@ -316,6 +312,9 @@ class Mp3PlayerOpenSmart : Mp3PlayerProtocol {
                                 break;
                             case 4:
                                 pSched->publish(topic+"/state", "FASTREWIND");
+                                break;
+                            case 0x11:
+                                pSched->publish(topic+"/state", "PLAYING");
                                 break;
                             default:
                                 char msg[32];

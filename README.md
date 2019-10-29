@@ -26,6 +26,7 @@ For ESP8266 and ESP32, it is recommended to use [munet](https://github.com/muwer
 | ldr.h       | Luminosity | LDR connected to analog port | |
 | led.h       | LED diode | Digital out or PWM connected to led: [D-out]--[led<]--(Vcc) | |
 | lumin.h     |
+| mp3.h       | MP3 player | OpenSmart v1.1 | [OpenSmart MP3 player](https://www.aliexpress.com/item/32782488336.html?spm=a2g0o.productlist.0.0.5a0e7823gMVTMa&algo_pvid=8fd3c7b0-09a7-4e95-bf8e-f3d37bd18300&algo_expid=8fd3c7b0-09a7-4e95-bf8e-f3d37bd18300-0&btsid=d8c8aa30-444b-4212-ba19-2decc528c422&ws_ab_test=searchweb0_0,searchweb201602_6,searchweb201603_52)
 | neocandle.h |
 | pressure.h  | Air pressure and temperature sensor | BMP085 | [Adafruit BMP085 unified](https://github.com/adafruit/Adafruit_BMP085_Unified), [Adafruit unified sensor](https://github.com/adafruit/Adafruit_Sensor) |
 | switch.h    | any push button |   |
@@ -259,3 +260,60 @@ void setup() {
 ```
 
 See [Servo](https://github.com/muwerk/Examples/tree/master/servo) for a complete example.
+
+
+
+
+
+## MP3 player with SD-Card (OpenSmart)
+
+Allows playback of different MP3 files.
+
+<img src="https://github.com/muwerk/mupplets/blob/master/Resources/mp3.png" width="70%" height="30%">
+Hardware: [OpenSmart MP3 player](https://www.aliexpress.com/item/32782488336.html?spm=a2g0o.productlist.0.0.5a0e7823gMVTMa&algo_pvid=8fd3c7b0-09a7-4e95-bf8e-f3d37bd18300&algo_expid=8fd3c7b0-09a7-4e95-bf8e-f3d37bd18300-0&btsid=d8c8aa30-444b-4212-ba19-2decc528c422&ws_ab_test=searchweb0_0,searchweb201602_6,searchweb201603_52).
+
+#### Notes
+
+* ⚠️ While the documentation says that the player works from 3.3 to 5V, the amplifier does not seem to work with less than 5V. It is unclear what voltage is generated for player's TX line. I had no problems connecting to 3.3V logic, but this is not documented as being safe.
+
+##### MP3 files on SD-Card
+
+* SD-Card needs to be fat or fat32 format.
+* It can have 100 folders (00...99), and each folder can contain 256 files (000-xxx.mp3...255-yyy.mp3), a file can be accessed with folder and track number: 01/002-mysong.mp3 would be the file identified by folder 1 and track 2.
+
+#### Messages received by mp3 mupplet:
+
+| topic | message body | comment
+| ----- | ------------ | -------
+| `<mupplet-name>/mp3/track/set` | <folder-id>,<track-id> | To play file 01/002-mysong.mp3, message text should contain `1,2`.
+| `<mupplet-name>/mp3/state/set` | `play|pause|stop` | Stops, pauses or plays current song.
+| `<mupplet-name>/mp3/volume/set` | 0...30  | Sets playback volume to between 0 and 30(max).
+
+#### Messages sent by mp3 mupplet:
+
+| topic | message body | comment
+| ----- | ------------ | -------
+| `<mupplet-name>/mp3/volume` | 0...30 | Current playback volume
+| `<mupplet-name>/mp3/storage` | `NONE|DISK|TF-CARD|SPI` | Active storage type
+| `<mupplet-name>/mp3/state` | `STOP|PLAY|PAUSE|FASTFORWARD|FASTREWIND|PLAYING` | Current player state. State `PLAYING` is not defined in documentation and seems to be followed always by state `PLAY`.
+| `<mupplet-name>/mp3/xmessage` | <hexdump> | Undocumented messages.
+
+### Sample code
+
+```cpp
+// Do NOT use serial debug, since Serial is used for communication with MP3 player!
+//#define USE_SERIAL_DBG 1
+#include "mp3.h"
+
+ustd::Scheduler sched(10,16,32);
+ustd::Mp3Player mp3("mp3", &Serial, ustd::Mp3Player::MP3_PLAYER_TYPE::OPENSMART);
+
+void setup() {
+    mp3.begin(&sched);
+    mp3.setVolume(4);
+    mp3.playFolderTrack(1,1);
+}
+
+```
+
+See [MP3](https://github.com/muwerk/Examples/tree/master/mp3) for a complete example.

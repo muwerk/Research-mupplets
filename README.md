@@ -26,7 +26,7 @@ For ESP8266 and ESP32, it is recommended to use [munet](https://github.com/muwer
 | ldr.h       | Luminosity | LDR connected to analog port | |
 | led.h       | LED diode | Digital out or PWM connected to led: [D-out]--[led<]--(Vcc) | |
 | lumin.h     |
-| mp3.h       | MP3 player | OpenSmart v1.1 | [OpenSmart MP3 player](https://www.aliexpress.com/item/32782488336.html?spm=a2g0o.productlist.0.0.5a0e7823gMVTMa&algo_pvid=8fd3c7b0-09a7-4e95-bf8e-f3d37bd18300&algo_expid=8fd3c7b0-09a7-4e95-bf8e-f3d37bd18300-0&btsid=d8c8aa30-444b-4212-ba19-2decc528c422&ws_ab_test=searchweb0_0,searchweb201602_6,searchweb201603_52)
+| mp3.h       | MP3 player | OpenSmart v1.1 [OpenSmart MP3 player](https://www.aliexpress.com/item/32782488336.html?spm=a2g0o.productlist.0.0.5a0e7823gMVTMa&algo_pvid=8fd3c7b0-09a7-4e95-bf8e-f3d37bd18300&algo_expid=8fd3c7b0-09a7-4e95-bf8e-f3d37bd18300-0&btsid=d8c8aa30-444b-4212-ba19-2decc528c422&ws_ab_test=searchweb0_0,searchweb201602_6,searchweb201603_52)
 | neocandle.h |
 | pressure.h  | Air pressure and temperature sensor | BMP085 | [Adafruit BMP085 unified](https://github.com/adafruit/Adafruit_BMP085_Unified), [Adafruit unified sensor](https://github.com/adafruit/Adafruit_Sensor) |
 | switch.h    | any push button |   |
@@ -275,6 +275,8 @@ Hardware: OpenSmart MP3 player (e.g. AliExpress).
 #### Notes
 
 * ⚠️ While the documentation says that the player works from 3.3 to 5V, the amplifier does not seem to work with less than 5V. It is unclear what voltage is generated for player's TX line. I had no problems connecting to 3.3V logic, but this is not documented as being safe.
+* The mupplet uses non-blocking asynchronous serial read and write. Each command messages is separated automatically and asynchronously by 120ms from the closed following messages to prevent confusing the mp3 player.
+* ⚠️ The player sometimes sends completely undocumented messages (MQTT topic `xmessage`). Do not rely too much on a deterministic message protocol.
 
 ##### MP3 files on SD-Card
 
@@ -313,7 +315,6 @@ void setup() {
     mp3.setVolume(4);
     mp3.playFolderTrack(1,1);
 }
-
 ```
 
 See [MP3](https://github.com/muwerk/Examples/tree/master/mp3) for a complete example.

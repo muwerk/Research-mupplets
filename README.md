@@ -269,7 +269,7 @@ See [Servo](https://github.com/muwerk/Examples/tree/master/servo) for a complete
 
 Allows playback of different MP3 files.
 
-<img src="https://github.com/muwerk/mupplets/blob/master/Resources/mp3.png" width="70%" height="30%">
+<img src="https://github.com/muwerk/mupplets/blob/master/Resources/mp3.png" width="30%" height="30%">
 Hardware: [OpenSmart MP3 player](https://www.aliexpress.com/item/32782488336.html?spm=a2g0o.productlist.0.0.5a0e7823gMVTMa&algo_pvid=8fd3c7b0-09a7-4e95-bf8e-f3d37bd18300&algo_expid=8fd3c7b0-09a7-4e95-bf8e-f3d37bd18300-0&btsid=d8c8aa30-444b-4212-ba19-2decc528c422&ws_ab_test=searchweb0_0,searchweb201602_6,searchweb201603_52).
 
 #### Notes

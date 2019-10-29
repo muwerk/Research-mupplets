@@ -270,7 +270,7 @@ See [Servo](https://github.com/muwerk/Examples/tree/master/servo) for a complete
 Allows playback of different MP3 files.
 
 <img src="https://github.com/muwerk/mupplets/blob/master/Resources/mp3.png" width="30%" height="30%">
-Hardware: [OpenSmart MP3 player](https://www.aliexpress.com/item/32782488336.html?spm=a2g0o.productlist.0.0.5a0e7823gMVTMa&algo_pvid=8fd3c7b0-09a7-4e95-bf8e-f3d37bd18300&algo_expid=8fd3c7b0-09a7-4e95-bf8e-f3d37bd18300-0&btsid=d8c8aa30-444b-4212-ba19-2decc528c422&ws_ab_test=searchweb0_0,searchweb201602_6,searchweb201603_52).
+Hardware: OpenSmart MP3 player (e.g. AliExpress).
 
 #### Notes
 
@@ -279,7 +279,7 @@ Hardware: [OpenSmart MP3 player](https://www.aliexpress.com/item/32782488336.htm
 ##### MP3 files on SD-Card
 
 * SD-Card needs to be fat or fat32 format.
-* It can have 100 folders (00...99), and each folder can contain 256 files (000-xxx.mp3...255-yyy.mp3), a file can be accessed with folder and track number: 01/002-mysong.mp3 would be the file identified by folder 1 and track 2.
+* It can have 100 folders (`00`...`99`), and each folder can contain 256 files (`000-xxx.mp3`...`255-yyy.mp3`), a file can be accessed with folder and track number: `01/002-mysong.mp3` would be the file identified by folder 1 (=directory name `01`) and track 2 (filename `002xxx.mp3`).
 
 #### Messages received by mp3 mupplet:
 

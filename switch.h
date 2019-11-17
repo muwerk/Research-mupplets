@@ -167,27 +167,39 @@ class Switch {
     }
 
     void mqMsg( String topic, String msg, String originator) {
-        char cmsg[180];
-        char *p1=nullptr;
-        memset(cmsg,0,180);
-        strncpy(cmsg,msg.c_str(),179);
-        p1=strchr(cmsg,',');
-        if (p1) {
-            *p1=0;
-            ++p1;
-        }
-        if (!strcmp(cmsg,"connected")) {
-            if (useHA) {
+        if (useHA) {
+            char cmsg[180];
+            char *p1=nullptr;
+            memset(cmsg,0,180);
+            strncpy(cmsg,msg.c_str(),179);
+            p1=strchr(cmsg,',');
+            if (p1) {
+                *p1=0;
+                ++p1;
+            }
+            if (p1) HAmuPrefix=p1;
+            char cmd[64];
+            memset(cmd,0,64);
+            strncpy(cmd,HAmuPrefix.c_str(),63);
+            String HAcmd="";
+            char *p0=strchr(cmd,'/');
+            if (p0) {
+                ++p0;
+                HAcmd=String(p0);
+            }
+            if (!strcmp(cmsg,"connected")) {
                 if (p1) HAmuPrefix=p1;
-                String HAcommandTopic=HAmuPrefix+"/"+name+"/switch/set";
+                String HAcommandTopic=HAcmd+"/"+name+"/switch/set";
                 String HAstateTopic=HAmuPrefix+"/"+name+"/switch/state";
                 HAdiscoTopic="!"+HAprefix+"/switch/"+name+"/config";
                 HAdiscoEntityDef="{\"state_topic\":\""+HAstateTopic+"\","+
-                           "\"command_topic\":\""+HAcommandTopic+"\","+
-                           "\"name\":\""+HAname+"\","+
-                           "\"state_on\":\"on\","+
-                           "\"state_off\":\"off\""+
-                                              "}";
+                        "\"command_topic\":\""+HAcommandTopic+"\","+
+                        "\"name\":\""+HAname+"\","+
+                        "\"state_on\":\"on\","+
+                        "\"state_off\":\"off\","+
+                        "\"payload_on\":\"on\","+
+                        "\"payload_off\":\"off\""+
+                                            "}";
                 pSched->publish(HAdiscoTopic,HAdiscoEntityDef);
             }
         }
@@ -295,9 +307,10 @@ class Switch {
                 decodeLogicalState(newState);
             }
         } else {
-            if (overridePhysicalActive) {
+            if (overridePhysicalActive && newState != overriddenPhysicalState) {
                 overridePhysicalActive=false;
             }
+            if (overridePhysicalActive) return;
             if (newState != physicalState || mode==Mode::Falling || mode==Mode::Rising) {
                 if (timeDiff(lastChangeMs, millis()) > debounceTimeMs || useInterrupt) {
                     lastChangeMs = millis();

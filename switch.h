@@ -79,6 +79,13 @@ class Switch {
     unsigned long startEvent=0; //ms
     unsigned long durations[2]={3000,30000};
 
+    bool useHA=false;
+    String HAname="";
+    String HAprefix="";
+    String HAmuPrefix="";
+    String HAdiscoTopic="";
+    String HAdiscoEntityDef="";
+
     Switch(String name, uint8_t port, Mode mode = Mode::Default, bool activeLogic = false, String customTopic = "", int8_t interruptIndex=-1, unsigned long debounceTimeMs = 0)
         : name(name), port(port), mode(mode), activeLogic(activeLogic),
           customTopic(customTopic), interruptIndex(interruptIndex), debounceTimeMs(debounceTimeMs) {
@@ -152,6 +159,46 @@ class Switch {
                 this->subsMsg(topic, msg, originator);
             };
         pSched->subscribe(tID, name + "/switch/#", fnall);
+        auto fnmq=
+            [=](String topic, String msg, String originator) {
+                this->mqMsg(topic, msg, originator);
+            };
+         pSched->subscribe(tID, "mqtt/state", fnmq);
+    }
+
+    void mqMsg( String topic, String msg, String originator) {
+        char cmsg[180];
+        char *p1=nullptr;
+        memset(cmsg,0,180);
+        strncpy(cmsg,msg.c_str(),179);
+        p1=strchr(cmsg,',');
+        if (p1) {
+            *p1=0;
+            ++p1;
+        }
+        if (!strcmp(cmsg,"connected")) {
+            if (useHA) {
+                if (p1) HAmuPrefix=p1;
+                String HAcommandTopic=HAmuPrefix+"/"+name+"/switch/set";
+                String HAstateTopic=HAmuPrefix+"/"+name+"/switch/state";
+                HAdiscoTopic="!"+HAprefix+"/switch/"+name+"/config";
+                HAdiscoEntityDef="{\"state_topic\":\""+HAstateTopic+"\","+
+                           "\"command_topic\":\""+HAcommandTopic+"\","+
+                           "\"name\":\""+HAname+"\","+
+                           "\"state_on\":\"on\","+
+                           "\"state_off\":\"off\""+
+                                              "}";
+                pSched->publish(HAdiscoTopic,HAdiscoEntityDef);
+            }
+        }
+    }
+
+    void registerHomeAssistant(String homeAssistantFriendlyName="", String homeAssistantDiscoveryPrefix="homeassistant") {
+        if (homeAssistantFriendlyName=="") homeAssistantFriendlyName=name;
+        useHA=true;
+        HAname=homeAssistantFriendlyName;
+        HAprefix=homeAssistantDiscoveryPrefix;
+        pSched->publish("mqtt/state/get");
     }
 
     void publishLogicalState(bool lState) {

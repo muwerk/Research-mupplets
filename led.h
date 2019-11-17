@@ -15,6 +15,7 @@ class Led {
     String name;
     uint8_t port;
     bool activeLogic = false;
+    uint8_t channel;
     double brightlevel;
     bool state;
     uint16_t pwmrange;
@@ -27,8 +28,8 @@ class Led {
     String pattern;
     unsigned int patternPointer=0;
 
-    Led(String name, uint8_t port, bool activeLogic=false )
-        : name(name), port(port), activeLogic(activeLogic) {
+    Led(String name, uint8_t port, bool activeLogic=false, uint8_t channel=0 )
+        : name(name), port(port), activeLogic(activeLogic), channel(channel) {
     }
 
     ~Led() {
@@ -39,13 +40,11 @@ class Led {
         #if defined(__ESP32__)
             pinMode(port, OUTPUT);
             // use first channel of 16 channels (started from zero)
-            #define LEDC_CHANNEL     0
-            // use 13 bit precission for LEDC timer
             #define LEDC_TIMER_BITS  10
             // use 5000 Hz as a LEDC base frequency
             #define LEDC_BASE_FREQ     5000
-            ledcSetup(LEDC_CHANNEL, LEDC_BASE_FREQ, LEDC_TIMER_BITS);
-  			ledcAttachPin(port, LEDC_CHANNEL);
+            ledcSetup(channel, LEDC_BASE_FREQ, LEDC_TIMER_BITS);
+  			ledcAttachPin(port, channel);
 		#else
 			pinMode(port, OUTPUT);
 		#endif
@@ -55,12 +54,7 @@ class Led {
         pwmrange=255;
         #endif
         
-        if (activeLogic) { // activeLogic true: HIGH is ON
-            digitalWrite(port, LOW);  // OFF
-
-        } else { // activeLogic false: LOW is ON
-            digitalWrite(port, HIGH);  // OFF
-        }
+        setOff();
         mode=Mode::Passive;
         interval=1000; //ms
         // give a c++11 lambda as callback scheduler task registration of
@@ -75,19 +69,50 @@ class Led {
         pSched->subscribe(tID, name + "/led/#", fnall);
     }
 
+    void setOn() {
+        if (activeLogic) {
+            #ifdef __ESP32__
+            ledcWrite(channel,pwmrange);
+            #else
+            digitalWrite(port, true);
+            #endif
+        } else {
+            #ifdef __ESP32__
+            ledcWrite(channel,0);
+            #else
+            digitalWrite(port, false);
+            #endif
+        }
+    }
+    void setOff() {
+        if (!activeLogic) {
+            #ifdef __ESP32__
+            ledcWrite(channel,pwmrange);
+            #else
+            digitalWrite(port, true);
+            #endif
+        } else {
+            #ifdef __ESP32__
+            ledcWrite(channel,0);
+            #else
+            digitalWrite(port, false);
+            #endif
+        }
+    }
+
     void set(bool state, bool _automatic=false) {
         if (state==this->state) return;
         this->state=state;
         if (!_automatic) mode=Mode::Passive;
         if (state) {
-            digitalWrite(port, activeLogic);
+            setOn();
             if (!_automatic) {
                 pSched->publish(name + "/led/unitluminosity", "1.0");
                 pSched->publish(name + "/led/state", "on");
             }
         } else {
-            digitalWrite(port, !activeLogic);
-           if (!_automatic) {
+            setOff();
+            if (!_automatic) {
                 pSched->publish(name + "/led/unitluminosity", "0.0");
                 pSched->publish(name + "/led/state", "off");
            }
@@ -132,7 +157,7 @@ class Led {
         if (!activeLogic)
             bri = pwmrange - bri;
         #if defined(__ESP32__)
-        ledcWrite(port, bri);
+        ledcWrite(channel, bri);
         #else
         analogWrite(port, bri);
         #endif

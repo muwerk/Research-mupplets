@@ -512,7 +512,7 @@ class Mp3Player {
             }
         }
         if (topic == name+"/mp3/volume/set") {
-            uint8 vol=atoi(msg.c_str());
+            uint8_t vol=atoi(msg.c_str());
             mp3prot->setVolume(vol);
         }
         if (topic == name+"/mp3/state/set") {

@@ -36,13 +36,25 @@ class Led {
 
     void begin(Scheduler *_pSched) {
         pSched = _pSched;
-
-        pinMode(port, OUTPUT);
+        #if defined(__ESP32__)
+            pinMode(port, OUTPUT);
+            // use first channel of 16 channels (started from zero)
+            #define LEDC_CHANNEL     0
+            // use 13 bit precission for LEDC timer
+            #define LEDC_TIMER_BITS  10
+            // use 5000 Hz as a LEDC base frequency
+            #define LEDC_BASE_FREQ     5000
+            ledcSetup(LEDC_CHANNEL, LEDC_BASE_FREQ, LEDC_TIMER_BITS);
+  			ledcAttachPin(port, LEDC_CHANNEL);
+		#else
+			pinMode(port, OUTPUT);
+		#endif
         #ifdef __ESP__
         pwmrange=1023;
         #else
         pwmrange=255;
         #endif
+        
         if (activeLogic) { // activeLogic true: HIGH is ON
             digitalWrite(port, LOW);  // OFF
 
@@ -119,8 +131,11 @@ class Led {
         else state=true;
         if (!activeLogic)
             bri = pwmrange - bri;
+        #if defined(__ESP32__)
+        ledcWrite(port, bri);
+        #else
         analogWrite(port, bri);
-
+        #endif
         char buf[32];
         sprintf(buf, "%5.3f", bright);
         if (!_automatic) {

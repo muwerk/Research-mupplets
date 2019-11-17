@@ -5,6 +5,8 @@
 
 namespace ustd {
 
+#ifndef __ESP32__  // No interrupt support for ESP32 (yet)
+
 #define USTD_MAX_IRQS (10)
 
 unsigned long irqcounter[USTD_MAX_IRQS]={0,0,0,0,0,0,0,0,0,0};
@@ -48,6 +50,7 @@ unsigned long getResetIrqCount(uint8_t irqno) {
     interrupts();
     return count;
 }
+#endif
 
 class Switch {
   public:
@@ -79,6 +82,7 @@ class Switch {
     Switch(String name, uint8_t port, Mode mode = Mode::Default, bool activeLogic = false, String customTopic = "", int8_t interruptIndex=-1, unsigned long debounceTimeMs = 0)
         : name(name), port(port), mode(mode), activeLogic(activeLogic),
           customTopic(customTopic), interruptIndex(interruptIndex), debounceTimeMs(debounceTimeMs) {
+              #ifndef __ESP32__
               if (interruptIndex>=0 && interruptIndex<USTD_MAX_IRQS) {
                   switch (mode) {
                         case Mode::Rising:
@@ -94,12 +98,15 @@ class Switch {
                   debounceMs[interruptIndex]=debounceTimeMs;
                   useInterrupt=true;
               }
+              #endif
               setMode(mode);
     }
 
     ~Switch() {
+        #ifndef __ESP32__
         if (useInterrupt)
             detachInterrupt(digitalPinToInterrupt(port));
+        #endif
     }
 
     void setDebounce(long ms) {
@@ -256,6 +263,7 @@ class Switch {
 
     void readState() {
         if (useInterrupt) {
+            #ifndef __ESP32__
             unsigned long count=getResetIrqCount(interruptIndex);
             int curstate = digitalRead(port);
             char msg[32];
@@ -301,6 +309,7 @@ class Switch {
                         break;
                 }
             }
+            #endif
         } else {
             int newstate = digitalRead(port);
             if (newstate==HIGH) newstate=true;

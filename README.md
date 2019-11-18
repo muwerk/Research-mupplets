@@ -6,9 +6,9 @@
 
 **mupplets** use muwerks MQTT-style messaging to pass information between each other on the same device. If connected to an MQTT-server via munet, all functionallity is externally available through an MQTT server such as Mosquitto.
 
-See [mupplet led and switch example](https://github.com/muwerk/Examples/tree/master/led) for a complete example that illustrates how a
+See [mupplet led and switch example](https://github.com/muwerk/Examples/tree/master/led-ha) for a complete example that illustrates how a
 switch mupplet (interfacing to a physical button) and a led mupplet (infacing to a physical led) communicate using muwerk.
-Both switch and led are also accessible via external MQTT without extra code.
+Both switch and led are also accessible via external MQTT without extra code. Additionally, both switch and led auto-register with [Home Assistant](https://www.home-assistant.io) [optional, if available], so they can be controlled using Home Assistant, Siri or Alexa.
 
 ## Dependencies
 

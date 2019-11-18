@@ -447,10 +447,12 @@ class Switch {
             memset(buf,0,32);
             strncpy(buf,msg.c_str(),31);
             if (!strcmp(buf,"on") || !strcmp(buf,"true")) {
-                setPhysicalState(true, true);
+                //setPhysicalState(true, true);
+                setLogicalState(true);
             }
             if (!strcmp(buf,"off") || !strcmp(buf,"false")) {
-                setPhysicalState(false, true);
+                //setPhysicalState(false, true);
+                setLogicalState(false);
             }
             if (!strcmp(buf,"toggle")) {
                 setPhysicalState(!physicalState, true);

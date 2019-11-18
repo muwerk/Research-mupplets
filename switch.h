@@ -189,8 +189,8 @@ class Switch {
             }
             if (!strcmp(cmsg,"connected")) {
                 if (p1) HAmuPrefix=p1;
-                String HAcommandTopic=HAcmd+"/"+name+"/led/set";
-                String HAstateTopic=HAmuPrefix+"/"+name+"/led/state";
+                String HAcommandTopic=HAcmd+"/"+name+"/switch/set";
+                String HAstateTopic=HAmuPrefix+"/"+name+"/switch/state";
                 HAdiscoTopic="!"+HAprefix+"/switch/"+name+"/config";
                 HAdiscoEntityDef="{\"state_topic\":\""+HAstateTopic+"\","+
                         "\"command_topic\":\""+HAcommandTopic+"\","+

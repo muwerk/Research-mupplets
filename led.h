@@ -28,6 +28,10 @@ class Led {
     String pattern;
     unsigned int patternPointer=0;
 
+    bool useHA=false;
+    String HAname="";
+    String HAprefix="";
+
     Led(String name, uint8_t port, bool activeLogic=false, uint8_t channel=0 )
         : name(name), port(port), activeLogic(activeLogic), channel(channel) {
     }
@@ -67,8 +71,66 @@ class Led {
                 this->subsMsg(topic, msg, originator);
             };
         pSched->subscribe(tID, name + "/led/#", fnall);
+        auto fnmq=
+            [=](String topic, String msg, String originator) {
+                this->mqMsg(topic, msg, originator);
+            };
+         pSched->subscribe(tID, "mqtt/state", fnmq);
     }
 
+    void mqMsg( String topic, String msg, String originator) {
+        if (useHA) {
+            String HAmuPrefix="";
+            String HAdiscoTopic="";
+            String HAdiscoEntityDef="";
+            char cmsg[180];
+            char *p1=nullptr;
+            memset(cmsg,0,180);
+            strncpy(cmsg,msg.c_str(),179);
+            p1=strchr(cmsg,',');
+            if (p1) {
+                *p1=0;
+                ++p1;
+            }
+            if (p1) HAmuPrefix=p1;
+            char cmd[64];
+            memset(cmd,0,64);
+            strncpy(cmd,HAmuPrefix.c_str(),63);
+            String HAcmd="";
+            char *p0=strchr(cmd,'/');
+            if (p0) {
+                ++p0;
+                HAcmd=String(p0);
+            }
+            if (!strcmp(cmsg,"connected")) {
+                if (p1) HAmuPrefix=p1;
+                String HAcommandTopic=HAcmd+"/"+name+"/switch/set";
+                String HAstateTopic=HAmuPrefix+"/"+name+"/switch/state";
+                String HAcommandBrTopic=HAcmd+"/"+name+"/led/brightness/set";
+                String HAstateBrTopic=HAmuPrefix+"/"+name+"/led/brightness";
+                HAdiscoTopic="!"+HAprefix+"/switch/"+name+"/config";
+                HAdiscoEntityDef="{\"state_topic\":\""+HAstateTopic+"\","+
+                        "\"command_topic\":\""+HAcommandTopic+"\","+
+                        "{\"brightness_state_topic\":\""+HAstateBrTopic+"\","+
+                        "\"brightness_command_topic\":\""+HAcommandBrTopic+"\","+
+                        "\"name\":\""+HAname+"\","+
+                        "\"state_on\":\"on\","+
+                        "\"state_off\":\"off\","+
+                        "\"payload_on\":\"on\","+
+                        "\"payload_off\":\"off\""+
+                                            "}";
+                pSched->publish(HAdiscoTopic,HAdiscoEntityDef);
+            }
+        }
+    }
+
+    void registerHomeAssistant(String homeAssistantFriendlyName="", String homeAssistantDiscoveryPrefix="homeassistant") {
+        if (homeAssistantFriendlyName=="") homeAssistantFriendlyName=name;
+        useHA=true;
+        HAname=homeAssistantFriendlyName;
+        HAprefix=homeAssistantDiscoveryPrefix;
+        pSched->publish("mqtt/state/get");
+    }
     void setOn() {
         if (activeLogic) {
             #ifdef __ESP32__

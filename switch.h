@@ -82,9 +82,6 @@ class Switch {
     bool useHA=false;
     String HAname="";
     String HAprefix="";
-    String HAmuPrefix="";
-    String HAdiscoTopic="";
-    String HAdiscoEntityDef="";
 
     Switch(String name, uint8_t port, Mode mode = Mode::Default, bool activeLogic = false, String customTopic = "", int8_t interruptIndex=-1, unsigned long debounceTimeMs = 0)
         : name(name), port(port), mode(mode), activeLogic(activeLogic),
@@ -168,6 +165,9 @@ class Switch {
 
     void mqMsg( String topic, String msg, String originator) {
         if (useHA) {
+            String HAmuPrefix="";
+            String HAdiscoTopic="";
+            String HAdiscoEntityDef="";
             char cmsg[180];
             char *p1=nullptr;
             memset(cmsg,0,180);
@@ -189,8 +189,8 @@ class Switch {
             }
             if (!strcmp(cmsg,"connected")) {
                 if (p1) HAmuPrefix=p1;
-                String HAcommandTopic=HAcmd+"/"+name+"/switch/set";
-                String HAstateTopic=HAmuPrefix+"/"+name+"/switch/state";
+                String HAcommandTopic=HAcmd+"/"+name+"/led/set";
+                String HAstateTopic=HAmuPrefix+"/"+name+"/led/state";
                 HAdiscoTopic="!"+HAprefix+"/switch/"+name+"/config";
                 HAdiscoEntityDef="{\"state_topic\":\""+HAstateTopic+"\","+
                         "\"command_topic\":\""+HAcommandTopic+"\","+

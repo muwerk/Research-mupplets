@@ -5,15 +5,19 @@
 
 namespace ustd {
 
-#ifndef __ESP32__  // No interrupt support for ESP32 (yet)
+#ifdef __ESP32__
+#define G_INT_ATTR IRAM_ATTR
+#else
+#define G_INT_ATTR ICACHE_RAM_ATTR
+#endif
 
 #define USTD_MAX_IRQS (10)
 
-unsigned long irqcounter[USTD_MAX_IRQS]={0,0,0,0,0,0,0,0,0,0};
-unsigned long lastIrq[USTD_MAX_IRQS]={0,0,0,0,0,0,0,0,0,0};
-unsigned long debounceMs[USTD_MAX_IRQS]={0,0,0,0,0,0,0,0,0,0};
+volatile unsigned long irqcounter[USTD_MAX_IRQS]={0,0,0,0,0,0,0,0,0,0};
+volatile unsigned long lastIrq[USTD_MAX_IRQS]={0,0,0,0,0,0,0,0,0,0};
+volatile unsigned long debounceMs[USTD_MAX_IRQS]={0,0,0,0,0,0,0,0,0,0};
 
-void ICACHE_RAM_ATTR ustd_irq_master(uint8_t irqno) {
+void G_INT_ATTR ustd_irq_master(uint8_t irqno) {
     unsigned long curr=millis();
     noInterrupts();
     if (debounceMs[irqno]) {
@@ -27,18 +31,18 @@ void ICACHE_RAM_ATTR ustd_irq_master(uint8_t irqno) {
     interrupts();
 }
 
-void ICACHE_RAM_ATTR ustd_irq0() {ustd_irq_master(0);}
-void ICACHE_RAM_ATTR ustd_irq1() {ustd_irq_master(1);}
-void ICACHE_RAM_ATTR ustd_irq2() {ustd_irq_master(2);}
-void ICACHE_RAM_ATTR ustd_irq3() {ustd_irq_master(3);}
-void ICACHE_RAM_ATTR ustd_irq4() {ustd_irq_master(4);}
-void ICACHE_RAM_ATTR ustd_irq5() {ustd_irq_master(5);}
-void ICACHE_RAM_ATTR ustd_irq6() {ustd_irq_master(6);}
-void ICACHE_RAM_ATTR ustd_irq7() {ustd_irq_master(7);}
-void ICACHE_RAM_ATTR ustd_irq8() {ustd_irq_master(8);}
-void ICACHE_RAM_ATTR ustd_irq9() {ustd_irq_master(9);}
+void G_INT_ATTR ustd_irq0() {ustd_irq_master(0);}
+void G_INT_ATTR ustd_irq1() {ustd_irq_master(1);}
+void G_INT_ATTR ustd_irq2() {ustd_irq_master(2);}
+void G_INT_ATTR ustd_irq3() {ustd_irq_master(3);}
+void G_INT_ATTR ustd_irq4() {ustd_irq_master(4);}
+void G_INT_ATTR ustd_irq5() {ustd_irq_master(5);}
+void G_INT_ATTR ustd_irq6() {ustd_irq_master(6);}
+void G_INT_ATTR ustd_irq7() {ustd_irq_master(7);}
+void G_INT_ATTR ustd_irq8() {ustd_irq_master(8);}
+void G_INT_ATTR ustd_irq9() {ustd_irq_master(9);}
 
-void ICACHE_RAM_ATTR (*ustd_irq_table[USTD_MAX_IRQS])()={ustd_irq0, ustd_irq1,ustd_irq2,ustd_irq3,ustd_irq4,ustd_irq5,ustd_irq6,ustd_irq7,ustd_irq8, ustd_irq9};
+void (*ustd_irq_table[USTD_MAX_IRQS])()={ustd_irq0, ustd_irq1,ustd_irq2,ustd_irq3,ustd_irq4,ustd_irq5,ustd_irq6,ustd_irq7,ustd_irq8, ustd_irq9};
 
 unsigned long getResetIrqCount(uint8_t irqno) {
     unsigned long count=(unsigned long)-1;
@@ -50,7 +54,6 @@ unsigned long getResetIrqCount(uint8_t irqno) {
     interrupts();
     return count;
 }
-#endif
 
 class Switch {
   public:
@@ -67,6 +70,7 @@ class Switch {
     unsigned long debounceTimeMs;
 
     bool useInterrupt=false;
+    uint8_t ipin=255;
     unsigned long lastChangeMs = 0;
     int physicalState=-1;
     int logicalState=-1;
@@ -86,31 +90,12 @@ class Switch {
     Switch(String name, uint8_t port, Mode mode = Mode::Default, bool activeLogic = false, String customTopic = "", int8_t interruptIndex=-1, unsigned long debounceTimeMs = 0)
         : name(name), port(port), mode(mode), activeLogic(activeLogic),
           customTopic(customTopic), interruptIndex(interruptIndex), debounceTimeMs(debounceTimeMs) {
-              #ifndef __ESP32__
-              if (interruptIndex>=0 && interruptIndex<USTD_MAX_IRQS) {
-                  switch (mode) {
-                        case Mode::Rising:
-                            attachInterrupt(digitalPinToInterrupt(port), ustd_irq_table[interruptIndex], RISING);
-                            break;
-                        case Mode::Falling:
-                            attachInterrupt(digitalPinToInterrupt(port), ustd_irq_table[interruptIndex], FALLING);
-                            break;
-                        default:
-                            attachInterrupt(digitalPinToInterrupt(port), ustd_irq_table[interruptIndex], CHANGE);
-                            break;
-                  }
-                  debounceMs[interruptIndex]=debounceTimeMs;
-                  useInterrupt=true;
-              }
-              #endif
-              setMode(mode);
+        setMode(mode);
     }
 
     ~Switch() {
-        #ifndef __ESP32__
         if (useInterrupt)
-            detachInterrupt(digitalPinToInterrupt(port));
-        #endif
+            detachInterrupt(ipin);
     }
 
     void setDebounce(long ms) {
@@ -143,6 +128,28 @@ class Switch {
         pSched = _pSched;
 
         pinMode(port, INPUT_PULLUP);
+
+        if (interruptIndex>=0 && interruptIndex<USTD_MAX_IRQS) {
+            #ifdef __ESP32__
+            ipin=digitalPinToInterrupt(port);
+            #else
+            ipin=digitalPinToInterrupt(port);
+            #endif
+            switch (mode) {
+                case Mode::Falling:
+                    attachInterrupt(ipin, ustd_irq_table[interruptIndex], FALLING);
+                    break;
+                case Mode::Rising:
+                    attachInterrupt(ipin, ustd_irq_table[interruptIndex], RISING);
+                    break;
+                default:
+                    attachInterrupt(ipin, ustd_irq_table[interruptIndex], CHANGE);
+                    break;
+            }
+            debounceMs[interruptIndex]=debounceTimeMs;
+            useInterrupt=true;
+        }
+
         readState();
 
         // give a c++11 lambda as callback scheduler task registration of
@@ -323,13 +330,12 @@ class Switch {
 
     void readState() {
         if (useInterrupt) {
-            #ifndef __ESP32__
             unsigned long count=getResetIrqCount(interruptIndex);
             int curstate = digitalRead(port);
             char msg[32];
             if (count) {
                 sprintf(msg,"%ld",count);
-                pSched->publish("mySwitch/switch/irqcount/0",msg);
+                pSched->publish(name+"/switch/irqcount/0",msg);
                 if (curstate==HIGH) curstate=true;
                 else curstate=false;
                 switch (mode) {
@@ -369,7 +375,6 @@ class Switch {
                         break;
                 }
             }
-            #endif
         } else {
             int newstate = digitalRead(port);
             if (newstate==HIGH) newstate=true;

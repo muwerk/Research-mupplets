@@ -29,7 +29,7 @@ For ESP8266 and ESP32, it is recommended to use [munet](https://github.com/muwer
 | mp3.h       | MP3 player | OpenSmart v1.1 [OpenSmart MP3 player](https://www.aliexpress.com/item/32782488336.html?spm=a2g0o.productlist.0.0.5a0e7823gMVTMa&algo_pvid=8fd3c7b0-09a7-4e95-bf8e-f3d37bd18300&algo_expid=8fd3c7b0-09a7-4e95-bf8e-f3d37bd18300-0&btsid=d8c8aa30-444b-4212-ba19-2decc528c422&ws_ab_test=searchweb0_0,searchweb201602_6,searchweb201603_52) | | ESP, ESP32
 | neocandle.h |
 | pressure.h  | Air pressure and temperature sensor | BMP085 | [Adafruit BMP085 unified](https://github.com/adafruit/Adafruit_BMP085_Unified), [Adafruit unified sensor](https://github.com/adafruit/Adafruit_Sensor) | ESP
-| switch.h    | Button | any push button |   | ESP, ESP32 (no intr.) | yes
+| switch.h    | Button | any push button |   | ESP, ESP32 | yes
 | i2c_pwm.h   | 16 channel PWM via I2C | [PCA9685 based I2C 16 channel board](https://www.adafruit.com/products/815) | https://github.com/adafruit/Adafruit-PWM-Servo-Driver-Library | ESP
 
 **Note**: [Home Assistent](https://www.home-assistant.io), if support is `yes`, the device can be auto-registered using [Home Assistant's MQTT discovery functionality](https://www.home-assistant.io/docs/mqtt/discovery/) by calling `myMupplet.registerHomeAssistant("muppletFriendlyName");`

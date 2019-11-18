@@ -32,7 +32,7 @@ For ESP8266 and ESP32, it is recommended to use [munet](https://github.com/muwer
 | switch.h    | Button | any push button |   | ESP, ESP32 (no intr.) | yes
 | i2c_pwm.h   | 16 channel PWM via I2C | [PCA9685 based I2C 16 channel board](https://www.adafruit.com/products/815) | https://github.com/adafruit/Adafruit-PWM-Servo-Driver-Library | ESP
 
-**Note**: Home Assistent, if support is `yes`, the device can be auto-registered using Home Assistant's MQTT discovery functionality by calling `myMupplet.registerHomeAssistant("muppletFriendlyName");`
+**Note**: [Home Assistent](https://www.home-assistant.io), if support is `yes`, the device can be auto-registered using [Home Assistant's MQTT discovery functionality](https://www.home-assistant.io/docs/mqtt/discovery/) by calling `myMupplet.registerHomeAssistant("muppletFriendlyName");`
 
 ## Application notes
 
@@ -115,6 +115,9 @@ void setup() {
             // soft pwm pulsing in 1000ms intervals
             // same can be accomplished by publishing
             // topic myLed/led/setmode  msg "wave 1000"
+    // OPTIONAL: Register with Home Assistant, led name is 'toy led'.
+    led.registerHomeAssistant("Toy led");
+
 ```
 
 * See [mupplet led and switch example](https://github.com/muwerk/Examples/tree/master/led) for a complete example.
@@ -174,6 +177,8 @@ void setup() {
     toggleswitch.begin(&sched);
     toggleswitch.setMode(ustd::Mode::Flipflop);
     sched.subscribe(tID, "mySwitch/switch/state", switch_messages);
+    // Optional: register with Home Assistant:
+    toggleswitch.registerHomeAssistant("Super switch");
 }
 ```
 

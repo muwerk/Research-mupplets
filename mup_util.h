@@ -34,7 +34,11 @@ double parseUnitLevel(String msg) {
                     buff[strlen(buff) - 1] = 0;
                     br = atoi((char *)buff) / 100.0;
                 } else {
-                    br = atof((char *)buff);
+                    if (strchr((char *)buff,'.')) {
+                        br = atof((char *)buff);
+                    } else {
+                        br = atoi((char *)buff) / 100.0;
+                    }
                 }
             }
         }

@@ -85,41 +85,43 @@ class Led {
             String HAdiscoEntityDef="";
             char cmsg[180];
             char *p1=nullptr;
-            memset(cmsg,0,180);
+            memset(cmsg,0,180);   // msg is format:   [dis]connected,prefix/hostname
             strncpy(cmsg,msg.c_str(),179);
             p1=strchr(cmsg,',');
             if (p1) {
                 *p1=0;
                 ++p1;
             }
-            if (p1) HAmuPrefix=p1;
+            if (p1) HAmuPrefix=p1;  // prefix/hostname, e.g. omu/myhost
             char cmd[64];
             memset(cmd,0,64);
             strncpy(cmd,HAmuPrefix.c_str(),63);
             String HAcmd="";
-            char *p0=strchr(cmd,'/');
+            char *p0=strchr(cmd,'/');  // get hostname from mqtt message, e.g. myhost
             if (p0) {
                 ++p0;
                 HAcmd=String(p0);
             }
             if (!strcmp(cmsg,"connected")) {
                 if (p1) HAmuPrefix=p1;
-                String HAcommandTopic=HAcmd+"/"+name+"/switch/set";
-                String HAstateTopic=HAmuPrefix+"/"+name+"/switch/state";
-                String HAcommandBrTopic=HAcmd+"/"+name+"/led/brightness/set";
-                String HAstateBrTopic=HAmuPrefix+"/"+name+"/led/brightness";
-                HAdiscoTopic="!"+HAprefix+"/switch/"+name+"/config";
+                String HAcommandTopic=HAcmd+"/"+name+"/led/set";
+                String HAstateTopic=HAmuPrefix+"/"+name+"/led/state";
+                String HAcommandBrTopic=HAcmd+"/"+name+"/led/set";
+                String HAstateBrTopic=HAmuPrefix+"/"+name+"/led/unitluminosity";
+                HAdiscoTopic="!"+HAprefix+"/light/"+name+"/config";
                 HAdiscoEntityDef="{\"state_topic\":\""+HAstateTopic+"\","+
                         "\"command_topic\":\""+HAcommandTopic+"\","+
-                        "{\"brightness_state_topic\":\""+HAstateBrTopic+"\","+
+                        "\"brightness_state_topic\":\""+HAstateBrTopic+"\","+
+                        "\"brightness_scale\":\"100\","+
+                        "\"brightness_value_template\":\"{{ value | float * 100 | round(0) }}\","+
                         "\"brightness_command_topic\":\""+HAcommandBrTopic+"\","+
                         "\"name\":\""+HAname+"\","+
-                        "\"state_on\":\"on\","+
-                        "\"state_off\":\"off\","+
+                        "\"on_command_type\":\"brightness\","+
                         "\"payload_on\":\"on\","+
                         "\"payload_off\":\"off\""+
                                             "}";
                 pSched->publish(HAdiscoTopic,HAdiscoEntityDef);
+                publishState();
             }
         }
     }
@@ -131,7 +133,10 @@ class Led {
         HAprefix=homeAssistantDiscoveryPrefix;
         pSched->publish("mqtt/state/get");
     }
+
     void setOn() {
+        this->state=true;
+        brightlevel=1.0;
         if (activeLogic) {
             #ifdef __ESP32__
             ledcWrite(channel,pwmrange);
@@ -147,6 +152,8 @@ class Led {
         }
     }
     void setOff() {
+        brightlevel=0.0;
+        this->state=false;
         if (!activeLogic) {
             #ifdef __ESP32__
             ledcWrite(channel,pwmrange);
@@ -195,6 +202,19 @@ class Led {
         oPeriod=(millis()+uPhase)%interval;
     }
 
+    void publishState() {
+        if (brightlevel>0.0) {
+            pSched->publish(name + "/led/state", "on");
+            this->state=true;
+        } else {
+            pSched->publish(name + "/led/state", "off");
+            this->state=false;
+        }
+        char buf[32];
+        sprintf(buf, "%5.3f", brightlevel);
+        pSched->publish(name + "/led/unitluminosity", buf);
+    }
+
     void brightness(double bright, bool _automatic=false) {
         uint16_t bri;
         
@@ -223,10 +243,8 @@ class Led {
         #else
         analogWrite(port, bri);
         #endif
-        char buf[32];
-        sprintf(buf, "%5.3f", bright);
         if (!_automatic) {
-            pSched->publish(name + "/led/unitluminosity", buf);
+            publishState();
         }
     }
 
@@ -342,9 +360,7 @@ class Led {
             }
         }
         if (topic == name + "/led/unitluminosity/get") {
-            char buf[32];
-            sprintf(buf, "%5.3f", brightlevel);
-            pSched->publish(name + "/led/unitluminosity", buf);
+            publishState();
         }
     };
 };  // Led

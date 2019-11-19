@@ -23,7 +23,7 @@ For ESP8266 and ESP32, it is recommended to use [munet](https://github.com/muwer
 | airqual.h   | Air quality sensor CO<sub>2</sub>, VOC | [CCS811](https://www.sparkfun.com/products/14193) | [SparkFun CCS811 Arduino Library](https://github.com/sparkfun/SparkFun_CCS811_Arduino_Library) | ESP
 | clock7seg.h | Simple 4 digit clock with timer | [4x 7segment display with HT16K33](https://www.adafruit.com/product/881) | [Adafruit GFX Library](https://github.com/adafruit/Adafruit-GFX-Library) [Adafruit LED Backpack Library](https://github.com/adafruit/Adafruit_LED_Backpack) | ESP
 | dhtxx.h     | Temperature, humidity sensor | DHT 11, DHT 21, DHT 22 | [DHT sensor library](https://github.com/adafruit/DHT-sensor-library), [Adafruit unified sensor](https://github.com/adafruit/Adafruit_Sensor) | ESP
-| ldr.h       | Luminosity | LDR connected to analog port | | ESP
+| ldr.h       | Luminosity | LDR connected to analog port | | ESP,ESP32
 | led.h       | LED diode | Digital out or PWM connected to led | | ESP, ESP32 | yes
 | lumin.h     |
 | mp3.h       | MP3 player | OpenSmart v1.1 [OpenSmart MP3 player](https://www.aliexpress.com/item/32782488336.html?spm=a2g0o.productlist.0.0.5a0e7823gMVTMa&algo_pvid=8fd3c7b0-09a7-4e95-bf8e-f3d37bd18300&algo_expid=8fd3c7b0-09a7-4e95-bf8e-f3d37bd18300-0&btsid=d8c8aa30-444b-4212-ba19-2decc528c422&ws_ab_test=searchweb0_0,searchweb201602_6,searchweb201603_52) | | ESP, ESP32
@@ -70,6 +70,9 @@ void setup() {
    sched.subscribe(tID, "myLDR/unitluminosity", task0);
 }
 ```
+
+Note: For ESP32 make sure to use a port connected to ADC #1, since ADC #2 conflicts with Wifi and ports connected to ADC #2 cannot be used concurrently with Wifi!
+
 ### led.h
 
 Allows to set LEDs via digital logic or PWM brightness.

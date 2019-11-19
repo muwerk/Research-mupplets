@@ -11,6 +11,11 @@ class Ldr {
     String name;
     uint8_t port;
     double ldrvalue;
+#ifdef __ESP32__
+    double adRange=4096.0; // 12 bit default
+#else
+    double adRange=1024.0; // 10 bit default
+#endif
     ustd::sensorprocessor ldrsens = ustd::sensorprocessor(4, 600, 0.005);
 
   public:
@@ -43,7 +48,7 @@ class Ldr {
 
   private:
     void loop() {
-        double val = analogRead(port) / 1023.0;
+        double val = analogRead(port) / (adRange-1.0);
         if (ldrsens.filter(&val)) {
             ldrvalue = val;
             char buf[32];

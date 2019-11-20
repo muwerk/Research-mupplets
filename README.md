@@ -2,6 +2,10 @@
 
 **Note:** This is very much a work-in-progress. Interface and messages are NOT stable or final.
 
+## History
+
+* 2019-11-20: v.0.2.0 Breaking changes to MQTT messages formats and APIs for greater consistency: `led`->`light`, `luminosity`->`illuminance`, `/sensor/` prefix for sensor data, led-brightness `luminance`->`brightness`.
+
 **mu**werk a**pplets**; mupplets: functional units that support specific hardware or reusable applications.
 
 **mupplets** use muwerks MQTT-style messaging to pass information between each other on the same device. If connected to an MQTT-server via munet, all functionallity is externally available through an MQTT server such as Mosquitto.

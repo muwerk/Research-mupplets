@@ -88,7 +88,7 @@ Hardware: 330Ω resistor, led.
 
 | topic | message body | comment
 | ----- | ------------ | -------
-| `<mupplet-name>/light/unitbrightness` | normalized illuminance [0.0-1.0] | `0.34`: Float value encoded as string. Not send on automatic changes (e.g. pulse mode)
+| `<mupplet-name>/light/unitbrightness` | normalized brightness [0.0-1.0] | `0.34`: Float value encoded as string. Not send on automatic changes (e.g. pulse mode)
 | `<mupplet-name>/light/state` | `on` or `off` | current led state (`on` is not sent on pwm intermediate values)
 
 #### Message received by led mupplet:

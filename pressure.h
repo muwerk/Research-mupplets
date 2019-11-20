@@ -15,11 +15,11 @@ class Pressure {
     Scheduler *pSched;
     int tID;
     String name;
-    double pressureTempVal;
-    double pressureVal;
+    double temperatureSensorVal;
+    double pressureSensorVal;
     bool bActive = false;
-    ustd::sensorprocessor pressureTemp = ustd::sensorprocessor(4, 600, 0.1);
-    ustd::sensorprocessor pressure = ustd::sensorprocessor(4, 600, 1.0);
+    ustd::sensorprocessor temperatureSensor = ustd::sensorprocessor(4, 600, 0.1);
+    ustd::sensorprocessor pressureSensor = ustd::sensorprocessor(4, 600, 1.0);
     Adafruit_BMP085_Unified *pPressure;
 
     Pressure(String name) : name(name) {
@@ -30,11 +30,11 @@ class Pressure {
     }
 
     double getTemp() {
-        return pressureTempVal;
+        return temperatureSensorVal;
     }
 
     double getPressure() {
-        return pressureVal;
+        return pressureSensorVal;
     }
 
     void begin(Scheduler *_pSched) {
@@ -61,14 +61,14 @@ class Pressure {
 
     void publishPressure() {
         char buf[32];
-        sprintf(buf, "%5.1f", pressureVal);
+        sprintf(buf, "%5.1f", pressureSensorVal);
         pSched->publish(name + "/sensor/pressure", buf);
 
     }
 
-    void publishPressureTemperature() {
+    void publishTemperature() {
         char buf[32];
-        sprintf(buf, "%5.1f", pressureTempVal);
+        sprintf(buf, "%5.1f", temperatureSensorVal);
         pSched->publish(name + "/sensor/temperature", buf);
 
     }
@@ -85,12 +85,12 @@ class Pressure {
                 pPressure->getTemperature(&tf);
                 t = (double)tf;
 
-                if (pressureTemp.filter(&t)) {
-                    pressureTempVal = t;
-                    publishPressureTemperature();
+                if (temperatureSensor.filter(&t)) {
+                    temperatureSensorVal = t;
+                    publishTemperature();
                 }
-                if (pressure.filter(&p)) {
-                    pressureVal = p;
+                if (pressureSensor.filter(&p)) {
+                    pressureSensorVal = p;
                     publishPressure();
                 }
             }
@@ -101,7 +101,7 @@ class Pressure {
 
     void subsMsg(String topic, String msg, String originator) {
         if (topic == name + "/sensor/temperature/get") {
-            publishPressureTemperature();
+            publishTemperature();
         }
         if (topic == name + "/sensor/pressure/get") {
             publishPressure();

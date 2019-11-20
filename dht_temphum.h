@@ -14,10 +14,10 @@ class Dht {
     String name;
     uint8_t port;
     uint8_t type;
-    double dhtTempVal;
-    double dhtHumidVal;
-    ustd::sensorprocessor dhtTemp = ustd::sensorprocessor(4, 600, 0.1);
-    ustd::sensorprocessor dhtHumid = ustd::sensorprocessor(4, 600, 1.0);
+    double temperatureSensorVal;
+    double humiditySensorVal;
+    ustd::sensorprocessor temperatureSensor = ustd::sensorprocessor(4, 600, 0.1);
+    ustd::sensorprocessor humiditySensor = ustd::sensorprocessor(4, 600, 1.0);
     DHT *pDht;
 
     Dht(String name, uint8_t port, uint8_t type = DHT22)
@@ -31,11 +31,11 @@ class Dht {
     }
 
     double getTemp() {
-        return dhtTempVal;
+        return temperatureSensorVal;
     }
 
     double getHumid() {
-        return dhtHumidVal;
+        return humiditySensorVal;
     }
 
     void begin(Scheduler *_pSched) {
@@ -60,28 +60,29 @@ class Dht {
 
     void publishTemperature() {
         char buf[32];
-        sprintf(buf, "%5.1f", dhtTempVal);
+        sprintf(buf, "%5.1f", temperatureSensorVal);
         pSched->publish(name + "/sensor/temperature", buf);
     }
 
     void publishHumidity() {
         char buf[32];
-        sprintf(buf, "%5.1f", dhtHumidVal);
+        sprintf(buf, "%5.1f", humiditySensorVal);
         pSched->publish(name + "/sensor/humidity", buf);
     }
+    
     void loop() {
         double t = pDht->readTemperature();
         double h = pDht->readHumidity();
 
         if (!isnan(t)) {
-            if (dhtTemp.filter(&t)) {
-                dhtTempVal = t;
+            if (temperatureSensor.filter(&t)) {
+                temperatureSensorVal = t;
                 publishTemperature();
             }
         }
         if (!isnan(h)) {
-            if (dhtHumid.filter(&h)) {
-                dhtHumidVal = h;
+            if (humiditySensor.filter(&h)) {
+                humiditySensorVal = h;
                 publishHumidity();
             }
         }

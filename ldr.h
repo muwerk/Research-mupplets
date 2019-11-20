@@ -18,7 +18,7 @@ class Ldr {
 #endif
 
   public:
-    ustd::sensorprocessor ldrsens = ustd::sensorprocessor(4, 600, 0.005);
+    ustd::sensorprocessor illuminanceSensor = ustd::sensorprocessor(4, 600, 0.005);
     
     Ldr(String name, uint8_t port) : name(name), port(port) {
     }
@@ -56,7 +56,7 @@ class Ldr {
   private:
     void loop() {
         double val = analogRead(port) / (adRange-1.0);
-        if (ldrsens.filter(&val)) {
+        if (illuminanceSensor.filter(&val)) {
             ldrvalue = val;
             publishIlluminance();
         }

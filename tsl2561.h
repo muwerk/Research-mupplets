@@ -17,7 +17,8 @@ class Illuminance {
     double luxvalue = 0.0;
     double unitIlluminanceValue = 0.0;
     double maxLux = 800.0;
-    ustd::sensorprocessor illuminanceSensor = ustd::sensorprocessor(20, 600, 5.0);
+    ustd::sensorprocessor illuminanceSensor = ustd::sensorprocessor(4, 600, 5.0);
+
     Adafruit_TSL2561_Unified *pTsl;
     bool bActive = false;
     tsl2561Gain_t tGain = TSL2561_GAIN_1X;

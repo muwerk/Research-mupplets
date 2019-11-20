@@ -16,9 +16,10 @@ class Ldr {
 #else
     double adRange=1024.0; // 10 bit default
 #endif
-    ustd::sensorprocessor ldrsens = ustd::sensorprocessor(4, 600, 0.005);
 
   public:
+    ustd::sensorprocessor ldrsens = ustd::sensorprocessor(4, 600, 0.005);
+    
     Ldr(String name, uint8_t port) : name(name), port(port) {
     }
 

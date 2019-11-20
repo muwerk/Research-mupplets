@@ -58,13 +58,13 @@ class Dht {
         pSched->subscribe(tID, name + "/sensor/humidity/get", fnall);
     }
 
-    publishTemperature() {
+    void publishTemperature() {
         char buf[32];
         sprintf(buf, "%5.1f", dhtTempVal);
         pSched->publish(name + "/sensor/temperature", buf);
     }
 
-    publishHumidity() {
+    void publishHumidity() {
         char buf[32];
         sprintf(buf, "%5.1f", dhtHumidVal);
         pSched->publish(name + "/sensor/humidity", buf);

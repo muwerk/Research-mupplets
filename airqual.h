@@ -99,13 +99,13 @@ class AirQuality {
         pSched->subscribe(tID, name + "sensor/voc/get", fnall);
     }
 
-    publishCO2() {
+    void publishCO2() {
         char buf[32];
         sprintf(buf, "%5.1f", co2Val);
         pSched->publish(name + "/sensor/co2", buf);
     }
 
-    publishVOC() {
+    void publishVOC() {
         char buf[32];
         sprintf(buf, "%5.1f", vocVal);
         pSched->publish(name + "/sensor/voc", buf);

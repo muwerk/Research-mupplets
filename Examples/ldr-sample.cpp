@@ -11,7 +11,7 @@ ustd::Scheduler sched;
 ustd::Ldr ldr("myLDR",A0);
 
 void task0(String topic, String msg, String originator) {
-    if (topic == "myLDR/unitluminosity") {
+    if (topic == "myLDR/sensor/illuminance") {
 #ifdef USE_SERIAL_DBG
         Serial.print("Lumin: ");
         Serial.prinln(msg);  // String representing float 0.0 .. 1.0
@@ -28,7 +28,7 @@ void setup() {
     tID = sched.add(appLoop, "main");
     ldr.begin(&sched);
 
-    sched.subscribe(tID, "myLDR/unitluminosity", task0);
+    sched.subscribe(tID, "myLDR/sensor/illuminance", task0);
 }
 
 void appLoop() {

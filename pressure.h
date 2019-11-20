@@ -55,21 +55,21 @@ class Pressure {
             [=](String topic, String msg, String originator) {
                 this->subsMsg(topic, msg, originator);
             };
-        pSched->subscribe(tID, name + "/temperature/get", fnall);
-        pSched->subscribe(tID, name + "/pressure/get", fnall);
+        pSched->subscribe(tID, name + "/sensor/temperature/get", fnall);
+        pSched->subscribe(tID, name + "/sensor/pressure/get", fnall);
     }
 
     void publishPressure() {
         char buf[32];
         sprintf(buf, "%5.1f", pressureVal);
-        pSched->publish(name + "/pressure", buf);
+        pSched->publish(name + "/sensor/pressure", buf);
 
     }
 
     void publishPressureTemperature() {
         char buf[32];
         sprintf(buf, "%5.1f", pressureTempVal);
-        pSched->publish(name + "/temperature", buf);
+        pSched->publish(name + "/sensor/temperature", buf);
 
     }
 
@@ -95,15 +95,15 @@ class Pressure {
                 }
             }
         } else {
-            pSched->publish(name+"/error", "hardware not initialized");
+            pSched->publish(name+"/sensor/error", "hardware not initialized");
         }
     }
 
     void subsMsg(String topic, String msg, String originator) {
-        if (topic == name + "/temperature/get") {
+        if (topic == name + "/sensor/temperature/get") {
             publishPressureTemperature();
         }
-        if (topic == name + "/pressure/get") {
+        if (topic == name + "/sensor/pressure/get") {
             publishPressure();
         }
     };

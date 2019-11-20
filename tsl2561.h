@@ -1,4 +1,4 @@
-// lumin.h
+// tsl2561.h
 // Substantial parts of the code are taken from Adafruit's example
 // sensorapi.h included with the TSL2561 library by Adafruit.
 #pragma once
@@ -8,16 +8,16 @@
 #include <Adafruit_TSL2561_U.h>
 
 namespace ustd {
-class Lumin {
+class Illuminance {
   public:
     Scheduler *pSched;
     int tID;
     String name;
     uint8_t port;
-    double luminvalue = 0.0;
-    double unitLuminvalue = 0.0;
-    double maxLuminLux = 800.0;
-    ustd::sensorprocessor luminsens = ustd::sensorprocessor(20, 600, 5.0);
+    double luxvalue = 0.0;
+    double unitIlluminanceValue = 0.0;
+    double maxLux = 800.0;
+    ustd::sensorprocessor illuminanceSensor = ustd::sensorprocessor(20, 600, 5.0);
     Adafruit_TSL2561_Unified *pTsl;
     bool bActive = false;
     tsl2561Gain_t tGain = TSL2561_GAIN_1X;
@@ -25,7 +25,7 @@ class Lumin {
     bool bAutogain = false;
     double amp = 1.0;
 
-    Lumin(String _name, uint8_t _port, String _gain = "16x",
+    Illuminance(String _name, uint8_t _port, String _gain = "16x",
           String _speed = "fast", double _amp = 1.0) {
         name = _name;
         port = _port;
@@ -56,10 +56,10 @@ class Lumin {
         }
     }
 
-    ~Lumin() {
+    ~Illuminance() {
     }
 
-    double calcLumin() {
+    double calcLux() {
         double val = 0.0;
         /* Get a new sensor event */
         sensors_event_t event;
@@ -76,18 +76,18 @@ class Lumin {
             /* If event.light = 0 lux the sensor is probably saturated
                and no reliable data could be generated! */
 #ifdef USE_SERIAL_DBG
-            Serial.println("Luminosity-sensor overload");
+            Serial.println("TSL2561 illuminance-sensor overload");
 #endif
         }
         return val;
     }
 
-    double getLuminosity() {
-        return luminvalue;
+    double getLux() {
+        return luxvalue;
     }
 
-    double getUnitLuminosity() {
-        return unitLuminvalue;
+    double getUnitIlluminance() {
+        return unitIlluminanceValue;
     }
 
     // Taken from Adafruit's sensorapi.ino example
@@ -162,39 +162,39 @@ class Lumin {
                 [=](String topic, String msg, String originator) {
                     this->subsMsg(topic, msg, originator);
                 };
-            pSched->subscribe(tID, name + "/luminosity/#", fnall);
-            pSched->subscribe(tID, name + "/unitluminosity/#", fnall);
+            pSched->subscribe(tID, name + "/sensor/illuminance/#", fnall);
+            pSched->subscribe(tID, name + "/sensor/unitilluminance/#", fnall);
             bActive = true;
         }
     }
 
-    void publishLumin() {
+    void publishIlluminance() {
         char buf[32];
-        sprintf(buf, "%4.0f", luminvalue);
-        pSched->publish(name + "/luminosity", buf);
-        sprintf(buf, "%5.3f", unitLuminvalue);
-        pSched->publish(name + "/unitluminosity", buf);
+        sprintf(buf, "%4.0f", luxvalue);
+        pSched->publish(name + "/sensor/illuminance", buf);
+        sprintf(buf, "%5.3f", unitIlluminanceValue);
+        pSched->publish(name + "/sensor/unitilluminance", buf);
     }
 
     void loop() {
         if (bActive) {
-            double val = calcLumin() * amp;
-            if (luminsens.filter(&val)) {
-                luminvalue = val;
-                unitLuminvalue = val / maxLuminLux;
-                if (unitLuminvalue > 1.0)
-                    unitLuminvalue = 1.0;
-                publishLumin();
+            double val = calcLux() * amp;
+            if (illuminanceSensor.filter(&val)) {
+                luxvalue = val;
+                unitIlluminanceValue = val / maxLux;
+                if (unitIlluminanceValue > 1.0)
+                    unitIlluminanceValue = 1.0;
+                publishIlluminance();
             }
         }
     }
 
     void subsMsg(String topic, String msg, String originator) {
-        if (topic == name + "/luminosity/get" ||
-            topic == name + "/unitluminosity/get") {
-            publishLumin();
+        if (topic == name + "/sensor/illuminance/get" ||
+            topic == name + "/sensor/unitilluminance/get") {
+            publishIlluminance();
         }
     };
-};  // Lumin
+};  // Illuminance
 
 }  // namespace ustd

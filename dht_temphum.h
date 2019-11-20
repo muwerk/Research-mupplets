@@ -54,10 +54,21 @@ class Dht {
             [=](String topic, String msg, String originator) {
                 this->subsMsg(topic, msg, originator);
             };
-        pSched->subscribe(tID, name + "/temperature/get", fnall);
-        pSched->subscribe(tID, name + "/humidity/get", fnall);
+        pSched->subscribe(tID, name + "/sensor/temperature/get", fnall);
+        pSched->subscribe(tID, name + "/sensor/humidity/get", fnall);
     }
 
+    publishTemperature() {
+        char buf[32];
+        sprintf(buf, "%5.1f", dhtTempVal);
+        pSched->publish(name + "/sensor/temperature", buf);
+    }
+
+    publishHumidity() {
+        char buf[32];
+        sprintf(buf, "%5.1f", dhtHumidVal);
+        pSched->publish(name + "/sensor/humidity", buf);
+    }
     void loop() {
         double t = pDht->readTemperature();
         double h = pDht->readHumidity();
@@ -65,31 +76,23 @@ class Dht {
         if (!isnan(t)) {
             if (dhtTemp.filter(&t)) {
                 dhtTempVal = t;
-                char buf[32];
-                sprintf(buf, "%5.1f", dhtTempVal);
-                pSched->publish(name + "/temperature", buf);
+                publishTemperature();
             }
         }
         if (!isnan(h)) {
             if (dhtHumid.filter(&h)) {
                 dhtHumidVal = h;
-                char buf[32];
-                sprintf(buf, "%5.1f", dhtHumidVal);
-                pSched->publish(name + "/humidity", buf);
+                publishHumidity();
             }
         }
     }
 
     void subsMsg(String topic, String msg, String originator) {
         if (topic == name + "/temperature/get") {
-            char buf[32];
-            sprintf(buf, "%5.3f", dhtTempVal);
-            pSched->publish(name + "/temperature", buf);
+            publishTemperature();
         }
         if (topic == name + "/humidity/get") {
-            char buf[32];
-            sprintf(buf, "%5.3f", dhtHumidVal);
-            pSched->publish(name + "/humidity", buf);
+            publishHumidity();
         }
     };
 };  // Dht

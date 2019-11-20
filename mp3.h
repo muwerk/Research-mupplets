@@ -377,7 +377,7 @@ class Mp3PlayerOpenSmart : Mp3PlayerProtocol {
                 sprintf(part," 0x%02x",recBuf[i]);
                 strcat(scratch,part);
             }
-            pSched->publish(topic+"/xmessage", scratch);
+            pSched->publish(topic+"/mediaplayer/xmessage", scratch);
         }
     }
 
@@ -463,7 +463,7 @@ class Mp3Player {
         auto fnall = [=](String topic, String msg, String originator) {
             this->subsMsg(topic, msg, originator);
         };
-        pSched->subscribe(tID, name + "/mp3/#", fnall);
+        pSched->subscribe(tID, name + "/mediaplayer/#", fnall);
 
         mp3prot->begin();
     }
@@ -488,12 +488,12 @@ class Mp3Player {
             checker=0;
             mp3prot->asyncCheckPlayMode();
         }
-        mp3prot->asyncReceive(pSched, name+"/mp3");
+        mp3prot->asyncReceive(pSched, name+"/mediaplayer");
         mp3prot->asyncSend();
     }
 
     void subsMsg(String topic, String msg, String originator) {
-        if (topic == name + "/mp3/track/set") {
+        if (topic == name + "/mediaplayer/track/set") {
             char buf[32];
             memset(buf,0,32);
             strncpy(buf,msg.c_str(),31);
@@ -507,15 +507,15 @@ class Mp3Player {
                 track=atoi(p);
             }
             if ((track!=-1) && (folder!=-1)) {
-                //mp3prot->stop();
+                // mp3prot->stop();
                 mp3prot->playFolderTrack(folder,track);
             }
         }
-        if (topic == name+"/mp3/volume/set") {
+        if (topic == name+"/mediaplayer/volume/set") {
             uint8_t vol=atoi(msg.c_str());
             mp3prot->setVolume(vol);
         }
-        if (topic == name+"/mp3/state/set") {
+        if (topic == name+"/mediaplayer/state/set") {
             if (msg=="stop") mp3prot->stop();
             if (msg=="pause") mp3prot->pause();
             if (msg=="play") mp3prot->play();

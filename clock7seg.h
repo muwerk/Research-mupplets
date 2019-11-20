@@ -124,7 +124,7 @@ class Clock7Seg {
         if (oldIBr != iBr) {
             oldIBr = iBr;
             String sbr = String(iBr);
-            pSched->publish(name + "/ibrightness", sbr);
+            pSched->publish(name + "/light/brightness", sbr);   // XXX: normalize
         }
     }
 

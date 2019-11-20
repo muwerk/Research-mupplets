@@ -23,9 +23,9 @@ For ESP8266 and ESP32, it is recommended to use [munet](https://github.com/muwer
 | airqual.h   | Air quality sensor CO<sub>2</sub>, VOC | [CCS811](https://www.sparkfun.com/products/14193) | [SparkFun CCS811 Arduino Library](https://github.com/sparkfun/SparkFun_CCS811_Arduino_Library) | ESP
 | clock7seg.h | Simple 4 digit clock with timer | [4x 7segment display with HT16K33](https://www.adafruit.com/product/881) | [Adafruit GFX Library](https://github.com/adafruit/Adafruit-GFX-Library) [Adafruit LED Backpack Library](https://github.com/adafruit/Adafruit_LED_Backpack) | ESP
 | dhtxx.h     | Temperature, humidity sensor | DHT 11, DHT 21, DHT 22 | [DHT sensor library](https://github.com/adafruit/DHT-sensor-library), [Adafruit unified sensor](https://github.com/adafruit/Adafruit_Sensor) | ESP
-| ldr.h       | Luminosity | LDR connected to analog port | | ESP, ESP32
+| ldr.h       | Illuminance | LDR connected to analog port | | ESP, ESP32
 | led.h       | LED diode | Digital out or PWM connected to led | | ESP, ESP32 | yes
-| lumin.h     | Luminosity | [Adafruit TSL2561](https://learn.adafruit.com/tsl2561/overview) | Wire, [Adafruit unified sensor](https://github.com/adafruit/Adafruit_Sensor), [Adafruit TSL2561](https://github.com/adafruit/Adafruit_TSL2561) | ESP, ESP32
+| tsl2561.h     | Illuminance | [Adafruit TSL2561](https://learn.adafruit.com/tsl2561/overview) | Wire, [Adafruit unified sensor](https://github.com/adafruit/Adafruit_Sensor), [Adafruit TSL2561](https://github.com/adafruit/Adafruit_TSL2561) | ESP, ESP32
 | mp3.h       | MP3 player | OpenSmart v1.1 [OpenSmart MP3 player](https://www.aliexpress.com/item/32782488336.html?spm=a2g0o.productlist.0.0.5a0e7823gMVTMa&algo_pvid=8fd3c7b0-09a7-4e95-bf8e-f3d37bd18300&algo_expid=8fd3c7b0-09a7-4e95-bf8e-f3d37bd18300-0&btsid=d8c8aa30-444b-4212-ba19-2decc528c422&ws_ab_test=searchweb0_0,searchweb201602_6,searchweb201603_52) | | ESP, ESP32
 | neocandle.h |
 | pressure.h  | Air pressure and temperature sensor | BMP085 | [Adafruit BMP085 unified](https://github.com/adafruit/Adafruit_BMP085_Unified), [Adafruit unified sensor](https://github.com/adafruit/Adafruit_Sensor) | ESP
@@ -38,13 +38,13 @@ For ESP8266 and ESP32, it is recommended to use [munet](https://github.com/muwer
 
 ### ldr.h
 
-The ldr mupplet measures luminosity using a simple analog LDR (light dependent resistor)
+The ldr mupplet measures illuminance using a simple analog LDR (light dependent resistor)
 
 #### Messages sent by ldr mupplet:
 
 | topic | message body | comment
 | ----- | ------------ | -------
-| `<mupplet-name>/unitluminosity` | luminosity [0.0-1.0] | Float value encoded as string
+| `<mupplet-name>/sensor/unitilluminance` | normalized illuminance [0.0-1.0] | Float value encoded as string
 
 
 <img src="https://github.com/muwerk/mupplets/blob/master/Resources/ldr.png" width="30%" height="30%">
@@ -58,8 +58,8 @@ ustd::Scheduler sched;
 ustd::Ldr ldr("myLDR",A0);
 
 void task0(String topic, String msg, String originator) {
-    if (topic == "myLDR/unitluminosity") {
-        Serial.print("Lumin: ");
+    if (topic == "myLDR/sensor/unitilluminance") {
+        Serial.print("Illuminance: ");
         Serial.prinln(msg);  // String float [0.0, ..., 1.0]
     }
 }
@@ -67,7 +67,7 @@ void task0(String topic, String msg, String originator) {
 void setup() {
    ldr.begin(&sched);
 
-   sched.subscribe(tID, "myLDR/unitluminosity", task0);
+   sched.subscribe(tID, "myLDR/sensor/unitilluminance", task0);
 }
 ```
 
@@ -84,15 +84,15 @@ Hardware: 330Ω resistor, led.
 
 | topic | message body | comment
 | ----- | ------------ | -------
-| `<mupplet-name>/led/unitluminosity` | luminosity [0.0-1.0] | `0.34`: Float value encoded as string. Not send on automatic changes (e.g. pulse mode)
-| `<mupplet-name>/led/state` | `on` or `off` | current led state (`on` is not sent on pwm intermediate values)
+| `<mupplet-name>/light/unitbrightness` | normalized illuminance [0.0-1.0] | `0.34`: Float value encoded as string. Not send on automatic changes (e.g. pulse mode)
+| `<mupplet-name>/light/state` | `on` or `off` | current led state (`on` is not sent on pwm intermediate values)
 
 #### Message received by led mupplet:
 
 | topic | message body | comment
 | ----- | ------------ | -------
-| `<mupplet-name>/led/set` | `on`, `off`, `true`, `false`, `pct 34`, `34%`, `0.34` | Led can be set fully on or off with on/true and off/false. A fractional brightness of 0.34 (within interval [0.0, 1.0]) can be sent as either `pct 34`, or `0.34`, or `34%`.
-| `<mupplet-name>/led/mode/set` | `passive`, `pulse <duration_ms>`, `blink <intervall_ms>[,<phase-shift>]`, `pattern <pattern>[,<intervall>[,<phase>]]` or `wave <intervall_ms>[,<phase-shift>]` | Mode passive does no automatic led state changes, `pulse` switches the led on for `<duration_ms>` ms, then led goes back to passive mode. `blink` changes the led state very `interval_ms` on/off, `wave` uses pwm to for soft changes between on and off states. Optional comma-speratated phase [0.0, ..., 1.0] can be added as a phase-shift. Two leds, one with `wave 1000` and one with `wave 1000,0.5` blink inverse. Patterns can be specified as string containing `+`,`-`,`0`..`9` or `r`. `+` is led on during `<intervall>` ms, `-` is off, `0`..`9` brightness-level. An `r` at the end of the pattern repeats the pattern. `"pattern +-+-+-+++-+++-+++-+-+-+---r,100"` lets the board signal SOS.
+| `<mupplet-name>/light/set` | `on`, `off`, `true`, `false`, `pct 34`, `34%`, `0.34` | Led can be set fully on or off with on/true and off/false. A fractional brightness of 0.34 (within interval [0.0, 1.0]) can be sent as either `pct 34`, or `0.34`, or `34%`.
+| `<mupplet-name>/light/mode/set` | `passive`, `pulse <duration_ms>`, `blink <intervall_ms>[,<phase-shift>]`, `pattern <pattern>[,<intervall>[,<phase>]]` or `wave <intervall_ms>[,<phase-shift>]` | Mode passive does no automatic led state changes, `pulse` switches the led on for `<duration_ms>` ms, then led goes back to passive mode. `blink` changes the led state very `interval_ms` on/off, `wave` uses pwm to for soft changes between on and off states. Optional comma-speratated phase [0.0, ..., 1.0] can be added as a phase-shift. Two leds, one with `wave 1000` and one with `wave 1000,0.5` blink inverse. Patterns can be specified as string containing `+`,`-`,`0`..`9` or `r`. `+` is led on during `<intervall>` ms, `-` is off, `0`..`9` brightness-level. An `r` at the end of the pattern repeats the pattern. `"pattern +-+-+-+++-+++-+++-+-+-+---r,100"` lets the board signal SOS.
 
 Example: sending an MQTT message with topic `<led-name>/mode/set` and message `wave 1000` causes the led to softly pulse between on and off every 1000ms.
 
@@ -109,7 +109,7 @@ ustd::Led led("myLed",D5,false,channel);
             // false: led is on when D5 low
             // (inverted logic)
             // Each led for ESP32 needs a unique PWM channel 0..15.
-            // messages are sent/received to myLed/led/...
+            // messages are sent/received to myLed/light/...
 
 void setup() {
 
@@ -117,7 +117,7 @@ void setup() {
     led.setmode(led.Mode::WAVE, 1000);
             // soft pwm pulsing in 1000ms intervals
             // same can be accomplished by publishing
-            // topic myLed/led/setmode  msg "wave 1000"
+            // topic myLed/light/setmode  msg "wave 1000"
     // OPTIONAL: Register with Home Assistant, led name is 'toy led'.
     led.registerHomeAssistant("Toy led");
 
@@ -199,8 +199,8 @@ Hardware: 10kΩ, DHT22 sensor.
 
 | topic | message body | comment
 | ----- | ------------ | -------
-| `<mupplet-name>/temperature` | `<temperature>` | Float, encoded as String, temperature in Celsius. "23.3"
-| `<mupplet-name>/humidity` | `<humidity>` | Float, encoded as String, humidity in percent. "55.6"
+| `<mupplet-name>/sensor/temperature` | `<temperature>` | Float, encoded as String, temperature in Celsius. "23.3"
+| `<mupplet-name>/sensor/humidity` | `<humidity>` | Float, encoded as String, humidity in percent. "55.6"
 
 ### Sample code
 
@@ -211,10 +211,10 @@ ustd::Scheduler sched(10,16,32);
 ustd::Dht dht("myDht",D4);
 
 void sensor_messages(String topic, String msg, String originator) {
-    if (topic == "myDht/temperature") {
+    if (topic == "myDht/sensor/temperature") {
         Serial.println("Temperature: "+msg);
     }
-    if (topic == "myDht/humidity") {
+    if (topic == "myDht/sensor/humidity") {
         Serial.println("Humidity: "+msg);
     }
 }
@@ -224,7 +224,7 @@ void setup() {
     Serial.begin(115200);
     dht.begin(&sched);
 
-    sched.subscribe(tID, "myDht/#", sensor_messages);
+    sched.subscribe(tID, "myDht/sensor/#", sensor_messages);
 }
 ```
 
@@ -301,18 +301,18 @@ Hardware: OpenSmart MP3 player (e.g. AliExpress).
 
 | topic | message body | comment
 | ----- | ------------ | -------
-| `<mupplet-name>/mp3/track/set` | `folder-id`,`track-id` | To play file 01/002-mysong.mp3, message text should contain `1,2`.
-| `<mupplet-name>/mp3/state/set` | `play`,`pause`,`stop` | Stops, pauses or plays current song.
-| `<mupplet-name>/mp3/volume/set` | 0...30  | Sets playback volume to between 0 and 30(max).
+| `<mupplet-name>/mediaplayer/track/set` | `folder-id`,`track-id` | To play file 01/002-mysong.mp3, message text should contain `1,2`.
+| `<mupplet-name>/mediaplayer/state/set` | `play`,`pause`,`stop` | Stops, pauses or plays current song.
+| `<mupplet-name>/mediaplayer/volume/set` | 0...30  | Sets playback volume to between 0 and 30(max).
 
 #### Messages sent by mp3 mupplet:
 
 | topic | message body | comment
 | ----- | ------------ | -------
-| `<mupplet-name>/mp3/volume` | 0...30 | Current playback volume
-| `<mupplet-name>/mp3/storage` | `NONE`,`DISK`,`TF-CARD`,`SPI` | Active storage type
-| `<mupplet-name>/mp3/state` | `STOP`,`PLAY`,`PAUSE`,`FASTFORWARD`,`FASTREWIND`,`PLAYING` | Current player state. State `PLAYING` is not defined in documentation and seems to be followed always by state `PLAY`.
-| `<mupplet-name>/mp3/xmessage` | `hexdump` | Undocumented messages.
+| `<mupplet-name>/mediaplayer/volume` | 0...30 | Current playback volume
+| `<mupplet-name>/mediaplayer/storage` | `NONE`,`DISK`,`TF-CARD`,`SPI` | Active storage type
+| `<mupplet-name>/mediaplayer/state` | `STOP`,`PLAY`,`PAUSE`,`FASTFORWARD`,`FASTREWIND`,`PLAYING` | Current player state. State `PLAYING` is not defined in documentation and seems to be followed always by state `PLAY`.
+| `<mupplet-name>/mediaplayer/xmessage` | `hexdump` | Undocumented messages.
 
 ### Sample code
 

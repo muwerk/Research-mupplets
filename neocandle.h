@@ -133,15 +133,15 @@ class NeoCandle {
             [=](String topic, String msg, String originator) {
                 this->subsMsg(topic, msg, originator);
             };
-        pSched->subscribe(tID, name + "/brightness/set", fnall);
-        pSched->subscribe(tID, "windlevel/set", fnall);
-        pSched->subscribe(tID, name + "/windlevel/set", fnall);
+        pSched->subscribe(tID, name + "/light/brightness/set", fnall);
+        pSched->subscribe(tID, "/light/windlevel/set", fnall);
+        pSched->subscribe(tID, name + "/light/windlevel/set", fnall);
         if (bAutobrightness)
             pSched->subscribe(tID, brightnessTopic, fnall);
         sprintf(buf, "%d", wind);
-        pSched->publish(name + "/windlevel", buf);
+        pSched->publish(name + "/light/windlevel", buf);
         sprintf(buf, "%d", amp);
-        pSched->publish(name + "/brightness", buf);
+        pSched->publish(name + "/light/brightness", buf);
         manualSet = 0;
         bStarted = true;
     }
@@ -222,7 +222,7 @@ class NeoCandle {
                     oldMx = mx;
                     char msg[32];
                     sprintf(msg, "%6.3f", mx);
-                    pSched->publish(name + "/modulator", msg);
+                    pSched->publish(name + "/light/modulator", msg);
                 }
                 cr = ((double)cr * mx);
                 cg = ((double)cg * mx);
@@ -243,7 +243,7 @@ class NeoCandle {
         if (msg == "dummyOn") {
             return;  // Ignore, homebridge hack
         }
-        if (topic == name + "/brightness/set") {
+        if (topic == name + "/light/brightness/set") {
 #ifdef USE_SERIAL_DBG
             Serial.print("Message arrived [");
             Serial.print(topic.c_str());
@@ -259,11 +259,11 @@ class NeoCandle {
             if (amp != amp_old) {
                 char buf[32];
                 sprintf(buf, "%d", amp);
-                pSched->publish(name + "/brightness", buf);
+                pSched->publish(name + "/light/brightness", buf);
                 manualSet = time(nullptr);
             }
         }
-        if (topic == "windlevel/set" || topic == name + "/windlevel/set") {
+        if (topic == "windlevel/set" || topic == name + "/light/windlevel/set") {
 #ifdef USE_SERIAL_DBG
             Serial.print("Message arrived [");
             Serial.print(topic.c_str());
@@ -279,7 +279,7 @@ class NeoCandle {
             if (wind != wind_old) {
                 char buf[32];
                 sprintf(buf, "%d", wind);
-                pSched->publish(name + "/windlevel", buf);
+                pSched->publish(name + "/light/windlevel", buf);
                 manualSet = time(nullptr);
             }
         }

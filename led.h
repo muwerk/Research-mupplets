@@ -70,7 +70,7 @@ class Led {
             [=](String topic, String msg, String originator) {
                 this->subsMsg(topic, msg, originator);
             };
-        pSched->subscribe(tID, name + "/led/#", fnall);
+        pSched->subscribe(tID, name + "/light/#", fnall);
         auto fnmq=
             [=](String topic, String msg, String originator) {
                 this->mqMsg(topic, msg, originator);
@@ -104,10 +104,10 @@ class Led {
             }
             if (!strcmp(cmsg,"connected")) {
                 if (p1) HAmuPrefix=p1;
-                String HAcommandTopic=HAcmd+"/"+name+"/led/set";
-                String HAstateTopic=HAmuPrefix+"/"+name+"/led/state";
-                String HAcommandBrTopic=HAcmd+"/"+name+"/led/set";
-                String HAstateBrTopic=HAmuPrefix+"/"+name+"/led/unitluminosity";
+                String HAcommandTopic=HAcmd+"/"+name+"/light/set";
+                String HAstateTopic=HAmuPrefix+"/"+name+"/light/state";
+                String HAcommandBrTopic=HAcmd+"/"+name+"/light/set";
+                String HAstateBrTopic=HAmuPrefix+"/"+name+"/light/unitbrightness";
                 HAdiscoTopic="!"+HAprefix+"/light/"+name+"/config";
                 HAdiscoEntityDef="{\"state_topic\":\""+HAstateTopic+"\","+
                         "\"command_topic\":\""+HAcommandTopic+"\","+
@@ -176,14 +176,14 @@ class Led {
         if (state) {
             setOn();
             if (!_automatic) {
-                pSched->publish(name + "/led/unitluminosity", "1.0");
-                pSched->publish(name + "/led/state", "on");
+                pSched->publish(name + "/light/unitbrightness", "1.0");
+                pSched->publish(name + "/light/state", "on");
             }
         } else {
             setOff();
             if (!_automatic) {
-                pSched->publish(name + "/led/unitluminosity", "0.0");
-                pSched->publish(name + "/led/state", "off");
+                pSched->publish(name + "/light/unitbrightness", "0.0");
+                pSched->publish(name + "/light/state", "off");
            }
         }
     }
@@ -204,15 +204,15 @@ class Led {
 
     void publishState() {
         if (brightlevel>0.0) {
-            pSched->publish(name + "/led/state", "on");
+            pSched->publish(name + "/light/state", "on");
             this->state=true;
         } else {
-            pSched->publish(name + "/led/state", "off");
+            pSched->publish(name + "/light/state", "off");
             this->state=false;
         }
         char buf[32];
         sprintf(buf, "%5.3f", brightlevel);
-        pSched->publish(name + "/led/unitluminosity", buf);
+        pSched->publish(name + "/light/unitbrightness", buf);
     }
 
     void brightness(double bright, bool _automatic=false) {
@@ -311,12 +311,12 @@ class Led {
         char msgbuf[128];
         memset(msgbuf,0,128);
         strncpy(msgbuf,msg.c_str(),127);
-        if (topic == name + "/led/set") {
+        if (topic == name + "/light/set") {
             double br;
             br = parseUnitLevel(msg);
             brightness(br);
         }
-        if (topic == name+"/led/mode/set") {
+        if (topic == name+"/light/mode/set") {
             char *p=strchr(msgbuf,' ');
             char *p2=nullptr;
             char *p3=nullptr;
@@ -359,7 +359,7 @@ class Led {
                 }
             }
         }
-        if (topic == name + "/led/unitluminosity/get") {
+        if (topic == name + "/light/unitbrightness/get") {
             publishState();
         }
     };

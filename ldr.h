@@ -25,7 +25,13 @@ class Ldr {
     ~Ldr() {
     }
 
-    double getUnitLuminosity() {
+    void publishIlluminance() {
+        char buf[32];
+        sprintf(buf, "%5.3f", ldrvalue);
+        pSched->publish(name + "/sensor/unitilluminance", buf);
+    }
+
+    double getUnitIlluminance() {
         return ldrvalue;
     }
 
@@ -43,7 +49,7 @@ class Ldr {
             [=](String topic, String msg, String originator) {
                 this->subsMsg(topic, msg, originator);
             };
-        pSched->subscribe(tID, name + "/unitluminosity/#", fnall);
+        pSched->subscribe(tID, name + "/sensor/unitilluminance/#", fnall);
     }
 
   private:
@@ -51,17 +57,13 @@ class Ldr {
         double val = analogRead(port) / (adRange-1.0);
         if (ldrsens.filter(&val)) {
             ldrvalue = val;
-            char buf[32];
-            sprintf(buf, "%5.3f", ldrvalue);
-            pSched->publish(name + "/unitluminosity", buf);
+            publishIlluminance();
         }
     }
 
     void subsMsg(String topic, String msg, String originator) {
-        if (topic == name + "/unitluminosity/get") {
-            char buf[32];
-            sprintf(buf, "%5.3f", ldrvalue);
-            pSched->publish(name + "/unitluminosity", buf);
+        if (topic == name + "/sensor/unitilluminance/get") {
+            publishIlluminance();
         }
     };
 };  // Ldr

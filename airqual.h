@@ -95,8 +95,20 @@ class AirQuality {
             [=](String topic, String msg, String originator) {
                 this->subsMsg(topic, msg, originator);
             };
-        pSched->subscribe(tID, name + "/co2/get", fnall);
-        pSched->subscribe(tID, name + "/voc/get", fnall);
+        pSched->subscribe(tID, name + "sensor/co2/get", fnall);
+        pSched->subscribe(tID, name + "sensor/voc/get", fnall);
+    }
+
+    publishCO2() {
+        char buf[32];
+        sprintf(buf, "%5.1f", co2Val);
+        pSched->publish(name + "/sensor/co2", buf);
+    }
+
+    publishVOC() {
+        char buf[32];
+        sprintf(buf, "%5.1f", vocVal);
+        pSched->publish(name + "/sensor/voc", buf);
     }
 
     void loop() {
@@ -117,15 +129,11 @@ class AirQuality {
 #endif
                 if (co2.filter(&c)) {
                     co2Val = c;
-                    char buf[32];
-                    sprintf(buf, "%5.1f", co2Val);
-                    pSched->publish(name + "/co2", buf);
+                    publishCO2();
                 }
                 if (voc.filter(&v)) {
                     vocVal = v;
-                    char buf[32];
-                    sprintf(buf, "%5.1f", vocVal);
-                    pSched->publish(name + "/voc", buf);
+                    publishVOC();
                 }
             } else {
 #ifdef USE_SERIAL_DBG
@@ -143,15 +151,11 @@ class AirQuality {
     }
 
     void subsMsg(String topic, String msg, String originator) {
-        if (topic == name + "/co2/get") {
-            char buf[32];
-            sprintf(buf, "%5.3f", co2Val);
-            pSched->publish(name + "/co2", buf);
+        if (topic == name + "/sensor/co2/get") {
+            publishCO2();
         }
-        if (topic == name + "/voc/get") {
-            char buf[32];
-            sprintf(buf, "%5.3f", vocVal);
-            pSched->publish(name + "/voc", buf);
+        if (topic == name + "/sensor/voc/get") {
+            publishVOC();
         }
     };
 };  // AirQuality

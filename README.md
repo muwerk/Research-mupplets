@@ -72,6 +72,7 @@ void setup() {
    ldr.begin(&sched);
 
    sched.subscribe(tID, "myLDR/sensor/unitilluminance", task0);
+   ldr.registerHomeAssistant("Living Illuminance");  // Optional auto-discovery for Home Assistant
 }
 ```
 

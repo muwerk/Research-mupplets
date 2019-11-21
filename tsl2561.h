@@ -26,6 +26,10 @@ class Illuminance {
     bool bAutogain = false;
     double amp = 1.0;
 
+    bool useHA=false;
+    String HAname="";
+    String HAprefix="";
+
     Illuminance(String _name, uint8_t _port, String _gain = "16x",
           String _speed = "fast", double _amp = 1.0) {
         name = _name;
@@ -166,7 +170,63 @@ class Illuminance {
             pSched->subscribe(tID, name + "/sensor/illuminance/#", fnall);
             pSched->subscribe(tID, name + "/sensor/unitilluminance/#", fnall);
             bActive = true;
+       pSched->subscribe(tID, name + "/sensor/unitilluminance/#", fnall);
+        auto fnmq=
+            [=](String topic, String msg, String originator) {
+                this->mqMsg(topic, msg, originator);
+            };
+        pSched->subscribe(tID, "mqtt/state", fnmq);
         }
+    }
+
+    void mqMsg( String topic, String msg, String originator) {
+        if (useHA) {
+            String HAmuPrefix="";
+            String HAdiscoTopic="";
+            String HAdiscoEntityDef="";
+            char cmsg[180];
+            char *p1=nullptr;
+            memset(cmsg,0,180);   // msg is format:   [dis]connected,prefix/hostname
+            strncpy(cmsg,msg.c_str(),179);
+            p1=strchr(cmsg,',');
+            if (p1) {
+                *p1=0;
+                ++p1;
+            }
+            if (p1) HAmuPrefix=p1;  // prefix/hostname, e.g. omu/myhost
+            char cmd[64];
+            memset(cmd,0,64);
+            strncpy(cmd,HAmuPrefix.c_str(),63);
+            String HAcmd="";
+            char *p0=strchr(cmd,'/');  // get hostname from mqtt message, e.g. myhost
+            if (p0) {
+                ++p0;
+                HAcmd=String(p0);
+            }
+            if (!strcmp(cmsg,"connected")) {
+                if (p1) HAmuPrefix=p1;
+                String HAstateTopic=HAmuPrefix+"/"+name+"/sensor/unitilluminance";
+                HAdiscoTopic="!"+HAprefix+"/sensor/"+name+"/config";
+                HAdiscoEntityDef="{\"state_topic\":\""+HAstateTopic+"\","+
+                        "\"name\":\""+HAname+"\","+
+                        "\"value_template\":\"{{ value | float }}\","+
+                        "\"unit_of_measurement\":\"[0..1]\","+
+                        "\"expire_after\": 180,"+
+                        "\"icon\":\"mdi:brightness-6\","+
+                        "\"device_class\":\"illuminance\""+
+                                            "}";
+                pSched->publish(HAdiscoTopic,HAdiscoEntityDef);
+                publishIlluminance();
+            }
+        }
+    }
+
+    void registerHomeAssistant(String homeAssistantFriendlyName="", String homeAssistantDiscoveryPrefix="homeassistant") {
+        if (homeAssistantFriendlyName=="") homeAssistantFriendlyName=name;
+        useHA=true;
+        HAname=homeAssistantFriendlyName;
+        HAprefix=homeAssistantDiscoveryPrefix;
+        pSched->publish("mqtt/state/get");
     }
 
     void publishIlluminance() {

@@ -211,7 +211,7 @@ class Illuminance {
                         "\"name\":\""+HAname+"\","+
                         "\"value_template\":\"{{ value | float }}\","+
                         "\"unit_of_measurement\":\"[0..1]\","+
-                        "\"expire_after\": 180,"+
+                        "\"expire_after\": 1800,"+
                         "\"icon\":\"mdi:brightness-6\","+
                         "\"device_class\":\"illuminance\""+
                                             "}";

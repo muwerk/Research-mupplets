@@ -54,7 +54,7 @@ class AirQuality {
             Serial.print(errmsg);
             break;
         case CCS811Core::SENSOR_I2C_ERROR:
-            errmsg="I2C_ERROR (can be caused by missing delay in .begin() when used with ESP-chips";
+            errmsg="I2C_ERROR (did you put WAK low? Required!) See code for more.";
             Serial.println(errmsg);
             Serial.println("You need a patch: "
                            "https://github.com/sparkfun/SparkFun_CCS811_Arduino_Library/issues/6");

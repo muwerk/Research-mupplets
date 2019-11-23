@@ -266,7 +266,7 @@ class Illuminance {
 
                     subDevNo="2";
                     HAstateTopic=HAmuPrefix+"/"+name+"/sensor/illuminance";
-                    HAattrTopic2=name+"/sensor/unitilluminance/attribs";
+                    HAattrTopic2=name+"/sensor/illuminance/attribs";
                     HAdiscoTopic="!"+HAprefix+"/sensor/"+subDevNo+"/"+name+"/config";
                     HAdiscoEntityDef="{\"state_topic\":\""+HAstateTopic+"\","+
                             "\"json_attributes_topic\":\""+HAmuPrefix+"/"+HAattrTopic2+"\","+

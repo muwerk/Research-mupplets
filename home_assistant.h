@@ -32,6 +32,9 @@ class HomeAssistant {
     int nrLights=0;
     ustd::array<String> lightsAttribs;
 
+    int nrSwitches=0;
+    ustd::array<String> switchesAttribs;
+
     HomeAssistant(String _devName, int _tID, String homeAssistantFriendlyName="", String homeAssistantDiscoveryPrefix="homeassistant") {
         if (homeAssistantFriendlyName=="") HAname=_devName;
         else HAname=homeAssistantFriendlyName;
@@ -68,6 +71,10 @@ class HomeAssistant {
         ++nrLights;
     }
 
+    void addSwitch() {
+        ++nrSwitches;
+    }
+
     void publishAttrib(String attrTopic) {
         String attrib="{\"Rssi\":"+String(rssiVal)+","+
                        "\"Mac\": \""+macAddress+"\","+
@@ -85,6 +92,9 @@ class HomeAssistant {
         }
         for (unsigned int i=0; i<lightsAttribs.length(); i++) {
             publishAttrib(lightsAttribs[i]);
+        }
+        for (unsigned int i=0; i<switchesAttribs.length(); i++) {
+            publishAttrib(switchesAttribs[i]);
         }
     }
  
@@ -175,6 +185,28 @@ class HomeAssistant {
                                 "\"payload_off\":\"off\""+
                                                     "}";
                         lightsAttribs.add(HAattrTopic);
+                        pSched->publish(HAdiscoTopic,HAdiscoEntityDef);
+                    }
+
+                    // switches
+                   for (int i=0; i<nrLights; i++) {
+                        int id=i+1;
+                        String subDevNo=String(id);
+                        String HAcommandTopic=HAcmd+"/"+devName+"/switch/set";
+                        String HAstateTopic=HAmuPrefix+"/"+devName+"/switch/state";
+                        String HAattrTopic=devName+"/switch/attribs";
+                        String HAdiscoTopic="!"+HAprefix+"/switch/"+subDevNo+"/"+devName+"/config";
+                        String HAdiscoEntityDef="{\"state_topic\":\""+HAstateTopic+"\","+
+                                "\"name\":\""+HAname+"\","+
+                                "\"unique_id\":\""+macAddress+"-SW"+subDevNo+"\","+
+                                "\"command_topic\":\""+HAcommandTopic+"\","+
+                                "\"json_attributes_topic\":\""+HAmuPrefix+"/"+HAattrTopic+"\","+
+                                "\"state_on\":\"on\","+
+                                "\"state_off\":\"off\","+
+                                "\"payload_on\":\"on\","+
+                                "\"payload_off\":\"off\""+
+                                                    "}";
+                        switchesAttribs.add(HAattrTopic);
                         pSched->publish(HAdiscoTopic,HAdiscoEntityDef);
                     }
                 }

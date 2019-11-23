@@ -165,9 +165,9 @@ class Switch {
     }
 
 
-    void registerHomeAssistant(String homeAssistantFriendlyName="", String homeAssistantDiscoveryPrefix="homeassistant") {
+    void registerHomeAssistant(String homeAssistantFriendlyName, String homeAssistantDiscoveryPrefix="homeassistant") {
         pHA=new HomeAssistant(name, tID, homeAssistantFriendlyName, homeAssistantDiscoveryPrefix);
-        pHA->addSwitch();
+        pHA->addSwitch(name, homeAssistantFriendlyName);
         pHA->begin(pSched);
     }
 

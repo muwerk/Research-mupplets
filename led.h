@@ -71,9 +71,9 @@ class Led {
         pSched->subscribe(tID, name + "/light/#", fnall);
     }
 
-    void registerHomeAssistant(String homeAssistantFriendlyName="", String homeAssistantDiscoveryPrefix="homeassistant") {
+    void registerHomeAssistant(String homeAssistantFriendlyName, String homeAssistantDiscoveryPrefix="homeassistant") {
         pHA=new HomeAssistant(name, tID, homeAssistantFriendlyName, homeAssistantDiscoveryPrefix);
-        pHA->addLight();
+        pHA->addLight(name, homeAssistantFriendlyName);
         pHA->begin(pSched);
     }
 

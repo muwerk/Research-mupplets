@@ -5,6 +5,7 @@
                    // and "Adafruit Unified Sensor", https://github.com/adafruit/Adafruit_Sensor
 #include "scheduler.h"
 #include "sensors.h"
+#include "home_assistant.h"
 
 namespace ustd {
 class Dht {
@@ -19,6 +20,7 @@ class Dht {
     ustd::sensorprocessor temperatureSensor = ustd::sensorprocessor(4, 600, 0.1);
     ustd::sensorprocessor humiditySensor = ustd::sensorprocessor(4, 600, 1.0);
     DHT *pDht;
+    HomeAssistant *pHA;
 
     Dht(String name, uint8_t port, uint8_t type = DHT22)
         : name(name), port(port), type(type) {
@@ -56,6 +58,13 @@ class Dht {
             };
         pSched->subscribe(tID, name + "/sensor/temperature/get", fnall);
         pSched->subscribe(tID, name + "/sensor/humidity/get", fnall);
+    }
+
+    void registerHomeAssistant(String homeAssistantFriendlyName, String homeAssistantDiscoveryPrefix="homeassistant") {
+        pHA=new HomeAssistant(name, tID, homeAssistantFriendlyName, homeAssistantDiscoveryPrefix);
+        pHA->addSensor(name, homeAssistantFriendlyName, "temperature", "Temperature", "\\u00B0C","temperature","mdi:thermometer");
+        pHA->addSensor(name, homeAssistantFriendlyName, "humidity", "Humidity", "%","humidity","mdi:water-percent");
+        pHA->begin(pSched);
     }
 
     void publishTemperature() {

@@ -175,7 +175,7 @@ class Illuminance {
     void registerHomeAssistant(String homeAssistantFriendlyName, String homeAssistantDiscoveryPrefix="homeassistant") {
         pHA=new HomeAssistant(name, tID, homeAssistantFriendlyName, homeAssistantDiscoveryPrefix);
         pHA->addSensor(name, homeAssistantFriendlyName, "unitilluminance", "Unit-Illuminance", "[0..1]","illuminance","mdi:brightness-6");
-        pHA->addSensor(name, homeAssistantFriendlyName, "illuminance", "Illuminance", "[0..1]","illuminance","mdi:brightness-6");
+        pHA->addSensor(name, homeAssistantFriendlyName, "illuminance", "Illuminance", "lux","illuminance","mdi:brightness-6");
         pHA->begin(pSched);
     }
 

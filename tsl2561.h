@@ -26,16 +26,7 @@ class Illuminance {
     bool bAutogain = false;
     double amp = 1.0;
 
-    bool useHA=false;
-    String HAname="";
-    String HAprefix="";
-    String macAddress="";
-    String ipAddress="";
-    String hostName="";
-    String swVersion="0.1.0";
-    long rssiVal=-99;
-    String HAattrTopic1="";
-    String HAattrTopic2="";
+    HomeAssistant *pHA;
 
     Illuminance(String _name, uint8_t _port, String _gain = "16x",
           String _speed = "fast", double _amp = 1.0) {
@@ -178,146 +169,16 @@ class Illuminance {
             pSched->subscribe(tID, name + "/sensor/unitilluminance/#", fnall);
             bActive = true;
        pSched->subscribe(tID, name + "/sensor/unitilluminance/#", fnall);
-        auto fnmq=
-            [=](String topic, String msg, String originator) {
-                this->mqMsg(topic, msg, originator);
-            };
-        pSched->subscribe(tID, "mqtt/state", fnmq);
-        pSched->subscribe(tID, "net/network", fnmq);
-        pSched->subscribe(tID, "net/rssi", fnmq);
         }
     }
 
-    void mqMsg( String topic, String msg, String originator) {
-        if (topic=="net/rssi") {
-            JSONVar mqttJsonMsg = JSON.parse(msg);
-            if (JSON.typeof(mqttJsonMsg) == "undefined") {
-                return;
-            }
-            rssiVal=(long)mqttJsonMsg["rssi"];  // root["state"];
-            if (HAattrTopic1!="") publishAttribs(HAattrTopic1);
-            if (HAattrTopic2!="") publishAttribs(HAattrTopic2);
-
-        } else if (topic=="net/network") {
-            JSONVar mqttJsonMsg = JSON.parse(msg);
-            if (JSON.typeof(mqttJsonMsg) == "undefined") {
-                return;
-            }
-           String state=(const char *)mqttJsonMsg["state"];  // root["state"];
-            if (state == "connected") {
-                ipAddress=(const char *)mqttJsonMsg["ip"];
-                macAddress=(const char *)mqttJsonMsg["mac"];
-                hostName=(const char *)mqttJsonMsg["hostname"];
-            }
-        } else {
-            if (useHA) {
-                String HAmuPrefix="";
-                String HAdiscoTopic="";
-                String HAdiscoEntityDef="";
-                char cmsg[180];
-                char *p1=nullptr;
-                memset(cmsg,0,180);   // msg is format:   [dis]connected,prefix/hostname
-                strncpy(cmsg,msg.c_str(),179);
-                p1=strchr(cmsg,',');
-                if (p1) {
-                    *p1=0;
-                    ++p1;
-                }
-                if (p1) HAmuPrefix=p1;  // prefix/hostname, e.g. omu/myhost
-                char cmd[64];
-                memset(cmd,0,64);
-                strncpy(cmd,HAmuPrefix.c_str(),63);
-                String HAcmd="";
-                char *p0=strchr(cmd,'/');  // get hostname from mqtt message, e.g. myhost
-                if (p0) {
-                    ++p0;
-                    HAcmd=String(p0);
-                }
-                if (!strcmp(cmsg,"connected")) {
-                    if (p1) HAmuPrefix=p1;
-
-                    String subDevNo="1";
-                    String HAstateTopic=HAmuPrefix+"/"+name+"/sensor/unitilluminance";
-                    HAattrTopic1=name+"/sensor/unitilluminance/attribs";
-                    HAdiscoTopic="!"+HAprefix+"/sensor/"+subDevNo+"/"+name+"/config";
-                    HAdiscoEntityDef="{\"state_topic\":\""+HAstateTopic+"\","+
-                            "\"json_attributes_topic\":\""+HAmuPrefix+"/"+HAattrTopic1+"\","+
-                            "\"name\":\""+HAname+" Unit-Illuminance\","+
-                            "\"unique_id\":\""+macAddress+"-"+subDevNo+"\","+
-                            "\"value_template\":\"{{ value | float }}\","+
-                            "\"unit_of_measurement\":\"[0..1]\","+
-                            "\"expire_after\": 1800,"+
-                            "\"icon\":\"mdi:brightness-6\","+
-                            "\"device_class\":\"illuminance\""+
-                            /*
-                            "\"device\":{"+
-                                "\"identifiers\": [\""+macAddress+"\", \""+macAddress+"-1\", \""+macAddress+"-2\"],"+
-                                "\"connections\": [[\"mac\", \""+macAddress+"\"],"+
-                                                  "[\"ip\", \""+ipAddress+"\"],"+
-                                                  "[\"host\", \""+hostName+"\"]],"+
-                                "\"sw_version\": \""+swVersion+"\","+
-                                "\"manufacturer\": \"muWerk\","+
-                                "\"model\": \"Illuminance sensor cluster\","+
-                                "\"name\": \"IlluMupplet\""+
-                            "}" */
-                            "}";
-
-                    pSched->publish(HAdiscoTopic,HAdiscoEntityDef);
-
-                    subDevNo="2";
-                    HAstateTopic=HAmuPrefix+"/"+name+"/sensor/illuminance";
-                    HAattrTopic2=name+"/sensor/illuminance/attribs";
-                    HAdiscoTopic="!"+HAprefix+"/sensor/"+subDevNo+"/"+name+"/config";
-                    HAdiscoEntityDef="{\"state_topic\":\""+HAstateTopic+"\","+
-                            "\"json_attributes_topic\":\""+HAmuPrefix+"/"+HAattrTopic2+"\","+
-                            "\"name\":\""+HAname+" Illuminance\","+
-                            "\"unique_id\":\""+macAddress+"-"+subDevNo+"\","+
-                            "\"value_template\":\"{{ value | float }}\","+
-                            "\"unit_of_measurement\":\"lux\","+
-                            "\"expire_after\": 1800,"+
-                            "\"icon\":\"mdi:brightness-6\","+
-                            "\"device_class\":\"illuminance\""+
-                            /*
-                            "\"device\":{"+
-                                "\"identifiers\": [\""+macAddress+"\", \""+macAddress+"-1\", \""+macAddress+"-2\"],"+
-                                "\"connections\": [[\"mac\", \""+macAddress+"\"],"+
-                                                  "[\"ip\", \""+ipAddress+"\"],"+
-                                                  "[\"host\", \""+hostName+"\"]],"+
-                                "\"sw_version\": \""+swVersion+"\","+
-                                "\"manufacturer\": \"muWerk\","+
-                                "\"model\": \"Illuminance sensor cluster\","+
-                                "\"name\": \"IlluMupplet\""+
-                            "}"*/
-                            "}";
-                    pSched->publish(HAdiscoTopic,HAdiscoEntityDef);
-
-                    publishIlluminance();
-                    publishAttribs(HAattrTopic1);
-                    publishAttribs(HAattrTopic2);
-                }
-            }
-        }
+    void registerHomeAssistant(String homeAssistantFriendlyName, String homeAssistantDiscoveryPrefix="homeassistant") {
+        pHA=new HomeAssistant(name, tID, homeAssistantFriendlyName, homeAssistantDiscoveryPrefix);
+        pHA->addSensor(name, homeAssistantFriendlyName, "unitilluminance", "Unit-Illuminance", "[0..1]","illuminance","mdi:brightness-6");
+        pHA->addSensor(name, homeAssistantFriendlyName, "illuminance", "Illuminance", "[0..1]","illuminance","mdi:brightness-6");
+        pHA->begin(pSched);
     }
 
-    void registerHomeAssistant(String homeAssistantFriendlyName="", String homeAssistantDiscoveryPrefix="homeassistant") {
-        if (homeAssistantFriendlyName=="") homeAssistantFriendlyName=name;
-        useHA=true;
-        HAname=homeAssistantFriendlyName;
-        HAprefix=homeAssistantDiscoveryPrefix;
-        pSched->publish("mqtt/state/get");
-    }
-
-    void publishAttribs(String attrTopic) {
-        String attrib="{\"Rssi\":"+String(rssiVal)+","+
-                       "\"Mac\": \""+macAddress+"\","+
-                       "\"IP\": \""+ipAddress+"\","+
-                       "\"Host\": \""+hostName+"\","+
-                       "\"Version\": \""+swVersion+"\","+
-                       "\"Manufacturer\": \"muWerk\""+
-                      "}";
-                    pSched->publish(attrTopic,attrib);
-
-    }
     void publishIlluminance() {
         char buf[32];
         sprintf(buf, "%4.0f", luxvalue);

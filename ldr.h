@@ -91,7 +91,7 @@ class Ldr {
                 String HAstateTopic=HAmuPrefix+"/"+name+"/sensor/unitilluminance";
                 HAdiscoTopic="!"+HAprefix+"/sensor/"+name+"/config";
                 HAdiscoEntityDef="{\"state_topic\":\""+HAstateTopic+"\","+
-                        "\"name\":\""+HAname+"\","+
+                        "\"name\":\""+HAname+" Unit-Illuminance\","+
                         "\"value_template\":\"{{ value | float }}\","+
                         "\"unit_of_measurement\":\"[0..1]\","+
                         "\"expire_after\": 1800,"+

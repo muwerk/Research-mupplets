@@ -5,6 +5,7 @@
 
 #include "scheduler.h"
 #include "sensors.h"
+#include "home_assistant.h"
 
 #include "SparkFunCCS811.h"
 
@@ -26,6 +27,7 @@ class AirQuality {
     ustd::sensorprocessor co2 = ustd::sensorprocessor(4, 600, 1.0);
     ustd::sensorprocessor voc = ustd::sensorprocessor(4, 600, 0.2);
     CCS811 *pAirQuality;
+    HomeAssistant *pHA;
 
     AirQuality(String name, uint8_t i2caddr = SPARKFUN_CCS811_ADDR)
         : name(name), i2caddr(i2caddr) {
@@ -97,6 +99,13 @@ class AirQuality {
             };
         pSched->subscribe(tID, name + "sensor/co2/get", fnall);
         pSched->subscribe(tID, name + "sensor/voc/get", fnall);
+    }
+
+    void registerHomeAssistant(String homeAssistantFriendlyName, String homeAssistantDiscoveryPrefix="homeassistant") {
+        pHA=new HomeAssistant(name, tID, homeAssistantFriendlyName, homeAssistantDiscoveryPrefix);
+        pHA->addSensor(name, homeAssistantFriendlyName, "co2", "CO2", "ppm","None","mdi:air-filter");
+        pHA->addSensor(name, homeAssistantFriendlyName, "voc", "VOC", "ppb","None","mdi:air-filter");
+        pHA->begin(pSched);
     }
 
     void publishCO2() {

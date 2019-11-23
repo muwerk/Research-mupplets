@@ -165,9 +165,11 @@ class HomeAssistant {
                                 "\"value_template\":\"{{ value | float }}\","+
                                 "\"unit_of_measurement\":\""+sensor_unitDescs[i]+"\","+
                                 "\"expire_after\": 1800,"+
-                                "\"icon\":\""+sensor_iconNames[i]+"\","+
-                                "\"device_class\":\""+sensor_classNames[i]+"\""+
-                                "}";
+                                "\"icon\":\""+sensor_iconNames[i]+"\"";
+                        if (sensor_classNames[i]!="None") {
+                            HAdiscoEntityDef += ",\"device_class\":\""+sensor_classNames[i]+"\""; 
+                        }
+                        HAdiscoEntityDef += "}";
                         sensorsAttribs.add(HAattrTopic);
                         pSched->publish(HAdiscoTopic,HAdiscoEntityDef);
                     }

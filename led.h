@@ -3,6 +3,7 @@
 
 #include "scheduler.h"
 #include "mup_util.h"
+#include "home_assistant.h"
 
 namespace ustd {
 
@@ -27,10 +28,7 @@ class Led {
     unsigned long startPulse=0;
     String pattern;
     unsigned int patternPointer=0;
-
-    bool useHA=false;
-    String HAname="";
-    String HAprefix="";
+    HomeAssistant *pHA;
 
     Led(String name, uint8_t port, bool activeLogic=false, uint8_t channel=0 )
         : name(name), port(port), activeLogic(activeLogic), channel(channel) {
@@ -71,67 +69,12 @@ class Led {
                 this->subsMsg(topic, msg, originator);
             };
         pSched->subscribe(tID, name + "/light/#", fnall);
-        auto fnmq=
-            [=](String topic, String msg, String originator) {
-                this->mqMsg(topic, msg, originator);
-            };
-         pSched->subscribe(tID, "mqtt/state", fnmq);
-    }
-
-    void mqMsg( String topic, String msg, String originator) {
-        if (useHA) {
-            String HAmuPrefix="";
-            String HAdiscoTopic="";
-            String HAdiscoEntityDef="";
-            char cmsg[180];
-            char *p1=nullptr;
-            memset(cmsg,0,180);   // msg is format:   [dis]connected,prefix/hostname
-            strncpy(cmsg,msg.c_str(),179);
-            p1=strchr(cmsg,',');
-            if (p1) {
-                *p1=0;
-                ++p1;
-            }
-            if (p1) HAmuPrefix=p1;  // prefix/hostname, e.g. omu/myhost
-            char cmd[64];
-            memset(cmd,0,64);
-            strncpy(cmd,HAmuPrefix.c_str(),63);
-            String HAcmd="";
-            char *p0=strchr(cmd,'/');  // get hostname from mqtt message, e.g. myhost
-            if (p0) {
-                ++p0;
-                HAcmd=String(p0);
-            }
-            if (!strcmp(cmsg,"connected")) {
-                if (p1) HAmuPrefix=p1;
-                String HAcommandTopic=HAcmd+"/"+name+"/light/set";
-                String HAstateTopic=HAmuPrefix+"/"+name+"/light/state";
-                String HAcommandBrTopic=HAcmd+"/"+name+"/light/set";
-                String HAstateBrTopic=HAmuPrefix+"/"+name+"/light/unitbrightness";
-                HAdiscoTopic="!"+HAprefix+"/light/"+name+"/config";
-                HAdiscoEntityDef="{\"state_topic\":\""+HAstateTopic+"\","+
-                        "\"command_topic\":\""+HAcommandTopic+"\","+
-                        "\"brightness_state_topic\":\""+HAstateBrTopic+"\","+
-                        "\"brightness_scale\":\"100\","+
-                        "\"brightness_value_template\":\"{{ value | float * 100 | round(0) }}\","+
-                        "\"brightness_command_topic\":\""+HAcommandBrTopic+"\","+
-                        "\"name\":\""+HAname+"\","+
-                        "\"on_command_type\":\"brightness\","+
-                        "\"payload_on\":\"on\","+
-                        "\"payload_off\":\"off\""+
-                                            "}";
-                pSched->publish(HAdiscoTopic,HAdiscoEntityDef);
-                publishState();
-            }
-        }
     }
 
     void registerHomeAssistant(String homeAssistantFriendlyName="", String homeAssistantDiscoveryPrefix="homeassistant") {
-        if (homeAssistantFriendlyName=="") homeAssistantFriendlyName=name;
-        useHA=true;
-        HAname=homeAssistantFriendlyName;
-        HAprefix=homeAssistantDiscoveryPrefix;
-        pSched->publish("mqtt/state/get");
+        pHA=new HomeAssistant(name, tID, homeAssistantFriendlyName, homeAssistantDiscoveryPrefix);
+        pHA->addLight();
+        pHA->begin(pSched);
     }
 
     void setOn() {

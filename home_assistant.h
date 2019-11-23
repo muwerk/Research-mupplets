@@ -161,7 +161,7 @@ class HomeAssistant {
                         String HAdiscoEntityDef="{\"state_topic\":\""+HAstateTopic+"\","+
                                 "\"json_attributes_topic\":\""+HAmuPrefix+"/"+HAattrTopic+"\","+
                                 "\"name\":\""+sensor_HAnames[i]+" "+sensor_friendlyNames[i]+"\","+
-                                "\"unique_id\":\""+macAddress+"-S"+subDevNo+"\","+
+                                "\"unique_id\":\""+macAddress+"-"+sensor_devNames[i]+"-S"+subDevNo+"\","+
                                 "\"value_template\":\"{{ value | float }}\","+
                                 "\"unit_of_measurement\":\""+sensor_unitDescs[i]+"\","+
                                 "\"expire_after\": 1800,"+
@@ -184,7 +184,7 @@ class HomeAssistant {
                         String HAdiscoTopic="!"+HAprefix+"/light/"+subDevNo+"/"+light_devNames[i]+"/config";
                         String HAdiscoEntityDef="{\"state_topic\":\""+HAstateTopic+"\","+
                                 "\"name\":\""+light_HAnames[i]+"\","+
-                                "\"unique_id\":\""+macAddress+"-L"+subDevNo+"\","+
+                                "\"unique_id\":\""+macAddress+"-"+light_devNames[i]+"-L"+subDevNo+"\","+
                                 "\"command_topic\":\""+HAcommandTopic+"\","+
                                 "\"json_attributes_topic\":\""+HAmuPrefix+"/"+HAattrTopic+"\","+
                                 "\"brightness_state_topic\":\""+HAstateBrTopic+"\","+
@@ -209,7 +209,7 @@ class HomeAssistant {
                         String HAdiscoTopic="!"+HAprefix+"/switch/"+subDevNo+"/"+switch_devNames[i]+"/config";
                         String HAdiscoEntityDef="{\"state_topic\":\""+HAstateTopic+"\","+
                                 "\"name\":\""+switch_HAnames[i]+"\","+
-                                "\"unique_id\":\""+macAddress+"-SW"+subDevNo+"\","+
+                                "\"unique_id\":\""+macAddress+"-"+switch_devNames[i]+"-SW"+subDevNo+"\","+
                                 "\"command_topic\":\""+HAcommandTopic+"\","+
                                 "\"json_attributes_topic\":\""+HAmuPrefix+"/"+HAattrTopic+"\","+
                                 "\"state_on\":\"on\","+

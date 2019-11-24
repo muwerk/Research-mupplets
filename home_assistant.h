@@ -180,6 +180,13 @@ class HomeAssistant {
                         if (sensor_classNames[i]!="None") {
                             HAdiscoEntityDef += ",\"device_class\":\""+sensor_classNames[i]+"\""; 
                         }
+                        HAdiscoEntityDef = HAdiscoEntityDef + ",\"device\":{"+
+                                "\"identifiers\":[\""+macAddress+"-"+devName+"\",\""+macAddress+"-"+devName+"-S"+subDevNo+"\"],"+
+                                "\"model\":\""+muProject+"\","+
+                                "\"name\":\""+muProject+"\","+
+                                "\"manufacturer\":\"muWerk\","+
+                                "\"connections\":[[\"IP\",\""+ipAddress+"\"],"+
+                                                 "[\"Host\",\""+hostName+"\"]]}";
                         HAdiscoEntityDef += "}";
                         sensorsAttribs.add(HAattrTopic);
                         pSched->publish(HAdiscoTopic,HAdiscoEntityDef);
@@ -206,8 +213,15 @@ class HomeAssistant {
                                 "\"bri_cmd_t\":\""+HAcommandBrTopic+"\","+
                                 "\"on_cmd_type\":\"brightness\","+
                                 "\"pl_on\":\"on\","+
-                                "\"pl_off\":\"off\""+
-                                                    "}";
+                                "\"pl_off\":\"off\"";
+                        HAdiscoEntityDef = HAdiscoEntityDef + ",\"device\":{"+
+                                "\"identifiers\":[\""+macAddress+"-"+devName+"\",\""+macAddress+"-"+devName+"-S"+subDevNo+"\"],"+
+                                "\"model\":\""+muProject+"\","+
+                                "\"name\":\""+muProject+"\","+
+                                "\"manufacturer\":\"muWerk\","+
+                                "\"connections\":[[\"IP\",\""+ipAddress+"\"],"+
+                                                 "[\"Host\",\""+hostName+"\"]]}";
+                        HAdiscoEntityDef += "}";
                         lightsAttribs.add(HAattrTopic);
                         pSched->publish(HAdiscoTopic,HAdiscoEntityDef);
                     }
@@ -228,8 +242,15 @@ class HomeAssistant {
                                 "\"state_on\":\"on\","+
                                 "\"state_off\":\"off\","+
                                 "\"pl_on\":\"on\","+
-                                "\"pl_off\":\"off\""+
-                                                    "}";
+                                "\"pl_off\":\"off\"";
+                        HAdiscoEntityDef = HAdiscoEntityDef + ",\"device\":{"+
+                                "\"identifiers\":[\""+macAddress+"-"+devName+"\",\""+macAddress+"-"+devName+"-S"+subDevNo+"\"],"+
+                                "\"model\":\""+muProject+"\","+
+                                "\"name\":\""+muProject+"\","+
+                                "\"manufacturer\":\"muWerk\","+
+                                "\"connections\":[[\"IP\",\""+ipAddress+"\"],"+
+                                                 "[\"Host\",\""+hostName+"\"]]}";
+                        HAdiscoEntityDef += "}";
                         switchesAttribs.add(HAattrTopic);
                         pSched->publish(HAdiscoTopic,HAdiscoEntityDef);
                     }

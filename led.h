@@ -9,6 +9,7 @@ namespace ustd {
 
 class Led {
   public:
+    String LED_VERSION="0.1.0";
     enum Mode { Passive, Blink, Wave, Pulse, Pattern};
 
     Scheduler *pSched;
@@ -71,9 +72,9 @@ class Led {
         pSched->subscribe(tID, name + "/light/#", fnall);
     }
 
-    void registerHomeAssistant(String homeAssistantFriendlyName, String homeAssistantDiscoveryPrefix="homeassistant") {
-        pHA=new HomeAssistant(name, tID, homeAssistantFriendlyName, homeAssistantDiscoveryPrefix);
-        pHA->addLight(name, homeAssistantFriendlyName);
+    void registerHomeAssistant(String homeAssistantFriendlyName, String projectName="", String homeAssistantDiscoveryPrefix="homeassistant") {
+        pHA=new HomeAssistant(name, tID, homeAssistantFriendlyName, projectName, LED_VERSION, homeAssistantDiscoveryPrefix);
+        pHA->addLight();
         pHA->begin(pSched);
     }
 

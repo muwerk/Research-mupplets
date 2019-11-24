@@ -10,6 +10,7 @@
 namespace ustd {
 class Illuminance {
   public:
+    String TSL_VERSION="0.1.0";
     Scheduler *pSched;
     int tID;
     String name;
@@ -172,10 +173,10 @@ class Illuminance {
         }
     }
 
-    void registerHomeAssistant(String homeAssistantFriendlyName, String homeAssistantDiscoveryPrefix="homeassistant") {
-        pHA=new HomeAssistant(name, tID, homeAssistantFriendlyName, homeAssistantDiscoveryPrefix);
-        pHA->addSensor(name, homeAssistantFriendlyName, "unitilluminance", "Unit-Illuminance", "[0..1]","illuminance","mdi:brightness-6");
-        pHA->addSensor(name, homeAssistantFriendlyName, "illuminance", "Illuminance", "lux","illuminance","mdi:brightness-6");
+    void registerHomeAssistant(String homeAssistantFriendlyName, String projectName="", String homeAssistantDiscoveryPrefix="homeassistant") {
+        pHA=new HomeAssistant(name, tID, homeAssistantFriendlyName, projectName, TSL_VERSION, homeAssistantDiscoveryPrefix);
+        pHA->addSensor("unitilluminance", "Unit-Illuminance", "[0..1]","illuminance","mdi:brightness-6");
+        pHA->addSensor("illuminance", "Illuminance", "lux","illuminance","mdi:brightness-6");
         pHA->begin(pSched);
     }
 

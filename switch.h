@@ -58,6 +58,7 @@ unsigned long getResetIrqCount(uint8_t irqno) {
 
 class Switch {
   public:
+    String SWITCH_VERSION="0.1.0";
     enum Mode { Default, Rising, Falling, Flipflop, Timer, Duration};
     Scheduler *pSched;
     int tID;
@@ -164,10 +165,9 @@ class Switch {
         pSched->subscribe(tID, name + "/switch/#", fnall);
     }
 
-
-    void registerHomeAssistant(String homeAssistantFriendlyName, String homeAssistantDiscoveryPrefix="homeassistant") {
-        pHA=new HomeAssistant(name, tID, homeAssistantFriendlyName, homeAssistantDiscoveryPrefix);
-        pHA->addSwitch(name, homeAssistantFriendlyName);
+    void registerHomeAssistant(String homeAssistantFriendlyName, String projectName="", String homeAssistantDiscoveryPrefix="homeassistant") {
+        pHA=new HomeAssistant(name, tID, homeAssistantFriendlyName, projectName, SWITCH_VERSION, homeAssistantDiscoveryPrefix);
+        pHA->addSwitch();
         pHA->begin(pSched);
     }
 

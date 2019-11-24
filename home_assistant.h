@@ -23,6 +23,7 @@ class HomeAssistant {
     String macAddress="";
     String ipAddress="";
     String hostName="";
+    String capHostName;
     String swVersion;
     String muProject;
     long rssiVal=-99;
@@ -138,6 +139,8 @@ class HomeAssistant {
                 ipAddress=(const char *)mqttJsonMsg["ip"];
                 macAddress=(const char *)mqttJsonMsg["mac"];
                 hostName=(const char *)mqttJsonMsg["hostname"];
+                capHostName=hostName;
+                if (capHostName[0]>='a' && capHostName[0]<='z') capHostName[0] -= 'a'+'A';
             }
         } else if (topic=="mqtt/state") {
             if (useHA) {
@@ -183,7 +186,7 @@ class HomeAssistant {
                         HAdiscoEntityDef = HAdiscoEntityDef + ",\"device\":{"+
                                 "\"identifiers\":[\""+macAddress+"-"+devName+"\",\""+macAddress+"-"+devName+"-S"+subDevNo+"\"],"+
                                 "\"model\":\""+muProject+"\","+
-                                "\"name\":\""+muProject+"\","+
+                                "\"name\":\""+capHostName+"\","+
                                 "\"manufacturer\":\"muWerk\","+
                                 "\"connections\":[[\"IP\",\""+ipAddress+"\"],"+
                                                  "[\"Host\",\""+hostName+"\"]]}";
@@ -217,7 +220,7 @@ class HomeAssistant {
                         HAdiscoEntityDef = HAdiscoEntityDef + ",\"device\":{"+
                                 "\"identifiers\":[\""+macAddress+"-"+devName+"\",\""+macAddress+"-"+devName+"-S"+subDevNo+"\"],"+
                                 "\"model\":\""+muProject+"\","+
-                                "\"name\":\""+muProject+"\","+
+                                "\"name\":\""+capHostName+"\","+
                                 "\"manufacturer\":\"muWerk\","+
                                 "\"connections\":[[\"IP\",\""+ipAddress+"\"],"+
                                                  "[\"Host\",\""+hostName+"\"]]}";
@@ -246,7 +249,7 @@ class HomeAssistant {
                         HAdiscoEntityDef = HAdiscoEntityDef + ",\"device\":{"+
                                 "\"identifiers\":[\""+macAddress+"-"+devName+"\",\""+macAddress+"-"+devName+"-S"+subDevNo+"\"],"+
                                 "\"model\":\""+muProject+"\","+
-                                "\"name\":\""+muProject+"\","+
+                                "\"name\":\""+capHostName+"\","+
                                 "\"manufacturer\":\"muWerk\","+
                                 "\"connections\":[[\"IP\",\""+ipAddress+"\"],"+
                                                  "[\"Host\",\""+hostName+"\"]]}";

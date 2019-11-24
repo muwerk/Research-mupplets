@@ -168,12 +168,12 @@ class HomeAssistant {
                         String HAstateTopic=HAmuPrefix+"/"+devName+"/sensor/"+sensor_topic_sub_names[i];
                         String HAattrTopic=devName+"/sensor/"+sensor_topic_sub_names[i]+"/attribs";
                         String HAdiscoTopic="!"+HAprefix+"/sensor/"+subDevNo+"/"+devName+"/config";
-                        String HAdiscoEntityDef="{\"state_topic\":\""+HAstateTopic+"\","+
-                                "\"json_attributes_topic\":\""+HAmuPrefix+"/"+HAattrTopic+"\","+
+                        String HAdiscoEntityDef="{\"stat_t\":\""+HAstateTopic+"\","+
+                                "\"json_attr_t\":\""+HAmuPrefix+"/"+HAattrTopic+"\","+
                                 "\"name\":\""+HAname+" "+sensor_friendlyNames[i]+"\","+
-                                "\"unique_id\":\""+macAddress+"-"+devName+"-S"+subDevNo+"\","+
-                                "\"value_template\":\"{{ value | float }}\","+
-                                "\"unit_of_measurement\":\""+sensor_unitDescs[i]+"\","+
+                                "\"uniq_id\":\""+macAddress+"-"+devName+"-S"+subDevNo+"\","+
+                                "\"val_tpl\":\"{{ value | float }}\","+
+                                "\"unit_of_meas\":\""+sensor_unitDescs[i]+"\","+
                                 "\"expire_after\": 1800,"+
                                 "\"icon\":\""+sensor_iconNames[i]+"\"";
                         if (sensor_classNames[i]!="None") {
@@ -194,18 +194,18 @@ class HomeAssistant {
                         String HAcommandBrTopic=HAcmd+"/"+devName+"/light/set";
                         String HAstateBrTopic=HAmuPrefix+"/"+devName+"/light/unitbrightness";
                         String HAdiscoTopic="!"+HAprefix+"/light/"+subDevNo+"/"+devName+"/config";
-                        String HAdiscoEntityDef="{\"state_topic\":\""+HAstateTopic+"\","+
+                        String HAdiscoEntityDef="{\"stat_t\":\""+HAstateTopic+"\","+
                                 "\"name\":\""+HAname+"\","+
-                                "\"unique_id\":\""+macAddress+"-"+devName+"-L"+subDevNo+"\","+
-                                "\"command_topic\":\""+HAcommandTopic+"\","+
-                                "\"json_attributes_topic\":\""+HAmuPrefix+"/"+HAattrTopic+"\","+
-                                "\"brightness_state_topic\":\""+HAstateBrTopic+"\","+
-                                "\"brightness_scale\":\"100\","+
-                                "\"brightness_value_template\":\"{{ value | float * 100 | round(0) }}\","+
-                                "\"brightness_command_topic\":\""+HAcommandBrTopic+"\","+
-                                "\"on_command_type\":\"brightness\","+
-                                "\"payload_on\":\"on\","+
-                                "\"payload_off\":\"off\""+
+                                "\"uniq_id\":\""+macAddress+"-"+devName+"-L"+subDevNo+"\","+
+                                "\"cmd_t\":\""+HAcommandTopic+"\","+
+                                "\"json_attr_t\":\""+HAmuPrefix+"/"+HAattrTopic+"\","+
+                                "\"bri_stat_t\":\""+HAstateBrTopic+"\","+
+                                "\"bri_scl\":\"100\","+
+                                "\"bri_val_tpl\":\"{{ value | float * 100 | round(0) }}\","+
+                                "\"bri_cmd_t\":\""+HAcommandBrTopic+"\","+
+                                "\"on_cmd_type\":\"brightness\","+
+                                "\"pl_on\":\"on\","+
+                                "\"pl_off\":\"off\""+
                                                     "}";
                         lightsAttribs.add(HAattrTopic);
                         pSched->publish(HAdiscoTopic,HAdiscoEntityDef);
@@ -219,15 +219,15 @@ class HomeAssistant {
                         String HAstateTopic=HAmuPrefix+"/"+devName+"/switch/state";
                         String HAattrTopic=devName+"/switch/attribs";
                         String HAdiscoTopic="!"+HAprefix+"/switch/"+subDevNo+"/"+devName+"/config";
-                        String HAdiscoEntityDef="{\"state_topic\":\""+HAstateTopic+"\","+
+                        String HAdiscoEntityDef="{\"stat_t\":\""+HAstateTopic+"\","+
                                 "\"name\":\""+HAname+"\","+
-                                "\"unique_id\":\""+macAddress+"-"+devName+"-SW"+subDevNo+"\","+
-                                "\"command_topic\":\""+HAcommandTopic+"\","+
-                                "\"json_attributes_topic\":\""+HAmuPrefix+"/"+HAattrTopic+"\","+
+                                "\"uniq_id\":\""+macAddress+"-"+devName+"-SW"+subDevNo+"\","+
+                                "\"cmd_t\":\""+HAcommandTopic+"\","+
+                                "\"json_attr_t\":\""+HAmuPrefix+"/"+HAattrTopic+"\","+
                                 "\"state_on\":\"on\","+
                                 "\"state_off\":\"off\","+
-                                "\"payload_on\":\"on\","+
-                                "\"payload_off\":\"off\""+
+                                "\"pl_on\":\"on\","+
+                                "\"pl_off\":\"off\""+
                                                     "}";
                         switchesAttribs.add(HAattrTopic);
                         pSched->publish(HAdiscoTopic,HAdiscoEntityDef);

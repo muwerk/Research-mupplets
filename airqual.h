@@ -16,6 +16,7 @@
 namespace ustd {
 class AirQuality {
   public:
+    String AIRQUALITY_VERSION="0.1.0";
     Scheduler *pSched;
     int tID;
     String name;
@@ -101,10 +102,10 @@ class AirQuality {
         pSched->subscribe(tID, name + "sensor/voc/get", fnall);
     }
 
-    void registerHomeAssistant(String homeAssistantFriendlyName, String homeAssistantDiscoveryPrefix="homeassistant") {
-        pHA=new HomeAssistant(name, tID, homeAssistantFriendlyName, homeAssistantDiscoveryPrefix);
-        pHA->addSensor(name, homeAssistantFriendlyName, "co2", "CO2", "ppm","None","mdi:air-filter");
-        pHA->addSensor(name, homeAssistantFriendlyName, "voc", "VOC", "ppb","None","mdi:air-filter");
+    void registerHomeAssistant(String homeAssistantFriendlyName, String projectName="", String homeAssistantDiscoveryPrefix="homeassistant") {
+        pHA=new HomeAssistant(name, tID, homeAssistantFriendlyName, projectName, AIRQUALITY_VERSION, homeAssistantDiscoveryPrefix);
+        pHA->addSensor("co2", "CO2", "ppm","None","mdi:air-filter");
+        pHA->addSensor("voc", "VOC", "ppb","None","mdi:air-filter");
         pHA->begin(pSched);
     }
 

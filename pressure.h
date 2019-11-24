@@ -13,6 +13,7 @@
 namespace ustd {
 class Pressure {
   public:
+    String PRESSURE_VERSION="0.1.0";
     Scheduler *pSched;
     int tID;
     String name;
@@ -61,10 +62,10 @@ class Pressure {
         pSched->subscribe(tID, name + "/sensor/pressure/get", fnall);
     }
 
-    void registerHomeAssistant(String homeAssistantFriendlyName, String homeAssistantDiscoveryPrefix="homeassistant") {
-        pHA=new HomeAssistant(name, tID, homeAssistantFriendlyName, homeAssistantDiscoveryPrefix);
-        pHA->addSensor(name, homeAssistantFriendlyName, "temperature", "Temperature", "\\u00B0C","temperature","mdi:thermometer");
-        pHA->addSensor(name, homeAssistantFriendlyName, "pressure", "Pressure", "hPa","pressure","mdi:altimeter");
+    void registerHomeAssistant(String homeAssistantFriendlyName, String projectName="", String homeAssistantDiscoveryPrefix="homeassistant") {
+        pHA=new HomeAssistant(name, tID, homeAssistantFriendlyName, projectName, PRESSURE_VERSION, homeAssistantDiscoveryPrefix);
+        pHA->addSensor("temperature", "Temperature", "\\u00B0C","temperature","mdi:thermometer");
+        pHA->addSensor("pressure", "Pressure", "hPa","pressure","mdi:altimeter");
         pHA->begin(pSched);
     }
 

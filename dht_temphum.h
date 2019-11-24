@@ -10,6 +10,7 @@
 namespace ustd {
 class Dht {
   public:
+    String DHT_VERSION="0.1.0";
     Scheduler *pSched;
     int tID;
     String name;
@@ -60,10 +61,10 @@ class Dht {
         pSched->subscribe(tID, name + "/sensor/humidity/get", fnall);
     }
 
-    void registerHomeAssistant(String homeAssistantFriendlyName, String homeAssistantDiscoveryPrefix="homeassistant") {
-        pHA=new HomeAssistant(name, tID, homeAssistantFriendlyName, homeAssistantDiscoveryPrefix);
-        pHA->addSensor(name, homeAssistantFriendlyName, "temperature", "Temperature", "\\u00B0C","temperature","mdi:thermometer");
-        pHA->addSensor(name, homeAssistantFriendlyName, "humidity", "Humidity", "%","humidity","mdi:water-percent");
+    void registerHomeAssistant(String homeAssistantFriendlyName, String projectName="", String homeAssistantDiscoveryPrefix="homeassistant") {
+        pHA=new HomeAssistant(name, tID, homeAssistantFriendlyName, projectName, DHT_VERSION, homeAssistantDiscoveryPrefix);
+        pHA->addSensor("temperature", "Temperature", "\\u00B0C","temperature","mdi:thermometer");
+        pHA->addSensor("humidity", "Humidity", "%","humidity","mdi:water-percent");
         pHA->begin(pSched);
     }
 

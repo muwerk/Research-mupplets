@@ -7,6 +7,10 @@
 #include "scheduler.h"
 
 namespace ustd {
+
+// Default version, if none is given during HomeAssistant instance creation
+#define __HA_VERSION__ "0.1.0"
+
 class HomeAssistant {
   public:
     Scheduler* pSched;
@@ -18,7 +22,8 @@ class HomeAssistant {
     String macAddress="";
     String ipAddress="";
     String hostName="";
-    String swVersion="0.1.0";
+    String swVersion;
+    String muProject;
     long rssiVal=-99;
 
     ustd::array<String> sensor_topic_sub_names;
@@ -26,26 +31,28 @@ class HomeAssistant {
     ustd::array<String> sensor_unitDescs;
     ustd::array<String> sensor_classNames;
     ustd::array<String> sensor_iconNames;
-    ustd::array<String> sensor_devNames;
-    ustd::array<String> sensor_HAnames;
+//    ustd::array<String> sensor_devNames;
+//    ustd::array<String> sensor_HAnames;
     ustd::array<String> sensorsAttribs;
 
     int nrLights=0;
-    ustd::array<String> light_devNames;
-    ustd::array<String> light_HAnames;
+//    ustd::array<String> light_devNames;
+//    ustd::array<String> light_HAnames;
     ustd::array<String> lightsAttribs;
 
     int nrSwitches=0;
-    ustd::array<String> switch_devNames;
-    ustd::array<String> switch_HAnames;
+//    ustd::array<String> switch_devNames;
+//    ustd::array<String> switch_HAnames;
     ustd::array<String> switchesAttribs;
 
-    HomeAssistant(String _devName, int _tID, String homeAssistantFriendlyName, String homeAssistantDiscoveryPrefix="homeassistant") {
+    HomeAssistant(String _devName, int _tID, String homeAssistantFriendlyName, String project="", String version=__HA_VERSION__, String homeAssistantDiscoveryPrefix="homeassistant") {
         if (homeAssistantFriendlyName=="") HAname=_devName;
         else HAname=homeAssistantFriendlyName;
         HAprefix=homeAssistantDiscoveryPrefix;
         tID=_tID;
         devName=_devName;
+        muProject=project;
+        swVersion=version;
     }
 
     ~HomeAssistant() {
@@ -64,9 +71,9 @@ class HomeAssistant {
         pSched->publish("mqtt/state/get");
     }
 
-    void addSensor(String devName, String HAname, String topic_sub_name, String friendlyName, String unitDesc, String className, String iconName) {
-        sensor_devNames.add(devName);
-        sensor_HAnames.add(HAname);
+    void addSensor(/*String devName, String HAname, */String topic_sub_name, String friendlyName, String unitDesc, String className, String iconName) {
+        //sensor_devNames.add(devName);
+        //sensor_HAnames.add(HAname);
         sensor_topic_sub_names.add(topic_sub_name);
         sensor_friendlyNames.add(friendlyName);
         sensor_unitDescs.add(unitDesc);
@@ -74,15 +81,15 @@ class HomeAssistant {
         sensor_iconNames.add(iconName);
     }
 
-    void addLight(String devName, String HAname) {
-        light_devNames.add(devName);
-        light_HAnames.add(HAname);
+    void addLight(/*String devName, String HAname*/) {
+        //light_devNames.add(devName);
+        //light_HAnames.add(HAname);
         ++nrLights;
     }
 
-    void addSwitch(String devName, String HAname) {
-        switch_devNames.add(devName);
-        switch_HAnames.add(HAname);
+    void addSwitch(/*String devName, String HAname*/) {
+        //switch_devNames.add(devName);
+        //switch_HAnames.add(HAname);
         ++nrSwitches;
     }
 
@@ -92,8 +99,11 @@ class HomeAssistant {
                        "\"IP\": \""+ipAddress+"\","+
                        "\"Host\": \""+hostName+"\","+
                        "\"Version\": \""+swVersion+"\","+
-                       "\"Manufacturer\": \"muWerk\""+
-                      "}";
+                       "\"Manufacturer\": \"muWerk\"";
+        if (muProject!="") {
+            attrib+=",\"Project\": \""+muProject+"\"";
+        }
+        attrib += "}";
         pSched->publish(attrTopic,attrib);
     }
 
@@ -155,13 +165,13 @@ class HomeAssistant {
 
                     for (unsigned int i=0; i<sensor_topic_sub_names.length(); i++) {
                         String subDevNo=String(i+1);
-                        String HAstateTopic=HAmuPrefix+"/"+sensor_devNames[i]+"/sensor/"+sensor_topic_sub_names[i];
+                        String HAstateTopic=HAmuPrefix+"/"+devName+"/sensor/"+sensor_topic_sub_names[i];
                         String HAattrTopic=devName+"/sensor/"+sensor_topic_sub_names[i]+"/attribs";
-                        String HAdiscoTopic="!"+HAprefix+"/sensor/"+subDevNo+"/"+sensor_devNames[i]+"/config";
+                        String HAdiscoTopic="!"+HAprefix+"/sensor/"+subDevNo+"/"+devName+"/config";
                         String HAdiscoEntityDef="{\"state_topic\":\""+HAstateTopic+"\","+
                                 "\"json_attributes_topic\":\""+HAmuPrefix+"/"+HAattrTopic+"\","+
-                                "\"name\":\""+sensor_HAnames[i]+" "+sensor_friendlyNames[i]+"\","+
-                                "\"unique_id\":\""+macAddress+"-"+sensor_devNames[i]+"-S"+subDevNo+"\","+
+                                "\"name\":\""+HAname+" "+sensor_friendlyNames[i]+"\","+
+                                "\"unique_id\":\""+macAddress+"-"+devName+"-S"+subDevNo+"\","+
                                 "\"value_template\":\"{{ value | float }}\","+
                                 "\"unit_of_measurement\":\""+sensor_unitDescs[i]+"\","+
                                 "\"expire_after\": 1800,"+
@@ -178,15 +188,15 @@ class HomeAssistant {
                     for (int i=0; i<nrLights; i++) {
                         int id=i+1;
                         String subDevNo=String(id);
-                        String HAcommandTopic=HAcmd+"/"+light_devNames[i]+"/light/set";
-                        String HAstateTopic=HAmuPrefix+"/"+light_devNames[i]+"/light/state";
-                        String HAattrTopic=light_devNames[i]+"/light/attribs";
-                        String HAcommandBrTopic=HAcmd+"/"+light_devNames[i]+"/light/set";
-                        String HAstateBrTopic=HAmuPrefix+"/"+light_devNames[i]+"/light/unitbrightness";
-                        String HAdiscoTopic="!"+HAprefix+"/light/"+subDevNo+"/"+light_devNames[i]+"/config";
+                        String HAcommandTopic=HAcmd+"/"+devName+"/light/set";
+                        String HAstateTopic=HAmuPrefix+"/"+devName+"/light/state";
+                        String HAattrTopic=devName+"/light/attribs";
+                        String HAcommandBrTopic=HAcmd+"/"+devName+"/light/set";
+                        String HAstateBrTopic=HAmuPrefix+"/"+devName+"/light/unitbrightness";
+                        String HAdiscoTopic="!"+HAprefix+"/light/"+subDevNo+"/"+devName+"/config";
                         String HAdiscoEntityDef="{\"state_topic\":\""+HAstateTopic+"\","+
-                                "\"name\":\""+light_HAnames[i]+"\","+
-                                "\"unique_id\":\""+macAddress+"-"+light_devNames[i]+"-L"+subDevNo+"\","+
+                                "\"name\":\""+HAname+"\","+
+                                "\"unique_id\":\""+macAddress+"-"+devName+"-L"+subDevNo+"\","+
                                 "\"command_topic\":\""+HAcommandTopic+"\","+
                                 "\"json_attributes_topic\":\""+HAmuPrefix+"/"+HAattrTopic+"\","+
                                 "\"brightness_state_topic\":\""+HAstateBrTopic+"\","+
@@ -205,13 +215,13 @@ class HomeAssistant {
                    for (int i=0; i<nrSwitches; i++) {
                         int id=i+1;
                         String subDevNo=String(id);
-                        String HAcommandTopic=HAcmd+"/"+switch_devNames[i]+"/switch/set";
-                        String HAstateTopic=HAmuPrefix+"/"+switch_devNames[i]+"/switch/state";
-                        String HAattrTopic=switch_devNames[i]+"/switch/attribs";
-                        String HAdiscoTopic="!"+HAprefix+"/switch/"+subDevNo+"/"+switch_devNames[i]+"/config";
+                        String HAcommandTopic=HAcmd+"/"+devName+"/switch/set";
+                        String HAstateTopic=HAmuPrefix+"/"+devName+"/switch/state";
+                        String HAattrTopic=devName+"/switch/attribs";
+                        String HAdiscoTopic="!"+HAprefix+"/switch/"+subDevNo+"/"+devName+"/config";
                         String HAdiscoEntityDef="{\"state_topic\":\""+HAstateTopic+"\","+
-                                "\"name\":\""+switch_HAnames[i]+"\","+
-                                "\"unique_id\":\""+macAddress+"-"+switch_devNames[i]+"-SW"+subDevNo+"\","+
+                                "\"name\":\""+HAname+"\","+
+                                "\"unique_id\":\""+macAddress+"-"+devName+"-SW"+subDevNo+"\","+
                                 "\"command_topic\":\""+HAcommandTopic+"\","+
                                 "\"json_attributes_topic\":\""+HAmuPrefix+"/"+HAattrTopic+"\","+
                                 "\"state_on\":\"on\","+

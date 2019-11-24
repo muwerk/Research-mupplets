@@ -9,7 +9,11 @@ namespace ustd {
 #ifdef __ESP32__
 #define G_INT_ATTR IRAM_ATTR
 #else
+#ifdef __ESP__
 #define G_INT_ATTR ICACHE_RAM_ATTR
+#else
+#define G_INT_ATTR
+#endif
 #endif
 
 #define USTD_MAX_IRQS (10)
@@ -84,8 +88,9 @@ class Switch {
     unsigned long timerDuration=1000; //ms
     unsigned long startEvent=0; //ms
     unsigned long durations[2]={3000,30000};
-
+    #ifdef __ESP__
     HomeAssistant *pHA;
+    #endif
 
     Switch(String name, uint8_t port, Mode mode = Mode::Default, bool activeLogic = false, String customTopic = "", int8_t interruptIndex=-1, unsigned long debounceTimeMs = 0)
         : name(name), port(port), mode(mode), activeLogic(activeLogic),
@@ -165,11 +170,13 @@ class Switch {
         pSched->subscribe(tID, name + "/switch/#", fnall);
     }
 
+    #ifdef __ESP__
     void registerHomeAssistant(String homeAssistantFriendlyName, String projectName="", String homeAssistantDiscoveryPrefix="homeassistant") {
         pHA=new HomeAssistant(name, tID, homeAssistantFriendlyName, projectName, SWITCH_VERSION, homeAssistantDiscoveryPrefix);
         pHA->addSwitch();
         pHA->begin(pSched);
     }
+    #endif
 
     void publishLogicalState(bool lState) {
         String textState;

@@ -28,7 +28,9 @@ class AirQuality {
     ustd::sensorprocessor co2 = ustd::sensorprocessor(4, 600, 1.0);
     ustd::sensorprocessor voc = ustd::sensorprocessor(4, 600, 0.2);
     CCS811 *pAirQuality;
+    #ifdef __ESP__
     HomeAssistant *pHA;
+    #endif
 
     AirQuality(String name, uint8_t i2caddr = SPARKFUN_CCS811_ADDR)
         : name(name), i2caddr(i2caddr) {
@@ -102,12 +104,14 @@ class AirQuality {
         pSched->subscribe(tID, name + "sensor/voc/get", fnall);
     }
 
+    #ifdef __ESP__
     void registerHomeAssistant(String homeAssistantFriendlyName, String projectName="", String homeAssistantDiscoveryPrefix="homeassistant") {
         pHA=new HomeAssistant(name, tID, homeAssistantFriendlyName, projectName, AIRQUALITY_VERSION, homeAssistantDiscoveryPrefix);
         pHA->addSensor("co2", "CO2", "ppm","None","mdi:air-filter");
         pHA->addSensor("voc", "VOC", "ppb","None","mdi:air-filter");
         pHA->begin(pSched);
     }
+    #endif
 
     void publishCO2() {
         char buf[32];

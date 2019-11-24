@@ -26,8 +26,9 @@ class Illuminance {
     tsl2561IntegrationTime_t tSpeed = TSL2561_INTEGRATIONTIME_101MS;
     bool bAutogain = false;
     double amp = 1.0;
-
+    #ifdef __ESP__
     HomeAssistant *pHA;
+    #endif
 
     Illuminance(String _name, uint8_t _port, String _gain = "16x",
           String _speed = "fast", double _amp = 1.0) {
@@ -173,12 +174,14 @@ class Illuminance {
         }
     }
 
+    #ifdef __ESP__
     void registerHomeAssistant(String homeAssistantFriendlyName, String projectName="", String homeAssistantDiscoveryPrefix="homeassistant") {
         pHA=new HomeAssistant(name, tID, homeAssistantFriendlyName, projectName, TSL_VERSION, homeAssistantDiscoveryPrefix);
         pHA->addSensor("unitilluminance", "Unit-Illuminance", "[0..1]","illuminance","mdi:brightness-6");
         pHA->addSensor("illuminance", "Illuminance", "lux","illuminance","mdi:brightness-6");
         pHA->begin(pSched);
     }
+    #endif
 
     void publishIlluminance() {
         char buf[32];

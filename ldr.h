@@ -18,7 +18,9 @@ class Ldr {
 #else
     double adRange=1024.0; // 10 bit default
 #endif
+#ifdef __ESP__
     HomeAssistant *pHA;
+#endif
 
   public:
     ustd::sensorprocessor illuminanceSensor = ustd::sensorprocessor(4, 600, 0.005);
@@ -56,11 +58,13 @@ class Ldr {
         pSched->subscribe(tID, name + "/sensor/unitilluminance/#", fnall);
     }
 
+#ifdef __ESP__
     void registerHomeAssistant(String homeAssistantFriendlyName, String projectName="", String homeAssistantDiscoveryPrefix="homeassistant") {
         pHA=new HomeAssistant(name, tID, homeAssistantFriendlyName, projectName, LDR_VERSION, homeAssistantDiscoveryPrefix);
         pHA->addSensor("unitilluminance", "Unit-Illuminance", "[0..1]","illuminance","mdi:brightness-6");
         pHA->begin(pSched);
     }
+#endif
 
   private:
     void loop() {

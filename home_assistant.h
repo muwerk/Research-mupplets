@@ -4,6 +4,7 @@
 
 #pragma once
 
+#ifdef __ESP__
 #include "scheduler.h"
 
 namespace ustd {
@@ -239,3 +240,4 @@ class HomeAssistant {
 
 }; // HomeAssistant
 } // namespace ustd
+#endif // __ESP__

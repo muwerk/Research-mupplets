@@ -29,7 +29,10 @@ class Led {
     unsigned long startPulse=0;
     String pattern;
     unsigned int patternPointer=0;
+    
+    #ifdef __ESP__
     HomeAssistant *pHA;
+    #endif
 
     Led(String name, uint8_t port, bool activeLogic=false, uint8_t channel=0 )
         : name(name), port(port), activeLogic(activeLogic), channel(channel) {
@@ -72,11 +75,13 @@ class Led {
         pSched->subscribe(tID, name + "/light/#", fnall);
     }
 
+    #ifdef __ESP__
     void registerHomeAssistant(String homeAssistantFriendlyName, String projectName="", String homeAssistantDiscoveryPrefix="homeassistant") {
         pHA=new HomeAssistant(name, tID, homeAssistantFriendlyName, projectName, LED_VERSION, homeAssistantDiscoveryPrefix);
         pHA->addLight();
         pHA->begin(pSched);
     }
+    #endif
 
     void setOn() {
         this->state=true;

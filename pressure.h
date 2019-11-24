@@ -23,7 +23,9 @@ class Pressure {
     ustd::sensorprocessor temperatureSensor = ustd::sensorprocessor(4, 600, 0.1);
     ustd::sensorprocessor pressureSensor = ustd::sensorprocessor(4, 600, 1.0);
     Adafruit_BMP085_Unified *pPressure;
+    #ifdef __ESP__
     HomeAssistant *pHA;
+    #endif
 
     Pressure(String name) : name(name) {
         pPressure = new Adafruit_BMP085_Unified(10085);
@@ -62,12 +64,14 @@ class Pressure {
         pSched->subscribe(tID, name + "/sensor/pressure/get", fnall);
     }
 
+    #ifdef __ESP__
     void registerHomeAssistant(String homeAssistantFriendlyName, String projectName="", String homeAssistantDiscoveryPrefix="homeassistant") {
         pHA=new HomeAssistant(name, tID, homeAssistantFriendlyName, projectName, PRESSURE_VERSION, homeAssistantDiscoveryPrefix);
         pHA->addSensor("temperature", "Temperature", "\\u00B0C","temperature","mdi:thermometer");
         pHA->addSensor("pressure", "Pressure", "hPa","pressure","mdi:altimeter");
         pHA->begin(pSched);
     }
+    #endif
 
     void publishPressure() {
         char buf[32];

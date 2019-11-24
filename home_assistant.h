@@ -139,8 +139,10 @@ class HomeAssistant {
                 ipAddress=(const char *)mqttJsonMsg["ip"];
                 macAddress=(const char *)mqttJsonMsg["mac"];
                 hostName=(const char *)mqttJsonMsg["hostname"];
-                capHostName=hostName;
-                if (capHostName[0]>='a' && capHostName[0]<='z') capHostName[0] -= 'a'+'A';
+                String c1=hostName.substring(0,1);
+                c1.toUpperCase();
+                String c2=hostName.substring(1);
+                capHostName=c1+c2;
             }
         } else if (topic=="mqtt/state") {
             if (useHA) {

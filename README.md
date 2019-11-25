@@ -14,10 +14,13 @@ See [mupplet led and switch example](https://github.com/muwerk/Examples/tree/mas
 switch mupplet (interfacing to a physical button) and a led mupplet (infacing to a physical led) communicate using muwerk.
 Both switch and led are also accessible via external MQTT without extra code. Additionally, both switch and led auto-register with [Home Assistant](https://www.home-assistant.io) [optional, if available], so they can be controlled using Home Assistant, Siri or Alexa.
 
-## Licenses
+## Licenses exceptions
 
-Code in this project is MIT licensed.
-```Exception```: energy_hlw8012.h uses the project HLW8012, which is GPL v3.
+Code in this project is generally MIT licensed, but this partly depends on included third-party libraries.
+
+* ```Exception```: energy_hlw8012.h uses the project HLW8012, which is GPL v3, hence project with this
+are subject to GPL v3 too.
+
 Please verify licenses of third-party libraries.
 
 ## Dependencies

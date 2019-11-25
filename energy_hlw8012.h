@@ -55,27 +55,32 @@ class EnergyHlw8012 {
     }
 
     void publishVoltage() {
-        sprintf(buf,"%6.1",voltageValue);
+        char buf[32];
+        sprintf(buf,"%6.1f",voltageValue);
         pSched->publish(name + "/sensor/voltage", buf);
     }
 
     void publishCurrent() {
-        sprintf(buf,"%6.1",currentValue);
+        char buf[32];
+        sprintf(buf,"%6.1f",currentValue);
         pSched->publish(name + "/sensor/current", buf);
     }
 
     void publishActivePower() {
-        sprintf(buf,"%6.1",activePowerValue);
+        char buf[32];
+        sprintf(buf,"%6.1f",activePowerValue);
         pSched->publish(name + "/sensor/activepower", buf);
     }
 
     void publishApparentPower() {
-        sprintf(buf,"%6.1",apparentPowerValue);
+        char buf[32];
+        sprintf(buf,"%6.1f",apparentPowerValue);
         pSched->publish(name + "/sensor/apparentpower", buf);
     }
 
     void publishEnergy() {
-        sprintf(buf,"%6.1",energyValue);
+        char buf[32];
+        sprintf(buf,"%6.1f",energyValue);
         pSched->publish(name + "/sensor/energy", buf);
     }
 
@@ -117,6 +122,7 @@ class EnergyHlw8012 {
                 this->subsMsg(topic, msg, originator);
             };
         pSched->subscribe(tID, name + "/sensor/#", fnall);
+        return true;
     }
 
 #ifdef __ESP__
@@ -126,7 +132,7 @@ class EnergyHlw8012 {
         pHA->addSensor("current", "Current", "A","None","mdi:gauge");
         pHA->addSensor("activepower", "Active Power", "W","power","mdi:gauge");
         pHA->addSensor("apparentpower", "Apparent Power", "VA","None","mdi:gauge");
-        pHA->addSensor("energy", "Energy", "Ws","None"s,"mdi:gauge");
+        pHA->addSensor("energy", "Energy", "Ws","None","mdi:gauge");
         pHA->begin(pSched);
     }
 #endif

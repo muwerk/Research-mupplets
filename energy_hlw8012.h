@@ -134,6 +134,7 @@ class EnergyHlw8012 {
         pHA->addSensor("apparentpower", "Apparent Power", "VA","None","mdi:gauge");
         pHA->addSensor("energy", "Energy", "Ws","None","mdi:gauge");
         pHA->begin(pSched);
+        publish();
     }
 #endif
 

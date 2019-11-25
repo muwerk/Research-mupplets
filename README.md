@@ -17,10 +17,6 @@ Both switch and led are also accessible via external MQTT without extra code. Ad
 ## Licenses exceptions
 
 Code in this project is generally MIT licensed, but this partly depends on included third-party libraries.
-
-* ```Exception```: energy_hlw8012.h uses the project HLW8012, which is GPL v3, hence project with this
-are subject to GPL v3 too.
-
 Please verify licenses of third-party libraries.
 
 ## Dependencies

@@ -39,7 +39,7 @@ class DigitalOut {
             [=](String topic, String msg, String originator) {
                 this->subsMsg(topic, msg, originator);
             };
-        pSched->subscribe(tID, name + "/digitalout/#", fnall);
+        pSched->subscribe(tID, name + "/switch/#", fnall);
     }
 
     #ifdef __ESP__
@@ -72,19 +72,19 @@ class DigitalOut {
         this->state=state;
         if (state) {
             setOn();
-            pSched->publish(name + "/digitalout/state", "on");
+            pSched->publish(name + "/switch/state", "on");
         } else {
             setOff();
-            pSched->publish(name + "/digitalout/state", "off");
+            pSched->publish(name + "/switch/state", "off");
         }
     }
 
     void publishState() {
         if (state) {
-            pSched->publish(name + "/digitalout/state", "on");
+            pSched->publish(name + "/switch/state", "on");
             this->state=true;
         } else {
-            pSched->publish(name + "/digitalout/state", "off");
+            pSched->publish(name + "/switch/state", "off");
             this->state=false;
         }
     }
@@ -97,7 +97,7 @@ class DigitalOut {
         memset(msgbuf,0,128);
         strncpy(msgbuf,msg.c_str(),127);
         msg.toLowerCase();
-        if (topic == name + "/digitalout/set") {
+        if (topic == name + "/switch/set") {
             set((msg=="on" || msg=="1"));
         }
     };

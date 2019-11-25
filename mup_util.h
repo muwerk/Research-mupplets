@@ -48,4 +48,37 @@ double parseUnitLevel(String msg) {
     return br;
 }
 
+static bool readNetJsonString(String key, String& value) {
+    SPIFFS.begin();
+    fs::File f = SPIFFS.open("/net.json", "r");
+    if (!f) {
+        return false;
+    } else {
+        String jsonstr = "";
+        while (f.available()) {
+            // Lets read line by line from the file
+            String lin = f.readStringUntil('\n');
+            jsonstr = jsonstr + lin;
+        }
+        JSONVar configObj = JSON.parse(jsonstr);
+        if (JSON.typeof(configObj) == "undefined") {
+            return false;
+        }
+        if (configObj.hasOwnProperty(key.c_str())) {
+            value = (const char *)configObj[key.c_str()];
+        } else {
+            return false;
+        }
+        return true;
+    }
+}
+
+static bool readFriendlyName(String& friendlyName) {
+    if (readNetJsonString("friendlyname",friendlyName)) return true;
+    if (readNetJsonString("hostname",friendlyName)) return true;
+    return false;
+}
+
+
+
 }  // namespace ustd

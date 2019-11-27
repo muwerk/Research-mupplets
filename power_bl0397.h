@@ -89,7 +89,7 @@ class PowerBl0937 {
     int8_t interruptIndex_CF, interruptIndex_CF1;
     bool bSELi=false;
     ustd::sensorprocessor frequencyCF = ustd::sensorprocessor(4, 600, 0.1);
-    ustd::sensorprocessor frequencyCF1_I = ustd::sensorprocessor(4, 600, 0.1);
+    ustd::sensorprocessor frequencyCF1_I = ustd::sensorprocessor(4, 600, 0.01);
     ustd::sensorprocessor frequencyCF1_V = ustd::sensorprocessor(4, 600, 0.1);
     double CFfrequencyVal=0.0;
     double CF1_IfrequencyVal=0.0;
@@ -140,7 +140,7 @@ class PowerBl0937 {
         }
 
         auto ft = [=]() { this->loop(); };
-        tID = pSched->add(ft, name, 1000000);  // uS schedule
+        tID = pSched->add(ft, name, 2000000);  // uS schedule
 
         auto fnall =
             [=](String topic, String msg, String originator) {
@@ -153,24 +153,26 @@ class PowerBl0937 {
     #ifdef __ESP__
     void registerHomeAssistant(String homeAssistantFriendlyName, String projectName="", String homeAssistantDiscoveryPrefix="homeassistant") {
         pHA=new HomeAssistant(name, tID, homeAssistantFriendlyName, projectName, POWER_BL0937_VERSION, homeAssistantDiscoveryPrefix);
-        // XXX: pHA->addSensor()
+        pHA->addSensor("power", "Power", "W","power","mdi:gauge");
+        pHA->addSensor("voltage", "Voltage", "V","None","mdi:gauge");
+        pHA->addSensor("current", "Current", "A","None","mdi:gauge");
         pHA->begin(pSched);
     }
     #endif
 
     void publish_CF() {
         char buf[32];
-        sprintf(buf,"%f",CFfrequencyVal);
+        sprintf(buf,"%6.1f",CFfrequencyVal);
         pSched->publish(name + "/power_bl0937/power/state", buf);
     }
     void publish_CF1_V() {
         char buf[32];
-        sprintf(buf,"%f",CF1_VfrequencyVal);
+        sprintf(buf,"%5.1f",CF1_VfrequencyVal);
         pSched->publish(name + "/power_bl0937/voltage/state", buf);
     }
     void publish_CF1_I() {
         char buf[32];
-        sprintf(buf,"%f",CF1_IfrequencyVal);
+        sprintf(buf,"%5.2f",CF1_IfrequencyVal);
         pSched->publish(name + "/power_bl0937/current/state", buf);
     }
 

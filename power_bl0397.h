@@ -95,9 +95,9 @@ class PowerBl0937 {
     double CF1_IfrequencyVal=0.0;
     double CF1_VfrequencyVal=0.0;
 
-    double voltageRenormalisation=6.221651690201113;
-    double currentRenormalisation=84.4444444444444411;
-    double powerRenormalization=0.575713594581519;
+    double voltageRenormalisation=6.221651690201113; // Empirical factors measured on Gosund-SP1 to convert frequency CF to power in W.
+    double currentRenormalisation=84.4444444444444411; // frequency CF1 (SELi high) to voltage (V)
+    double powerRenormalization=0.575713594581519; // frequency CF1 (SELi low) to current (I)
 
     double userCalibrationPowerFactor=1.0;
     double userCalibrationVoltageFactor=1.0;
@@ -111,6 +111,16 @@ class PowerBl0937 {
 
     PowerBl0937(String name, uint8_t pin_CF, uint8_t pin_CF1, uint8_t pin_SELi, int8_t interruptIndex_CF, uint8_t interruptIndex_CF1)
         : name(name), pin_CF(pin_CF), pin_CF1(pin_CF1), pin_SELi(pin_SELi), interruptIndex_CF(interruptIndex_CF), interruptIndex_CF1(interruptIndex_CF1) {
+        /*! Creates a new instance of BL0937 based power meter
+        @param name Friendly name of the meter.
+        @param pin_CF BL0937 pin CF. BL0937 outputs a 50% duty PWM signal with frequency proportional to power usage
+        @param pin_CF1 BL0937 pin CF1. BL0937 outputs a 50% duty PWM signal with frequency eithe proportical to voltage (SELi high) or current (SELi low).
+        @param pin_SELi BL0937 pin SELi. If set to high, BL0937 outputs voltage proportional frequncy on CF1, low: current-proportional.
+        @param interruptIndex_CF Should be unique interrupt index 0..USTD_MAX_PIRQS. Used to assign a unique interrupt service routine.
+        @param interruptIndex_CF IRQ service index for CF, Should be unique interrupt index 0..USTD_MAX_PIRQS. Used to assign a unique interrupt service routine.
+        @param interruptIndex_CF1 IRQ service index for CF1, Should be unique interrupt index 0..USTD_MAX_PIRQS. Used to assign a unique interrupt service routine.
+        */
+    
     }
 
     ~PowerBl0937() {

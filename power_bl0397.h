@@ -99,6 +99,10 @@ class PowerBl0937 {
     double currentRenormalisation=84.4444444444444411;
     double powerRenormalization=0.575713594581519;
 
+    double userCalibrationPowerFactor=1.0;
+    double userCalibrationVoltageFactor=1.0;
+    double userCalibrationCurrentFactor=1.0;
+
     uint8_t ipin=255;
 
     #ifdef __ESP__
@@ -161,6 +165,15 @@ class PowerBl0937 {
     }
     #endif
 
+    void setUserCalibrationFactors(double powerFactor=1.0, double voltageFactor=1.0, double currentFactor=1.0) {
+        userCalibrationPowerFactor=powerFactor;
+        userCalibrationVoltageFactor=voltageFactor;
+        userCalibrationCurrentFactor=currentFactor;
+        frequencyCF.reset();
+        frequencyCF1_V.reset();
+        frequencyCF1_I.reset();
+    }
+
     void publish_CF() {
         char buf[32];
         sprintf(buf,"%6.1f",CFfrequencyVal);
@@ -193,20 +206,20 @@ class PowerBl0937 {
         double cf_val=getResetpIrqFrequency(interruptIndex_CF);
         if ((frequencyCF.lastVal==0.0 && cf_val>0.0) || (frequencyCF.lastVal>0.0 && cf_val==0.0)) frequencyCF.reset();
         if (frequencyCF.filter(&cf_val)) {
-            cf_val=cf_val/powerRenormalization;
+            cf_val=cf_val/powerRenormalization*userCalibrationPowerFactor;
             CFfrequencyVal=cf_val;
             publish_CF();
         }
         cf_val=getResetpIrqFrequency(interruptIndex_CF1);
         if  (bSELi) {
-            cf_val=cf_val/voltageRenormalisation;
+            cf_val=cf_val/voltageRenormalisation*userCalibrationVoltageFactor;
             if ((frequencyCF1_V.lastVal==0.0 && cf_val>0.0) || (frequencyCF1_V.lastVal>0.0 && cf_val==0.0)) frequencyCF1_V.reset();
             if (frequencyCF1_V.filter(&cf_val)) {
                 CF1_VfrequencyVal=cf_val;
                 publish_CF1_V();
             }
         } else {
-            cf_val=cf_val/currentRenormalisation;
+            cf_val=cf_val/currentRenormalisation*userCalibrationCurrentFactor;
             if ((frequencyCF1_I.lastVal==0.0 && cf_val>0.0) || (frequencyCF1_I.lastVal>0.0 && cf_val==0.0)) frequencyCF1_I.reset();
             if (frequencyCF1_I.filter(&cf_val)) {
                 CF1_IfrequencyVal=cf_val;

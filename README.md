@@ -36,6 +36,8 @@ Note: third-party libraries may be subject to different licensing conditions.
 | dhtxx.h     | Temperature, humidity sensor | DHT 11, DHT 21, DHT 22 | [DHT sensor library](https://github.com/adafruit/DHT-sensor-library), [Adafruit unified sensor](https://github.com/adafruit/Adafruit_Sensor) | ESP, ESP32 | yes
 | ldr.h       | Illuminance | LDR connected to analog port | | ESP, ESP32 | yes
 | led.h       | LED diode | Digital out or PWM connected to led | | ESP, ESP32 | yes
+| digital_out.h | GPIO output | switch external hardware via GPIO | | ESP, ESP32 | yes
+| power_bl0397.h | Power meter | BL0937 sensor chip for power, volt, amp | | ESP, ESP32 | yes
 | tsl2561.h     | Illuminance | [Adafruit TSL2561](https://learn.adafruit.com/tsl2561/overview) | Wire, [Adafruit unified sensor](https://github.com/adafruit/Adafruit_Sensor), [Adafruit TSL2561](https://github.com/adafruit/Adafruit_TSL2561) | ESP, ESP32 | yes
 | mp3.h       | MP3 player | OpenSmart v1.1 [OpenSmart MP3 player](https://www.aliexpress.com/item/32782488336.html?spm=a2g0o.productlist.0.0.5a0e7823gMVTMa&algo_pvid=8fd3c7b0-09a7-4e95-bf8e-f3d37bd18300&algo_expid=8fd3c7b0-09a7-4e95-bf8e-f3d37bd18300-0&btsid=d8c8aa30-444b-4212-ba19-2decc528c422&ws_ab_test=searchweb0_0,searchweb201602_6,searchweb201603_52) | | ESP, ESP32
 | neocandle.h |

@@ -19,14 +19,14 @@ namespace ustd {
 #define USTD_MAX_PIRQS (10)
 
 volatile unsigned long pirqcounter[USTD_MAX_PIRQS]={0,0,0,0,0,0,0,0,0,0};
-volatile unsigned long plastIrq[USTD_MAX_PIRQS]={0,0,0,0,0,0,0,0,0,0};
+volatile unsigned long plastIrqTimer[USTD_MAX_PIRQS]={0,0,0,0,0,0,0,0,0,0};
 volatile unsigned long pbeginIrqTimer[USTD_MAX_PIRQS]={0,0,0,0,0,0,0,0,0,0};
 
 void G_INT_ATTR ustd_pirq_master(uint8_t irqno) {
     unsigned long curr=micros();
     if (pbeginIrqTimer[irqno]==0) pbeginIrqTimer[irqno]=curr;
     else ++pirqcounter[irqno];
-    plastIrq[irqno]=curr;
+    plastIrqTimer[irqno]=curr;
 }
 
 void G_INT_ATTR ustd_pirq0() {ustd_pirq_master(0);}
@@ -58,12 +58,13 @@ double getResetpIrqFrequency(uint8_t irqno) {
     noInterrupts();
     if (irqno < USTD_MAX_PIRQS) {
         unsigned long count=pirqcounter[irqno];
-        unsigned long dt=timeDiff(pbeginIrqTimer[irqno],micros());
+        unsigned long dt=timeDiff(pbeginIrqTimer[irqno],plastIrqTimer[irqno]);
         if (dt>0) {
             frequency = (count*500000.0)/dt;   // = count/2.0*1000.0000 uS / dt; no. of waves (count/2) / dt.
         }
         pbeginIrqTimer[irqno]=0;
         pirqcounter[irqno]=0;
+        plastIrqTimer[irqno]=0;
     }
     interrupts();
     return frequency;

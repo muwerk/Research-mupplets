@@ -117,7 +117,6 @@ class PowerBl0937 {
         @param pin_CF1 BL0937 pin CF1. BL0937 outputs a 50% duty PWM signal with frequency eithe proportical to voltage (SELi high) or current (SELi low).
         @param pin_SELi BL0937 pin SELi. If set to high, BL0937 outputs voltage proportional frequncy on CF1, low: current-proportional.
         @param interruptIndex_CF Should be unique interrupt index 0..USTD_MAX_PIRQS. Used to assign a unique interrupt service routine.
-        @param interruptIndex_CF IRQ service index for CF, Should be unique interrupt index 0..USTD_MAX_PIRQS. Used to assign a unique interrupt service routine.
         @param interruptIndex_CF1 IRQ service index for CF1, Should be unique interrupt index 0..USTD_MAX_PIRQS. Used to assign a unique interrupt service routine.
         */
     

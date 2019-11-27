@@ -88,9 +88,9 @@ class PowerBl0937 {
     uint8_t irqno_CF, irqno_CF1, irqno_SELi;
     int8_t interruptIndex_CF, interruptIndex_CF1;
     bool bSELi=false;
-    ustd::sensorprocessor frequencyCF = ustd::sensorprocessor(4, 600, 0.1);
-    ustd::sensorprocessor frequencyCF1_I = ustd::sensorprocessor(4, 600, 0.01);
-    ustd::sensorprocessor frequencyCF1_V = ustd::sensorprocessor(4, 600, 0.1);
+    ustd::sensorprocessor frequencyCF = ustd::sensorprocessor(8, 600, 0.1);
+    ustd::sensorprocessor frequencyCF1_I = ustd::sensorprocessor(8, 600, 0.01);
+    ustd::sensorprocessor frequencyCF1_V = ustd::sensorprocessor(8, 600, 0.1);
     double CFfrequencyVal=0.0;
     double CF1_IfrequencyVal=0.0;
     double CF1_VfrequencyVal=0.0;
@@ -157,23 +157,30 @@ class PowerBl0937 {
         pHA->addSensor("voltage", "Voltage", "V","None","mdi:gauge");
         pHA->addSensor("current", "Current", "A","None","mdi:gauge");
         pHA->begin(pSched);
+        publish();
     }
     #endif
 
     void publish_CF() {
         char buf[32];
         sprintf(buf,"%6.1f",CFfrequencyVal);
-        pSched->publish(name + "/power_bl0937/power/state", buf);
+        char *p1=buf;
+        while (*p1==' ') ++p1;
+        pSched->publish(name + "/sensor/power", p1);
     }
     void publish_CF1_V() {
         char buf[32];
         sprintf(buf,"%5.1f",CF1_VfrequencyVal);
-        pSched->publish(name + "/power_bl0937/voltage/state", buf);
+        char *p1=buf;
+        while (*p1==' ') ++p1;
+        pSched->publish(name + "/sensor/voltage", p1);
     }
     void publish_CF1_I() {
         char buf[32];
         sprintf(buf,"%5.2f",CF1_IfrequencyVal);
-        pSched->publish(name + "/power_bl0937/current/state", buf);
+        char *p1=buf;
+        while (*p1==' ') ++p1;
+        pSched->publish(name + "/sensor/current", p1);
     }
 
     void publish() {
@@ -184,6 +191,7 @@ class PowerBl0937 {
 
     void loop() {
         double cf_val=getResetpIrqFrequency(interruptIndex_CF);
+        if ((frequencyCF.lastVal==0.0 && cf_val>0.0) || (frequencyCF.lastVal>0.0 && cf_val==0.0)) frequencyCF.reset();
         if (frequencyCF.filter(&cf_val)) {
             cf_val=cf_val/powerRenormalization;
             CFfrequencyVal=cf_val;
@@ -192,12 +200,14 @@ class PowerBl0937 {
         cf_val=getResetpIrqFrequency(interruptIndex_CF1);
         if  (bSELi) {
             cf_val=cf_val/voltageRenormalisation;
+            if ((frequencyCF1_V.lastVal==0.0 && cf_val>0.0) || (frequencyCF1_V.lastVal>0.0 && cf_val==0.0)) frequencyCF1_V.reset();
             if (frequencyCF1_V.filter(&cf_val)) {
                 CF1_VfrequencyVal=cf_val;
                 publish_CF1_V();
             }
         } else {
             cf_val=cf_val/currentRenormalisation;
+            if ((frequencyCF1_I.lastVal==0.0 && cf_val>0.0) || (frequencyCF1_I.lastVal>0.0 && cf_val==0.0)) frequencyCF1_I.reset();
             if (frequencyCF1_I.filter(&cf_val)) {
                 CF1_IfrequencyVal=cf_val;
                 publish_CF1_I();
@@ -207,8 +217,17 @@ class PowerBl0937 {
     }
 
     void subsMsg(String topic, String msg, String originator) {
-        if (topic == name + "/power_bl0937/state/get") {
+        if (topic == name + "/sensor/state/get") {
             publish();
+        }
+        if (topic == name + "/sensor/power/get") {
+            publish_CF();
+        }
+        if (topic == name + "/sensor/voltage/get") {
+            publish_CF1_V();
+        }
+        if (topic == name + "/sensor/current/get") {
+            publish_CF1_I();
         }
     };
 };  // PowerBl0937

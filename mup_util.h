@@ -48,7 +48,7 @@ double parseUnitLevel(String msg) {
     return br;
 }
 
-static bool readNetJsonString(String key, String& value) {
+bool readNetJsonString(String key, String& value) {
     SPIFFS.begin();
     fs::File f = SPIFFS.open("/net.json", "r");
     if (!f) {
@@ -73,7 +73,7 @@ static bool readNetJsonString(String key, String& value) {
     }
 }
 
-static bool readFriendlyName(String& friendlyName) {
+bool readFriendlyName(String& friendlyName) {
     if (readNetJsonString("friendlyname",friendlyName)) return true;
     if (readNetJsonString("hostname",friendlyName)) return true;
     return false;

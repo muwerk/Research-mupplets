@@ -60,6 +60,7 @@ bool readNetJsonString(String key, String& value) {
             String lin = f.readStringUntil('\n');
             jsonstr = jsonstr + lin;
         }
+        f.close();
         JSONVar configObj = JSON.parse(jsonstr);
         if (JSON.typeof(configObj) == "undefined") {
             return false;

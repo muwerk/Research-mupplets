@@ -34,16 +34,17 @@ Note: third-party libraries may be subject to different licensing conditions.
 | airqual.h   | Air quality sensor CO<sub>2</sub>, VOC | [CCS811](https://www.sparkfun.com/products/14193) | [SparkFun CCS811 Arduino Library](https://github.com/sparkfun/SparkFun_CCS811_Arduino_Library) | ESP, ESP32 | yes
 | clock7seg.h | Simple 4 digit clock with timer | [4x 7segment display with HT16K33](https://www.adafruit.com/product/881) | [Adafruit GFX Library](https://github.com/adafruit/Adafruit-GFX-Library) [Adafruit LED Backpack Library](https://github.com/adafruit/Adafruit_LED_Backpack) | ESP
 | dhtxx.h     | Temperature, humidity sensor | DHT 11, DHT 21, DHT 22 | [DHT sensor library](https://github.com/adafruit/DHT-sensor-library), [Adafruit unified sensor](https://github.com/adafruit/Adafruit_Sensor) | ESP, ESP32 | yes
+| digital_out.h | GPIO output | switch external hardware via GPIO | | ESP, ESP32 | yes
+| i2c_pwm.h   | 16 channel PWM via I2C | [PCA9685 based I2C 16 channel board](https://www.adafruit.com/products/815) | https://github.com/adafruit/Adafruit-PWM-Servo-Driver-Library | ESP
 | ldr.h       | Illuminance | LDR connected to analog port | | ESP, ESP32 | yes
 | led.h       | LED diode | Digital out or PWM connected to led | | ESP, ESP32 | yes
-| digital_out.h | GPIO output | switch external hardware via GPIO | | ESP, ESP32 | yes
-| power_bl0397.h | Power meter | BL0937 sensor chip for power, volt, amp | | ESP, ESP32 | yes
-| tsl2561.h     | Illuminance | [Adafruit TSL2561](https://learn.adafruit.com/tsl2561/overview) | Wire, [Adafruit unified sensor](https://github.com/adafruit/Adafruit_Sensor), [Adafruit TSL2561](https://github.com/adafruit/Adafruit_TSL2561) | ESP, ESP32 | yes
 | mp3.h       | MP3 player | OpenSmart v1.1 [OpenSmart MP3 player](https://www.aliexpress.com/item/32782488336.html?spm=a2g0o.productlist.0.0.5a0e7823gMVTMa&algo_pvid=8fd3c7b0-09a7-4e95-bf8e-f3d37bd18300&algo_expid=8fd3c7b0-09a7-4e95-bf8e-f3d37bd18300-0&btsid=d8c8aa30-444b-4212-ba19-2decc528c422&ws_ab_test=searchweb0_0,searchweb201602_6,searchweb201603_52) | | ESP, ESP32
 | neocandle.h |
+| power_bl0397.h | Power meter | BL0937 sensor chip for power, volt, amp | | ESP, ESP32 | yes
 | pressure.h  | Air pressure and temperature sensor | BMP085, BMP180 | [Adafruit BMP085 unified](https://github.com/adafruit/Adafruit_BMP085_Unified), [Adafruit unified sensor](https://github.com/adafruit/Adafruit_Sensor) | ESP, ESP32 | yes
+| shift_reg_74595.h | serial to parallel output | 74HC595 shift register(s) | | ESP, ESP32
 | switch.h    | Button | any push button |   | ESP, ESP32 | yes
-| i2c_pwm.h   | 16 channel PWM via I2C | [PCA9685 based I2C 16 channel board](https://www.adafruit.com/products/815) | https://github.com/adafruit/Adafruit-PWM-Servo-Driver-Library | ESP
+| tsl2561.h     | Illuminance | [Adafruit TSL2561](https://learn.adafruit.com/tsl2561/overview) | Wire, [Adafruit unified sensor](https://github.com/adafruit/Adafruit_Sensor), [Adafruit TSL2561](https://github.com/adafruit/Adafruit_TSL2561) | ESP, ESP32 | yes
 
 **Note**: [Home Assistent](https://www.home-assistant.io), if support is `yes`, the device can be auto-registered using [Home Assistant's MQTT discovery functionality](https://www.home-assistant.io/docs/mqtt/discovery/) by calling `myMupplet.registerHomeAssistant("muppletFriendlyName");`
 
@@ -289,10 +290,6 @@ void setup() {
 
 See [Servo](https://github.com/muwerk/Examples/tree/master/servo) for a complete example.
 
-
-
-
-
 ## MP3 player with SD-Card (OpenSmart)
 
 Allows playback of different MP3 files.
@@ -346,3 +343,29 @@ void setup() {
 ```
 
 See [MP3](https://github.com/muwerk/Examples/tree/master/mp3) for a complete example.
+
+## 74HC595 shift register
+
+Allows serial output of 8 bit (or more, if cascaded) data using either 3 GPIOs or SPI (MOSI, CLK, +latch).
+
+<img src="https://github.com/muwerk/mupplets/blob/master/Resources/74hc595.png" width="60%" height="30%">
+Hardware: OpenSmart MP3 player (e.g. AliExpress).
+
+#### Notes
+
+Can be combined with ULN2003 (7 outputs) or ULN2803 (8 outputs) darlington amplifiers to drive higher
+voltage or current loads.
+
+#### Messages received by shift_reg_74595 mupplet:
+
+| topic | message body | comment
+| ----- | ------------ | -------
+| `<mupplet-name>/shiftreg/set/all` | `byte` | Set output to value of `byte`.
+| `<mupplet-name>/shiftreg/set/<bit-no>` |  `on`, `off`, `true`, `false`, 0, 100 | Set output bit `bit-no` to high or low.
+| `<mupplet-name>/shiftreg/pulse/<bit-no>` |  `on[,pulse-time]` | Set output bit `bit-no` to high for `pulse-time` milliseconds.
+
+#### Messages sent by shift_reg_74595 mupplet:
+
+| topic | message body | comment
+| ----- | ------------ | -------
+| `<mupplet-name>/shiftreg` | `<byte>` | Current value of shift register as string (in decimal).

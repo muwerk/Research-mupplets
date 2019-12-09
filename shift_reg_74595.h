@@ -33,6 +33,7 @@ class ShiftReg {
     */
  
   public:
+    String SHIFTREG74595_VERSION="0.1.0";
     Scheduler *pSched;
     int tID;
     String name;
@@ -118,7 +119,7 @@ class ShiftReg {
         writeShiftReg(data,mask);
         char buf[32];
         sprintf(buf,"%d",cur_data);
-        pSched->publish(name + "/shiftreg/setdata", buf);
+        pSched->publish(name + "/shiftreg", buf);
     }
 
     void setBit(uint8_t bit, bool val) {
@@ -142,7 +143,7 @@ class ShiftReg {
          *
          * Set a bit in 74HC595 shift register for a time perios of ms milliseconds (one-time).
          * 
-         * @param bit bit to pulsee.
+         * @param bit bit to pulse.
          * @param ms high signal duration in milliseconds. Note: default timer for this mupplet 
          * is 50ms, which therefore is the minimum resolution for a pulse. Change parameter
          * scheduleIntervalUsec of the begin() method to increase the resolution. (Shorter 

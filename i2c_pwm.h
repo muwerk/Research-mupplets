@@ -51,7 +51,7 @@ class I2CPWM {
     void begin(Scheduler *_pSched) {
         pSched = _pSched;
 
-        pPwm = new Adafruit_PWMServoDriver(&Wire, i2c_address);
+        pPwm = new Adafruit_PWMServoDriver(i2c_address, Wire);
 
         pPwm->begin();
         pPwm->setPWMFreq(frequency);
@@ -94,6 +94,7 @@ class I2CPWM {
         }
     }
 
+/*
     double parseUnitLevel(String msg) {
         char buff[32];
         int l;
@@ -131,7 +132,7 @@ class I2CPWM {
         if (br>1.0) br=1.0;
         return br;
     }
-
+*/
     void subsMsg(String topic, String msg, String originator) {
         String wct=name+"/i2cpwm/set/*";
         int port;

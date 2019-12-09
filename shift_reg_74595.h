@@ -11,7 +11,7 @@
 //          Q3|3  14| DS    <-- Data
 //          Q4|4  13| OEi
 //          Q5|5  12| ST_CP <-- Latch
-//          Q6|6  11| SH_CP <-- Clocks
+//          Q6|6  11| SH_CP <-- Clock
 //          Q7|7  10| MRi
 //         Gnd|8   9| Q7'
 //            +-----+

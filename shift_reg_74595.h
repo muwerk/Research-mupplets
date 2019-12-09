@@ -34,6 +34,8 @@ class ShiftReg {
     uint8_t port_latch;
     uint8_t cur_data;
     bool useSPI;
+    unsigned long bitPulseTimer[8]={0,0,0,0,0,0,0,0};
+    unsigned long bitPulseDelta[8]={0,0,0,0,0,0,0,0};
 
     ShiftReg(String name, uint8_t port_data_mosi, uint8_t port_clock_sck, uint8_t port_latch, bool useSPI=true )
         : name(name), port_data_mosi(port_data_mosi), port_clock_sck(port_clock_sck), port_latch(port_latch), useSPI(useSPI) {
@@ -79,14 +81,40 @@ class ShiftReg {
         digitalWrite(port_latch, HIGH);
     }
 
-    void set(uint8_t data) {
-        writeShiftReg(data);
+    void set(uint8_t data, uint8_t mask=0xff) {
+        writeShiftReg(data,mask);
         char buf[32];
-        sprintf(buf,"%d",data);
-        pSched->publish(name + "/shiftreg/data", buf);
+        sprintf(buf,"%d",cur_data);
+        pSched->publish(name + "/shiftreg/setdata", buf);
+    }
+
+    void setBit(uint8_t bit, bool val) {
+        uint8_t cw=1<<bit;
+        if (val) {
+            set(cw,cw);
+        } else {
+            set(0,cw);
+        }
+    }
+
+    void pulseBit(uint8_t bit, unsigned long ms=1000) {
+        if (bit>=0 and bit<8) {
+            setBit(bit, true);
+            bitPulseTimer[bit]=millis();
+            bitPulseDelta[bit]=ms;
+        }
     }
 
     void loop() {
+        for (uint8_t bit=0; bit<8; bit++) {
+            if (bitPulseTimer[bit]) {
+                if (timeDiff(bitPulseTimer[bit],millis())>bitPulseDelta[bit]) {
+                    bitPulseTimer[bit]=0;
+                    bitPulseDelta[bit]=0;
+                    setBit(bit,false);
+                }
+            }
+        }
     }
 
     void subsMsg(String topic, String msg, String originator) {
@@ -94,10 +122,54 @@ class ShiftReg {
         memset(msgbuf,0,128);
         strncpy(msgbuf,msg.c_str(),127);
         // TODO: allow other data-formats than decimal
-        if (topic == name + "/shiftreg/data/set") {
+        if (topic == name + "/shiftreg/set/all") {
+            uint8_t mask=0xff;
+            char *p=strchr(msgbuf,',');
+            if (p!=nullptr) {
+                *p=0;
+                ++p;
+                mask=atoi(p);
+            }
             uint8_t data=atoi(msgbuf);
-            set(data);
+            set(data,mask);
+        } else {
+            String wct=name+"/shiftreg/set/*";   // 8Bits:  /shiftreg/set/[0..7]
+            int bit;
+            if (pSched->mqttmatch(topic,wct )) {
+                if (topic.length() >= wct.length()) {
+                    const char *p=topic.c_str();
+                    bit=atoi(&p[name.length()+strlen("/i2cpwm/")]);
+                    if (bit>=0 and bit<=7) {
+                        double level=parseUnitLevel(msg);
+                        if (level==0.0) setBit(bit, false);
+                        else setBit(bit, true);
+                    }
+                }
+            }
         }
+        String wct=name+"/shiftreg/pulse/*";   // 8Bits:  /shiftreg/set/[0..7]
+        int bit;
+        if (pSched->mqttmatch(topic,wct )) {
+            if (topic.length() >= wct.length()) {
+                const char *p=topic.c_str();
+                bit=atoi(&p[name.length()+strlen("/i2cpwm/")]);
+                if (bit>=0 and bit<=7) {
+                    unsigned long ms=1000;
+                    char *p=strchr(msgbuf,',');
+                    if (p!=nullptr) {
+                        *p=0;
+                        ++p;
+                        ms=atol(p);
+                    }
+                    double level=parseUnitLevel(msgbuf);
+                    if (level==0.0) setBit(bit, false);
+                    else {
+                        pulseBit(bit, ms);
+                    }
+                }
+            }
+        }
+        
     };
 };  // ShiftReg
 

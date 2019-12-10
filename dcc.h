@@ -48,11 +48,16 @@ T_DQ dcc_cmd_que[USTD_MAX_DCC_TIMERS]={T_DQ(16),T_DQ(16),T_DQ(16),T_DQ(16)};
 T_DCC_CMD dcc_curData[USTD_MAX_DCC_TIMERS];
 
 volatile uint8_t dcc_currentBit[USTD_MAX_DCC_TIMERS]={1,1,1,1};
-volatile uint8_t dcc_zeroSkip[USTD_MAX_DCC_TIMERS]={0,0,0,0};
+volatile uint8_t dcc_zeroSkip[USTD_MAX_DCC_TIMERS]={1,1,1,1};
 volatile uint8_t dcc_inData[USTD_MAX_DCC_TIMERS]={0,0,0,0};
 
+volatile unsigned long cmdsSent=0;
+volatile unsigned long qS=0;
+
+volatile bool irqAct=false;
+
 void G_INT_ATTR ustd_dcc_timer_irq_master(uint8_t timerNo) {
-    portENTER_CRITICAL(&(dccTimerMux[timerNo])); // generate 58uSec changes on pin_enable1 port as default PWM
+    portENTER_CRITICAL(&(dccTimerMux[timerNo])); 
     if (dcc_currentBit[timerNo]==0 && dcc_zeroSkip[timerNo]==1) {
         dcc_zeroSkip[timerNo]=0;
         portEXIT_CRITICAL(&(dccTimerMux[timerNo]));
@@ -61,29 +66,35 @@ void G_INT_ATTR ustd_dcc_timer_irq_master(uint8_t timerNo) {
     dcc_zeroSkip[timerNo]=1;
     if (waveState[timerNo]) {
         waveState[timerNo]=false;
-        digitalWrite(wavePin[timerNo],false);
+        if (irqAct) digitalWrite(wavePin[timerNo],false);
     } else {
         waveState[timerNo]=true;
-        digitalWrite(wavePin[timerNo],true);
+        if (irqAct) digitalWrite(wavePin[timerNo],true);
         if (!dcc_inData[timerNo]) {
             if (dcc_cmd_que[timerNo].length()>0) {
                 dcc_curData[timerNo]=dcc_cmd_que[timerNo].pop();
                 dcc_inData[timerNo]=1;
+                ++qS;
+                irqAct=true;
             }
         }
         if (dcc_inData[timerNo]) {
-            uint8_t ind=dcc_curData[timerNo].bitPos/8;
-            uint8_t pos=1<<dcc_curData[timerNo].bitPos%8;
+            uint8_t ind=(dcc_curData[timerNo].bitPos)/8;
+            uint8_t pos=1<<((dcc_curData[timerNo].bitPos)%8);
             if (dcc_curData[timerNo].bytes[ind]&pos) dcc_currentBit[timerNo]=1;
             else dcc_currentBit[timerNo]=0;
             ++dcc_curData[timerNo].bitPos;
             if (dcc_curData[timerNo].bitPos==dcc_curData[timerNo].bitLen) {
                 dcc_inData[timerNo]=0;
                 memset(&dcc_curData[timerNo],0,sizeof(dcc_curData[timerNo]));
+                ++cmdsSent;
             }
+            if (dcc_currentBit[timerNo]==0) dcc_zeroSkip[timerNo]=1;
         } else {
             dcc_currentBit[timerNo]=1;
             dcc_zeroSkip[timerNo]=0;
+
+            irqAct=false;
         }
     }
     portEXIT_CRITICAL(&(dccTimerMux[timerNo]));
@@ -153,7 +164,7 @@ class Dcc {
         }
 
         auto ft = [=]() { this->loop(); };
-        tID = pSched->add(ft, name, 50000);
+        tID = pSched->add(ft, name, 200000);
 
         auto fnall =
             [=](String topic, String msg, String originator) {
@@ -163,30 +174,37 @@ class Dcc {
     }
 
     void encodeAddBit(T_DCC_CMD *dccCmd, uint8_t bit) {
-        uint8_t ind=dccCmd->bitPos/8;
-        uint8_t pos=1<<dccCmd->bitPos%8;
-        dccCmd->bytes[ind] |= pos;
+        uint8_t ind=(dccCmd->bitPos)/8;
+        uint8_t pos=1<<((dccCmd->bitPos)%8);
+        if (bit) dccCmd->bytes[ind] |= pos;
         ++dccCmd->bitPos;
     }
 
     bool encode(int len, uint8_t *buf, T_DCC_CMD *dccCmd) {
-        if (DCC_MAX_CMD_LEN*8 < len*9+12) {
+        if (DCC_MAX_CMD_LEN*8 < (len+1)*9+13) {
             #ifdef USE_SERIAL_DBG
             Serial.println("Cmd len exeeded for DCC buf");
             #endif
             return false;
         }
         dccCmd->bitPos=0;
-        for (uint8_t i=0; i<12; i++) encodeAddBit(dccCmd,1);
+        uint8_t crc=0;
+        uint8_t preambleBits=16;
+        for (uint8_t i=0; i<preambleBits; i++) encodeAddBit(dccCmd,1);
         encodeAddBit(dccCmd,0);
         for (uint8_t i=0; i<len; i++) {
+            crc ^= buf[i];
             for (uint8_t b=0; b<8; b++) {
-                if (buf[i]&(1<<b)) encodeAddBit(dccCmd,1);
+                if (buf[i]&(1<<(7-b))) encodeAddBit(dccCmd,1);
                 else encodeAddBit(dccCmd,0);
             }
-            if (i==len-1) encodeAddBit(dccCmd,1);
+            encodeAddBit(dccCmd,0);
+        }
+        for (uint8_t b=0; b<8; b++) {
+            if (crc&(1<<(7-b))) encodeAddBit(dccCmd,1);
             else encodeAddBit(dccCmd,0);
         }
+        encodeAddBit(dccCmd,1);
         dccCmd->bitLen=dccCmd->bitPos;
         dccCmd->bitPos=0;
         return true;
@@ -207,10 +225,16 @@ class Dcc {
                 return true;
             }
         }
+        return false;
     }
 
-    bool setTrainSpeed(uint8_t trainDccAddress, uint8_t trainSpeed) {
-        return false;
+    bool setTrainSpeed(uint8_t trainDccAddress, uint8_t trainSpeed, bool direction=true) {
+        uint8_t buf[2];
+        buf[0]=trainDccAddress&127;
+        buf[1]=trainSpeed&0x1f;
+        if (direction) buf[1]|=0x20;
+        buf[1] |= 0x40;
+        return sendCmd(2,buf);
     }
 /*
     #ifdef __ESP__
@@ -222,9 +246,17 @@ class Dcc {
     #endif
 */
 
+    uint8_t speed=0;
     void loop() {
         if (timerStarted) {
-
+            //#ifdef USE_SERIAL_DBG
+            //char buf[128];
+            //sprintf(buf,"Cmds: %ld sent: %ld", qS, cmdsSent);
+            //Serial.println(buf);
+            //#endif
+            setTrainSpeed(3,13);
+            ++speed;
+            if (speed>31) speed=0;
         }
     }
 

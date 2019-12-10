@@ -162,6 +162,56 @@ class Dcc {
         pSched->subscribe(tID, name + "/dcc/#", fnall);
     }
 
+    void encodeAddBit(T_DCC_CMD *dccCmd, uint8_t bit) {
+        uint8_t ind=dccCmd->bitPos/8;
+        uint8_t pos=1<<dccCmd->bitPos%8;
+        dccCmd->bytes[ind] |= pos;
+        ++dccCmd->bitPos;
+    }
+
+    bool encode(int len, uint8_t *buf, T_DCC_CMD *dccCmd) {
+        if (DCC_MAX_CMD_LEN*8 < len*9+12) {
+            #ifdef USE_SERIAL_DBG
+            Serial.println("Cmd len exeeded for DCC buf");
+            #endif
+            return false;
+        }
+        dccCmd->bitPos=0;
+        for (uint8_t i=0; i<12; i++) encodeAddBit(dccCmd,1);
+        encodeAddBit(dccCmd,0);
+        for (uint8_t i=0; i<len; i++) {
+            for (uint8_t b=0; b<8; b++) {
+                if (buf[i]&(1<<b)) encodeAddBit(dccCmd,1);
+                else encodeAddBit(dccCmd,0);
+            }
+            if (i==len-1) encodeAddBit(dccCmd,1);
+            else encodeAddBit(dccCmd,0);
+        }
+        dccCmd->bitLen=dccCmd->bitPos;
+        dccCmd->bitPos=0;
+        return true;
+    }
+
+    bool sendCmd(int len, uint8_t *buf) {
+        T_DCC_CMD tcc;
+        if (encode(len,buf,&tcc)) {
+            portENTER_CRITICAL(&(dccTimerMux[iTimer]));
+            if (!dcc_cmd_que[iTimer].push(tcc)) {
+                portEXIT_CRITICAL(&(dccTimerMux[iTimer]));
+                #ifdef USE_SERIAL_DBG
+                Serial.println("DCC Queue full");
+                #endif
+                return false;
+            } else {
+                portEXIT_CRITICAL(&(dccTimerMux[iTimer]));
+                return true;
+            }
+        }
+    }
+
+    bool setTrainSpeed(uint8_t trainDccAddress, uint8_t trainSpeed) {
+        return false;
+    }
 /*
     #ifdef __ESP__
     void registerHomeAssistant(String homeAssistantFriendlyName, String projectName="", String homeAssistantDiscoveryPrefix="homeassistant") {

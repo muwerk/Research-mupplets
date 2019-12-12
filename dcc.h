@@ -27,13 +27,13 @@ namespace ustd {
 #endif
 
 #define USTD_MAX_DCC_TIMERS (4)
-#define DCC_MAX_CMD_LEN (10)
+#define DCC_BITSTREAM_LEN (10)
 #define DCC_MAX_CMD_QUEUE (16)
 
 typedef struct t_dcc_cmd {
     uint8_t bitLen;
     uint8_t bitPos;
-    uint8_t bytes[DCC_MAX_CMD_LEN];
+    uint8_t bitstream[DCC_BITSTREAM_LEN];
 } T_DCC_CMD;
 
 
@@ -81,7 +81,7 @@ void G_INT_ATTR ustd_dcc_timer_irq_master(uint8_t timerNo) {
         if (dcc_inData[timerNo]) {
             uint8_t ind=(dcc_curData[timerNo].bitPos)/8;
             uint8_t pos=1<<((dcc_curData[timerNo].bitPos)%8);
-            if (dcc_curData[timerNo].bytes[ind]&pos) dcc_currentBit[timerNo]=1;
+            if (dcc_curData[timerNo].bitstream[ind]&pos) dcc_currentBit[timerNo]=1;
             else dcc_currentBit[timerNo]=0;
             ++dcc_curData[timerNo].bitPos;
             if (dcc_curData[timerNo].bitPos==dcc_curData[timerNo].bitLen) {
@@ -109,14 +109,17 @@ void (*ustd_dcc_timer_irq_table[USTD_MAX_DCC_TIMERS])()={ustd_dcc_timer_irq0, us
 
 class Dcc {
   public:
+    enum Mode {DCC, HBRIDGE, DC};
     String DCC_VERSION="0.1.0";
-    enum Mode { Default, Rising, Falling, Flipflop, Timer, Duration};
     Scheduler *pSched;
     int tID;
+    int pwmrange;
 
     String name;
-    uint8_t pin_in1,pin_in2,pin_enable1;
-    uint8_t iTimer;
+    Mode mode;
+    uint8_t pin_pwm;
+    uint8_t channel;
+    uint8_t pin_in1,pin_in2;
     bool timerStarted=false;
 
     /*
@@ -126,13 +129,13 @@ class Dcc {
     */
 
 
-    Dcc(String name, uint8_t pin_in1, uint8_t pin_in2, uint8_t pin_enable1, int8_t iTimer=0)
-        : name(name), pin_in1(pin_in1), pin_in2(pin_in2), pin_enable1(pin_enable1), iTimer(iTimer) {
+    Dcc(String name, Mode mode, uint8_t pin_pwm, int8_t channel, uint8_t pin_in1=0xff, uint8_t pin_in2=0xff)
+        : name(name), mode(mode), pin_pwm(pin_pwm), channel(channel), pin_in1(pin_in1), pin_in2(pin_in2) {
     }
 
     ~Dcc() {
         if (timerStarted) {
-            timerEnd(dccTimer[iTimer]);
+            timerEnd(dccTimer[channel]);
             timerStarted=false;
         }
     }
@@ -140,27 +143,51 @@ class Dcc {
     void begin(Scheduler *_pSched) {
         pSched = _pSched;
 
-        digitalWrite(pin_in1, true);
-        digitalWrite(pin_in2, false);
-        digitalWrite(pin_enable1, false);
-        pinMode(pin_in1, OUTPUT);
-        pinMode(pin_in2, OUTPUT);
-        pinMode(pin_enable1, OUTPUT);
+        digitalWrite(pin_pwm, false);
+        pinMode(pin_pwm, OUTPUT);
+        if (mode!=Mode::DC) {
+            digitalWrite(pin_in1, true);
+            digitalWrite(pin_in2, false);
+            pinMode(pin_in1, OUTPUT);
+            pinMode(pin_in2, OUTPUT);
+        }
 
-        if (iTimer>=0 && iTimer<USTD_MAX_DCC_TIMERS) {
-            // Use iTimer=[0..3] timer.
-            // Set 80 divider for prescaler, ->us. (see ESP32 Technical Reference Manual for more
-            // info).
-            dccTimer[iTimer] = timerBegin(iTimer, 80, true);
-            // Attach onTimer function to our timer.
-            timerAttachInterrupt(dccTimer[iTimer], ustd_dcc_timer_irq_table[iTimer], true);
-            // Set alarm to call onTimer function every second (value in microseconds).
-            // Repeat the alarm (third parameter)
-            timerAlarmWrite(dccTimer[iTimer], 58, true); // every 58 uSec
-            // Start repeating alarm
-            timerStarted=true;
-            wavePin[iTimer]=pin_enable1;
-            timerAlarmEnable(dccTimer[iTimer]);
+        switch (mode) {
+            case Mode::DCC:
+                if (channel>=0 && channel<USTD_MAX_DCC_TIMERS) {
+                    // Use channel=[0..3] timer.
+                    // Set 80 divider for prescaler, ->us. (see ESP32 Technical Reference Manual for more
+                    // info).
+                    dccTimer[channel] = timerBegin(channel, 80, true);
+                    // Attach onTimer function to our timer.
+                    timerAttachInterrupt(dccTimer[channel], ustd_dcc_timer_irq_table[channel], true);
+                    // Set alarm to call onTimer function every second (value in microseconds).
+                    // Repeat the alarm (third parameter)
+                    timerAlarmWrite(dccTimer[channel], 58, true); // every 58 uSec
+                    // Start repeating alarm
+                    timerStarted=true;
+                    wavePin[channel]=pin_pwm;
+                    timerAlarmEnable(dccTimer[channel]);
+                }
+                break;
+            case Mode::DC:
+                #if defined(__ESP32__)
+                    // use first channel of 16 channels (started from zero)
+                    #define PWM_TIMER_BITS  10
+                    // use 5000 Hz as a LEDC base frequency
+                    #define PWM_BASE_FREQ     20000
+                    ledcSetup(channel, PWM_BASE_FREQ, PWM_TIMER_BITS);
+                    ledcAttachPin(pin_pwm, channel);
+                #else
+                    pinMode(pin_pwm, OUTPUT);
+                #endif
+                #ifdef __ESP__
+                pwmrange=1023;
+                #else
+                pwmrange=255;
+                #endif
+            default:
+                break;
         }
 
         auto ft = [=]() { this->loop(); };
@@ -176,12 +203,19 @@ class Dcc {
     void encodeAddBit(T_DCC_CMD *dccCmd, uint8_t bit) {
         uint8_t ind=(dccCmd->bitPos)/8;
         uint8_t pos=1<<((dccCmd->bitPos)%8);
-        if (bit) dccCmd->bytes[ind] |= pos;
+        if (bit) dccCmd->bitstream[ind] |= pos;
         ++dccCmd->bitPos;
     }
 
+    void encodeAddByte(T_DCC_CMD *dccCmd, uint8_t byte) {
+        for (uint8_t b=0; b<8; b++) {
+            if (byte&(1<<(7-b))) encodeAddBit(dccCmd,1);
+            else encodeAddBit(dccCmd,0);
+        }
+    }
+
     bool encode(int len, uint8_t *buf, T_DCC_CMD *dccCmd) {
-        if (DCC_MAX_CMD_LEN*8 < (len+1)*9+13) {
+        if (DCC_BITSTREAM_LEN*8 < (len+1)*9+13) {
             #ifdef USE_SERIAL_DBG
             Serial.println("Cmd len exeeded for DCC buf");
             #endif
@@ -194,16 +228,10 @@ class Dcc {
         encodeAddBit(dccCmd,0);
         for (uint8_t i=0; i<len; i++) {
             crc ^= buf[i];
-            for (uint8_t b=0; b<8; b++) {
-                if (buf[i]&(1<<(7-b))) encodeAddBit(dccCmd,1);
-                else encodeAddBit(dccCmd,0);
-            }
+            encodeAddByte(dccCmd,buf[i]);
             encodeAddBit(dccCmd,0);
         }
-        for (uint8_t b=0; b<8; b++) {
-            if (crc&(1<<(7-b))) encodeAddBit(dccCmd,1);
-            else encodeAddBit(dccCmd,0);
-        }
+        encodeAddByte(dccCmd,crc);
         encodeAddBit(dccCmd,1);
         dccCmd->bitLen=dccCmd->bitPos;
         dccCmd->bitPos=0;
@@ -213,28 +241,44 @@ class Dcc {
     bool sendCmd(int len, uint8_t *buf) {
         T_DCC_CMD tcc;
         if (encode(len,buf,&tcc)) {
-            portENTER_CRITICAL(&(dccTimerMux[iTimer]));
-            if (!dcc_cmd_que[iTimer].push(tcc)) {
-                portEXIT_CRITICAL(&(dccTimerMux[iTimer]));
+            portENTER_CRITICAL(&(dccTimerMux[channel]));
+            if (!dcc_cmd_que[channel].push(tcc)) {
+                portEXIT_CRITICAL(&(dccTimerMux[channel]));
                 #ifdef USE_SERIAL_DBG
                 Serial.println("DCC Queue full");
                 #endif
                 return false;
             } else {
-                portEXIT_CRITICAL(&(dccTimerMux[iTimer]));
+                portEXIT_CRITICAL(&(dccTimerMux[channel]));
                 return true;
             }
         }
         return false;
     }
 
-    bool setTrainSpeed(uint8_t trainDccAddress, uint8_t trainSpeed, bool direction=true) {
-        uint8_t buf[2];
-        buf[0]=trainDccAddress&127;
-        buf[1]=trainSpeed&0x1f;
-        if (direction) buf[1]|=0x20;
-        buf[1] |= 0x40;
-        return sendCmd(2,buf);
+    bool setTrainSpeed(uint8_t trainSpeed, bool direction=true, uint8_t trainDccAddress=0x00) {
+        switch (mode) {
+            case Mode::DCC:
+                uint8_t buf[2];
+                buf[0]=trainDccAddress&127;
+                buf[1]=trainSpeed&0x1f;
+                if (direction) buf[1]|=0x20;
+                buf[1] |= 0x40;
+                return sendCmd(2,buf);
+                break;
+            case Mode::DC:
+                 #if defined(__ESP32__)
+                    ledcWrite(channel, trainSpeed);
+                #else
+                    analogWrite(pin_pwm, trainSpeed);
+                #endif
+                
+                return true;
+                break;
+            default:
+                return false;
+                break;
+        }
     }
 /*
     #ifdef __ESP__
@@ -246,7 +290,7 @@ class Dcc {
     #endif
 */
 
-    uint8_t speed=0;
+    //uint8_t speed=0;
     void loop() {
         if (timerStarted) {
             //#ifdef USE_SERIAL_DBG
@@ -254,9 +298,10 @@ class Dcc {
             //sprintf(buf,"Cmds: %ld sent: %ld", qS, cmdsSent);
             //Serial.println(buf);
             //#endif
-            setTrainSpeed(3,13);
-            ++speed;
-            if (speed>31) speed=0;
+            
+            //setTrainSpeed(3,13);
+            //++speed;
+            //if (speed>31) speed=0;
         }
     }
 

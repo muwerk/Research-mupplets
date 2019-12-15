@@ -114,6 +114,8 @@ class Dcc {
     Scheduler *pSched;
     int tID;
     int pwmrange;
+    int pwmfreq;
+    int pwmtimerbits=10;
 
     String name;
     Mode mode;
@@ -122,6 +124,7 @@ class Dcc {
     uint8_t pin_in1,pin_in2;
     bool timerStarted=false;
 
+    int trainSpeed;
     /*
     #ifdef __ESP__
     HomeAssistant *pHA;
@@ -172,11 +175,8 @@ class Dcc {
                 break;
             case Mode::DC:
                 #if defined(__ESP32__)
-                    // use first channel of 16 channels (started from zero)
-                    #define PWM_TIMER_BITS  10
-                    // use 5000 Hz as a LEDC base frequency
-                    #define PWM_BASE_FREQ     20000
-                    ledcSetup(channel, PWM_BASE_FREQ, PWM_TIMER_BITS);
+                    pwmfreq=6;
+                    ledcSetup(channel, pwmfreq, pwmtimerbits);
                     ledcAttachPin(pin_pwm, channel);
                 #else
                     pinMode(pin_pwm, OUTPUT);
@@ -191,7 +191,7 @@ class Dcc {
         }
 
         auto ft = [=]() { this->loop(); };
-        tID = pSched->add(ft, name, 200000);
+        tID = pSched->add(ft, name, 1000000);
 
         auto fnall =
             [=](String topic, String msg, String originator) {
@@ -256,7 +256,8 @@ class Dcc {
         return false;
     }
 
-    bool setTrainSpeed(uint8_t trainSpeed, bool direction=true, uint8_t trainDccAddress=0x00) {
+    bool setTrainSpeed(uint8_t _trainSpeed, bool direction=true, uint8_t trainDccAddress=0x00) {
+        trainSpeed=_trainSpeed;
         switch (mode) {
             case Mode::DCC:
                 uint8_t buf[2];
@@ -291,7 +292,18 @@ class Dcc {
 */
 
     //uint8_t speed=0;
+    int n=0;
     void loop() {
+        if (pwmfreq<30) {
+            ++n;
+            pwmfreq+=1;
+            setTrainSpeed(trainSpeed+2);
+            if (n==12 || n==14 || n==16) ledcWriteTone(channel,220);
+            else ledcWriteTone(channel, pwmfreq);
+            ledcWrite(channel,trainSpeed);
+            //ledcSetup(channel, pwmfreq, pwmtimerbits);
+            //ledcAttachPin(pin_pwm, channel);
+        }
         if (timerStarted) {
             //#ifdef USE_SERIAL_DBG
             //char buf[128];

@@ -90,8 +90,6 @@ class TVSerialLG : TvSerialProtocol {
         lastSend=millis()+500;
         asyncCheckState();
         asyncCheckInput();
-        //char *xx="ka 01 00\n";
-        //_sendTV(xx,strlen(xx));
         return true;
     }
 
@@ -206,7 +204,7 @@ class TVSerialLG : TvSerialProtocol {
                         default:
                             char msg[32];
                             sprintf(msg,"UNKNOWN STATE 0x%02x",state);
-                            pSched->publish(topic+"/state", msg);
+                            pSched->publish(topic+"/switch/state", msg);
                             break;
                     }
                     break;
@@ -396,8 +394,8 @@ class TvSerial {
                 tvProt->asyncCheckState();
                 tvProt->asyncCheckInput();
             }
-            tvProt->asyncReceive(pSched, name+"/tv");
-            tvProt->asyncSend(pSched, name+"/tv");
+            tvProt->asyncReceive(pSched, name);
+            tvProt->asyncSend(pSched, name);
         }
     }
 

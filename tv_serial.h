@@ -9,7 +9,7 @@ namespace ustd {
 
 class TvSerialProtocol {
   public:
-    enum TvInput {DIGITALTV, ANALOGTV, VIDEO1, VIDEO2, COMPONENT1, COMPONENT2, RGBDTV, RGBPC, HDMI1, HDMI2};
+    enum TvInput {UNDEFINED, DIGITALTV, ANALOGTV, VIDEO1, VIDEO2, COMPONENT1, COMPONENT2, RGBDTV, RGBPC, HDMI1, HDMI2};
 
     virtual ~TvSerialProtocol() {}; // Otherwise destructor of derived classes is never called!
     virtual bool begin() { return false;}
@@ -17,10 +17,12 @@ class TvSerialProtocol {
     virtual bool setOff() { return false; }
     virtual bool setState(bool state) { return false;}
     virtual bool setInput(TvInput input) { return false; }
+    virtual bool getState() { return false; }
+    virtual TvInput getInput() { return TvInput::UNDEFINED; }
     virtual bool asyncCheckState() { return false; }
     virtual bool asyncCheckInput() { return false; }
     virtual bool asyncReceive(Scheduler *, String) { return false; }
-    virtual bool asyncSend() { return false; }
+    virtual bool asyncSend(Scheduler *, String) { return false; }
 };
 
 
@@ -36,7 +38,6 @@ class TVSerialLG : TvSerialProtocol {
     int curInput=-1;
     unsigned long lastSend=0;
     unsigned long minSendIntervall=150;
-
     
     ustd::queue<uint8_t *> asyncSendQueue = ustd::queue<uint8_t *>(16);
 
@@ -44,8 +45,8 @@ class TVSerialLG : TvSerialProtocol {
         if (timeDiff(lastSend, millis()) < minSendIntervall) {
             uint8_t *buf=(uint8_t *)malloc(dataLen+1);
             if (buf) {
-                *buf=dataLen;
-                memcpy(&buf[1],pData,dataLen);
+                memset(buf,0,dataLen+1);
+                memcpy(buf,pData,dataLen);
                 if (!asyncSendQueue.push(buf)) {
                     free(buf);
                 }
@@ -53,6 +54,7 @@ class TVSerialLG : TvSerialProtocol {
             return;
         }
         pSer->write((const uint8_t *)pData, dataLen);
+//        pSer->write(0x0d);
         pSer->write('\n');
         lastSend=millis();
     }
@@ -61,11 +63,20 @@ class TVSerialLG : TvSerialProtocol {
     HardwareSerial *pSer;
     TVSerialLG(HardwareSerial *pSer) : pSer(pSer) {}
 
-    virtual bool asyncSend() override {
+    virtual bool asyncSend(Scheduler *pSched, String name) override {
         if (timeDiff(lastSend, millis()) >= minSendIntervall) {
             if (!asyncSendQueue.isEmpty()) {
                 char *buf=(char *)asyncSendQueue.pop();
                 if (buf) {
+                    //pSched->publish(name+"/debug",buf);
+                    //char bufdbg[256];
+                    //char bufbt[32];
+                    //strcpy(bufdbg,"Async: ");
+                    //for (unsigned int i=0; i<strlen(buf); i++) {
+                    //    sprintf(bufbt," 0x%02x [%c] |",buf[i],buf[i]);
+                    //    strcat(bufdbg,bufbt);
+                    //}
+                    //pSched->publish(name+"/debug",bufdbg);
                     _sendTV(buf, strlen(buf));
                     free(buf);
                 }
@@ -79,17 +90,19 @@ class TVSerialLG : TvSerialProtocol {
         lastSend=millis()+500;
         asyncCheckState();
         asyncCheckInput();
+        //char *xx="ka 01 00\n";
+        //_sendTV(xx,strlen(xx));
         return true;
     }
 
     virtual bool setOn() override {
-        const char *cmd="ta 01 01";
+        const char *cmd="ka 01 01";
         _sendTV(cmd, strlen(cmd));
         return true;
     }
 
     virtual bool setOff() override {
-        const char *cmd="ta 01 00";
+        const char *cmd="ka 01 00";
         _sendTV(cmd, strlen(cmd));
         return true;
     }
@@ -97,6 +110,11 @@ class TVSerialLG : TvSerialProtocol {
     virtual bool setState(bool state) override {
         if (state) return setOn();
         else return setOff();
+    }
+
+    virtual bool getState() {
+        if (curState==1) return true;
+        else return false;
     }
 
     /*
@@ -151,15 +169,19 @@ class TVSerialLG : TvSerialProtocol {
 
 
     virtual bool asyncCheckState() {
-        const char *cmd="ta 01 ff";
+        const char *cmd="ka 01 ff";
         _sendTV(cmd, strlen(cmd));
         return true;
     }
 
     virtual bool asyncCheckInput() {
-        const char *cmd="tb 01 ff";
-        _sendTV(cmd, strlen(cmd));
-        return true;
+        if (curState==1) {
+            const char *cmd="kb 01 ff";
+            _sendTV(cmd, strlen(cmd));
+            return true;
+        } else {
+            return false; // Can't check input channel, if TV off.
+        }
     }
 
 
@@ -172,12 +194,12 @@ class TVSerialLG : TvSerialProtocol {
                     state=recBuf[8]-'0';
                     switch (state) {
                         case 0:
-                            if (state!=curState) pSched->publish(topic+"/state", "off");
+                            if (state!=curState) pSched->publish(topic+"/switch/state", "off");
                             curState=state;
                             known=true;
                             break;
                         case 1:
-                            if (state!=curState) pSched->publish(topic+"/state", "on");
+                            if (state!=curState) pSched->publish(topic+"/switch/state", "on");
                             curState=state;
                             known=true;
                             break;
@@ -226,12 +248,13 @@ class TVSerialLG : TvSerialProtocol {
                             break;
                     }
                     if (known) {
-                        if (curInput!=newInput) pSched->publish(topic+"/input", sval);                       
+                        if (curInput!=newInput) pSched->publish(topic+"/tv/input", sval);                       
                         curInput=newInput;
                     } else {
                         char msg[32];
-                        sprintf(msg,"UNKNOWN TV INPUT 0x%02x",input);
-                        pSched->publish(topic+"/input", msg);
+                        sprintf(msg,"UNKNOWN TV INPUT 0x%02x, TV off?",input);
+                        pSched->publish(topic+"/tv/input", msg);
+                        curInput=TvInput::UNDEFINED;
                     }
                     break;
             }
@@ -251,6 +274,9 @@ class TVSerialLG : TvSerialProtocol {
     virtual bool asyncReceive(Scheduler *pSched, String topic) override {
         while (pSer->available()>0) {
             uint8_t b=pSer->read();
+            //char dbg[42];
+            //sprintf(dbg,"RECEIVE [%02d] 0x%02x %c",recBufPtr,b,(char)b);
+            //pSched->publish(topic+"/debug",dbg);
             switch (recState) {
                 case recStateType::none:
                     if (b=='a' || b=='b') { // Answer to state ('a') or input ('b')
@@ -261,6 +287,7 @@ class TVSerialLG : TvSerialProtocol {
                     } else {
                         recBufPtr=0;
                     }
+                    continue;
                 break;
                 case recStateType::started:
                     if (b=='x') {
@@ -275,6 +302,7 @@ class TVSerialLG : TvSerialProtocol {
                             recState=recStateType::none;
                         }
                     }
+                    continue;
                 break;
                 default:
                     recBufPtr=0;
@@ -299,6 +327,7 @@ class TvSerial {
     String name;
     HardwareSerial *pSerial;
     TV_SERIAL_TYPE tvSerialType;
+    bool pollActive=true;
     #ifdef __ESP__
     HomeAssistant *pHA;
     #endif
@@ -319,18 +348,16 @@ class TvSerial {
 
     void begin(Scheduler *_pSched) {
         pSched = _pSched;
+        tvProt->begin();
         
-        Serial.begin(9600);
-
         auto ft = [=]() { this->loop(); };
         tID = pSched->add(ft, name, 50000);  // call loop() every 50ms
 
         auto fnall = [=](String topic, String msg, String originator) {
             this->subsMsg(topic, msg, originator);
         };
-        pSched->subscribe(tID, name + "/tv/#", fnall);
+        pSched->subscribe(tID, name + "/#", fnall);
 
-        tvProt->begin();
     }
 
     #ifdef __ESP__
@@ -362,14 +389,16 @@ class TvSerial {
     int checker=0;
 
     void loop() {
-        ++checker;
-        if (checker>20) {
-            checker=0;
-            tvProt->asyncCheckState();
-            tvProt->asyncCheckInput();
+        if (pollActive) {
+            ++checker;
+            if (checker>20) {
+                checker=0;
+                tvProt->asyncCheckState();
+                tvProt->asyncCheckInput();
+            }
+            tvProt->asyncReceive(pSched, name+"/tv");
+            tvProt->asyncSend(pSched, name+"/tv");
         }
-        tvProt->asyncReceive(pSched, name+"/tv");
-        tvProt->asyncSend();
     }
 
     void subsMsg(String topic, String msg, String originator) {
@@ -381,6 +410,13 @@ class TvSerial {
                 tvProt->setOff();
             }
         }
+        if (topic == name + "/switch/state/get") {
+            char buf[32];
+            if (tvProt->getState()) sprintf(buf,"on");
+            else sprintf(buf,"off");
+            pSched->publish(name + "/switch/state", buf);
+        }
+ 
         if (topic == name+"/tv/input/set") {
             if (msg=="digitaltv") {
                 tvProt->setInput(TvSerialProtocol::TvInput::DIGITALTV);

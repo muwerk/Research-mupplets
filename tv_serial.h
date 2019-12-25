@@ -7,6 +7,7 @@
 
 namespace ustd {
 
+// Protocol defintion for TVs that can be controlled via serial
 class TvSerialProtocol {
   public:
     enum TvInput {UNDEFINED, DIGITALTV, ANALOGTV, VIDEO1, VIDEO2, COMPONENT1, COMPONENT2, RGBDTV, RGBPC, HDMI1, HDMI2};
@@ -26,7 +27,7 @@ class TvSerialProtocol {
 };
 
 
-
+// TvSerialProtocol implementation for LG-TV
 class TVSerialLG : TvSerialProtocol {
   private:
     const uint8_t recBufLen=32;
@@ -41,6 +42,10 @@ class TVSerialLG : TvSerialProtocol {
     
     ustd::queue<uint8_t *> asyncSendQueue = ustd::queue<uint8_t *>(16);
 
+    // this send function makes sure that there are at least
+    // minSendIntervall ms between different packets, otherwise
+    // the TV protocol parser might implode...
+    // Packets are queued and sent asynchronously, if necessary.
     void _sendTV(const char *pData, uint8_t dataLen=0) {
         if (timeDiff(lastSend, millis()) < minSendIntervall) {
             uint8_t *buf=(uint8_t *)malloc(dataLen+1);
@@ -54,7 +59,6 @@ class TVSerialLG : TvSerialProtocol {
             return;
         }
         pSer->write((const uint8_t *)pData, dataLen);
-//        pSer->write(0x0d);
         pSer->write('\n');
         lastSend=millis();
     }
@@ -63,6 +67,8 @@ class TVSerialLG : TvSerialProtocol {
     HardwareSerial *pSer;
     TVSerialLG(HardwareSerial *pSer) : pSer(pSer) {}
 
+    // Check if packets are in the async queue, and sent
+    // at appropriate time.
     virtual bool asyncSend(Scheduler *pSched, String name) override {
         if (timeDiff(lastSend, millis()) >= minSendIntervall) {
             if (!asyncSendQueue.isEmpty()) {
@@ -88,8 +94,8 @@ class TVSerialLG : TvSerialProtocol {
     virtual bool begin() override {
         pSer->begin(9600);
         lastSend=millis()+500;
-        asyncCheckState();
-        asyncCheckInput();
+        asyncCheckState(); // Current TV state (on/off)
+        asyncCheckInput(); // Check current input (only works, if TV is on)
         return true;
     }
 
@@ -165,13 +171,14 @@ class TVSerialLG : TvSerialProtocol {
         }
     }
 
-
+    // request current state (on/off)
     virtual bool asyncCheckState() {
         const char *cmd="ka 01 ff";
         _sendTV(cmd, strlen(cmd));
         return true;
     }
 
+    // request current input
     virtual bool asyncCheckInput() {
         if (curState==1) {
             const char *cmd="kb 01 ff";
@@ -182,7 +189,7 @@ class TVSerialLG : TvSerialProtocol {
         }
     }
 
-
+    // Parse a complete message from TV
     void parseRecBuf(Scheduler *pSched, String topic) {
         bool known=false;
         if (recBufPtr==9) {
@@ -269,6 +276,7 @@ class TVSerialLG : TvSerialProtocol {
         }
     }
 
+    // Check, if serial data is available and assemble a complete packet for parser
     virtual bool asyncReceive(Scheduler *pSched, String topic) override {
         while (pSer->available()>0) {
             uint8_t b=pSer->read();
@@ -313,6 +321,7 @@ class TVSerialLG : TvSerialProtocol {
     }
 };
 
+// Main mupplet
 class TvSerial {
   private:
     Scheduler *pSched;
@@ -321,7 +330,7 @@ class TvSerial {
   public:
     String TVSERIAL_VERSION="0.1.0";
     TvSerialProtocol *tvProt;
-    enum TV_SERIAL_TYPE {LG_TV};
+    enum TV_SERIAL_TYPE {LG_TV}; // currently support serial TV types
     String name;
     HardwareSerial *pSerial;
     TV_SERIAL_TYPE tvSerialType;
@@ -331,6 +340,7 @@ class TvSerial {
     #endif
 
     TvSerial(String name, HardwareSerial *pSerial, TV_SERIAL_TYPE tvSerialType=TV_SERIAL_TYPE::LG_TV) : name(name), pSerial(pSerial), tvSerialType(tvSerialType)  {
+        // Instantiate the appropriate TvSerialProtocol: 
         switch (tvSerialType) {
             case TV_SERIAL_TYPE::LG_TV:
                 tvProt=(TvSerialProtocol *)new TVSerialLG(pSerial);
@@ -349,15 +359,18 @@ class TvSerial {
         tvProt->begin();
         
         auto ft = [=]() { this->loop(); };
+        // Loop 50ms: check async send/receive every 50ms,
+        // (and request TV status every 1sec):
         tID = pSched->add(ft, name, 50000);  // call loop() every 50ms
 
         auto fnall = [=](String topic, String msg, String originator) {
             this->subsMsg(topic, msg, originator);
         };
         pSched->subscribe(tID, name + "/#", fnall);
-
     }
 
+    // This registers the TV as switch in home assistant and automatically
+    // syncs information.
     #ifdef __ESP__
     void registerHomeAssistant(String homeAssistantFriendlyName, String projectName="", String homeAssistantDiscoveryPrefix="homeassistant") {
         pHA=new HomeAssistant(name, tID, homeAssistantFriendlyName, projectName, TVSERIAL_VERSION, homeAssistantDiscoveryPrefix);
@@ -389,16 +402,18 @@ class TvSerial {
     void loop() {
         if (pollActive) {
             ++checker;
-            if (checker>20) {
+            if (checker>20) { // 20*50ms = 1sec, request TV status to make sure it's 
+            // in sync, if user manually switch TV.
                 checker=0;
                 tvProt->asyncCheckState();
                 tvProt->asyncCheckInput();
             }
-            tvProt->asyncReceive(pSched, name);
-            tvProt->asyncSend(pSched, name);
+            tvProt->asyncReceive(pSched, name); // serial receive
+            tvProt->asyncSend(pSched, name); // serial send
         }
     }
 
+    // MQTT message subscriptions, also used by Home Assistant
     void subsMsg(String topic, String msg, String originator) {
         if (topic == name + "/switch/set") {
             if (msg=="on" || msg=="true") {
@@ -436,6 +451,6 @@ class TvSerial {
             }
         }
     };
-};  // Mp3
+};  // TvSerial
 
 }  // namespace ustd

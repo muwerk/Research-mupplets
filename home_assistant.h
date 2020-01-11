@@ -96,6 +96,7 @@ class HomeAssistant {
     }
 
     void publishAttrib(String attrTopic) {
+        if (macAddress="") return; // not initialized!
         String attrib="{\"Rssi\":"+String(rssiVal)+","+
                        "\"Mac\": \""+macAddress+"\","+
                        "\"IP\": \""+ipAddress+"\","+

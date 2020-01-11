@@ -169,12 +169,14 @@ class HomeAssistant {
                 }
                 if (!strcmp(cmsg,"connected")) {
                     if (p1) HAmuPrefix=p1;
+                    String HAnameNS=HAname;
+                    HAnameNS.replace(" ","_");
 
                     for (unsigned int i=0; i<sensor_topic_sub_names.length(); i++) {
                         String subDevNo=String(i+1);
                         String HAstateTopic=HAmuPrefix+"/"+devName+"/sensor/"+sensor_topic_sub_names[i];
                         String HAattrTopic=devName+"/sensor/"+sensor_topic_sub_names[i]+"/attribs";
-                        String HAdiscoTopic="!"+HAprefix+"/sensor/"+subDevNo+"-"+HAname+"/"+devName+"/config";
+                        String HAdiscoTopic="!"+HAprefix+"/sensor/"+subDevNo+"-"+HAnameNS+"/"+devName+"/config";
                         String HAdiscoEntityDef="{\"stat_t\":\""+HAstateTopic+"\","+
                                 "\"json_attr_t\":\""+HAmuPrefix+"/"+HAattrTopic+"\","+
                                 "\"name\":\""+HAname+" "+sensor_friendlyNames[i]+"\","+
@@ -207,7 +209,7 @@ class HomeAssistant {
                         String HAattrTopic=devName+"/light/attribs";
                         String HAcommandBrTopic=HAcmd+"/"+devName+"/light/set";
                         String HAstateBrTopic=HAmuPrefix+"/"+devName+"/light/unitbrightness";
-                        String HAdiscoTopic="!"+HAprefix+"/light/"+subDevNo+"-"+HAname+"/"+devName+"/config";
+                        String HAdiscoTopic="!"+HAprefix+"/light/"+subDevNo+"-"+HAnameNS+"/"+devName+"/config";
                         String HAdiscoEntityDef="{\"stat_t\":\""+HAstateTopic+"\","+
                                 "\"name\":\""+HAname+"\","+
                                 "\"uniq_id\":\""+macAddress+"-"+devName+"-L"+subDevNo+"\","+
@@ -239,7 +241,7 @@ class HomeAssistant {
                         String HAcommandTopic=HAcmd+"/"+devName+"/switch/set";
                         String HAstateTopic=HAmuPrefix+"/"+devName+"/switch/state";
                         String HAattrTopic=devName+"/switch/attribs";
-                        String HAdiscoTopic="!"+HAprefix+"/switch/"+subDevNo+"-"+HAname+"/"+devName+"/config";
+                        String HAdiscoTopic="!"+HAprefix+"/switch/"+subDevNo+"-"+HAnameNS+"/"+devName+"/config";
                         String HAdiscoEntityDef="{\"stat_t\":\""+HAstateTopic+"\","+
                                 "\"name\":\""+HAname+"\","+
                                 "\"uniq_id\":\""+macAddress+"-"+devName+"-SW"+subDevNo+"\","+

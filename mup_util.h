@@ -48,7 +48,44 @@ double parseUnitLevel(String msg) {
     return br;
 }
 
+bool spiffsBeginDone=false;
+
+bool writeJson(String filename, JSONVar jsonobj) {
+    if (!spiffsBeginDone) {
+        SPIFFS.begin();
+        spiffsBeginDone=true;
+    }
+    fs::File f = SPIFFS.open(filename, "w");
+    if (!f) {
+        return false;
+    }
+    String jsonstr=JSON.stringify(jsonobj);
+    f.print(jsonstr.c_str());
+    f.close();
+    return true;
+}
+
+bool readJson(String filename, String& content) {
+    if (!spiffsBeginDone) {
+        SPIFFS.begin();
+        spiffsBeginDone=true;
+    }
+    fs::File f = SPIFFS.open(filename, "r");
+    if (!f) {
+        return false;
+    } else {
+        String content = "";
+        while (f.available()) {
+            String lin = f.readStringUntil('\n');
+            content = content + lin;
+        }
+        f.close();
+    }
+    return true;
+}
+
 bool readNetJsonString(String key, String& value) {
+/*
     SPIFFS.begin();
     fs::File f = SPIFFS.open("/net.json", "r");
     if (!f) {
@@ -61,6 +98,9 @@ bool readNetJsonString(String key, String& value) {
             jsonstr = jsonstr + lin;
         }
         f.close();
+*/
+    String jsonstr;
+    if (readJson("/net.json", jsonstr)) {
         JSONVar configObj = JSON.parse(jsonstr);
         if (JSON.typeof(configObj) == "undefined") {
             return false;
@@ -71,8 +111,11 @@ bool readNetJsonString(String key, String& value) {
             return false;
         }
         return true;
+    } else {
+        return false;
     }
 }
+
 
 bool readFriendlyName(String& friendlyName) {
     if (readNetJsonString("friendlyname",friendlyName)) return true;

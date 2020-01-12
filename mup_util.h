@@ -60,7 +60,7 @@ bool writeJson(String filename, JSONVar jsonobj) {
         return false;
     }
     String jsonstr=JSON.stringify(jsonobj);
-    f.print(jsonstr.c_str());
+    f.println(jsonstr);
     f.close();
     return true;
 }
@@ -70,11 +70,11 @@ bool readJson(String filename, String& content) {
         SPIFFS.begin();
         spiffsBeginDone=true;
     }
+    content = "";
     fs::File f = SPIFFS.open(filename, "r");
     if (!f) {
         return false;
     } else {
-        String content = "";
         while (f.available()) {
             String lin = f.readStringUntil('\n');
             content = content + lin;

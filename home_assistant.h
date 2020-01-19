@@ -67,6 +67,7 @@ class HomeAssistant {
             [=](String topic, String msg, String originator) {
                 this->mqMsg(topic, msg, originator);
             };
+        macAddress = WiFi.macAddress();
         pSched->subscribe(tID, "mqtt/state", fnmq);
         pSched->subscribe(tID, "net/network", fnmq);
         pSched->subscribe(tID, "net/rssi", fnmq);
@@ -138,7 +139,7 @@ class HomeAssistant {
            String state=(const char *)mqttJsonMsg["state"];  // root["state"];
             if (state == "connected") {
                 ipAddress=(const char *)mqttJsonMsg["ip"];
-                macAddress=(const char *)mqttJsonMsg["mac"];
+                // macAddress=(const char *)mqttJsonMsg["mac"]; // too late, done already in begin()
                 hostName=(const char *)mqttJsonMsg["hostname"];
                 String c1=hostName.substring(0,1);
                 c1.toUpperCase();

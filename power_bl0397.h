@@ -214,7 +214,7 @@ class PowerBl0937 {
     void loop() {
         double watts=getResetpIrqFrequency(interruptIndex_CF)/powerRenormalization*userCalibrationPowerFactor;
         if ((frequencyCF.lastVal==0.0 && watts>0.0) || (frequencyCF.lastVal>0.0 && watts==0.0)) frequencyCF.reset();
-        if (watts >= 0.0 watts < 3800) {
+        if (watts >= 0.0 && watts < 3800) {
             if (frequencyCF.filter(&watts)) {
                 CFfrequencyVal=watts;
                 publish_CF();

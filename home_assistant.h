@@ -50,6 +50,7 @@ class HomeAssistant {
     HomeAssistant(String _devName, int _tID, String homeAssistantFriendlyName, String project="", String version=__HA_VERSION__, String homeAssistantDiscoveryPrefix="homeassistant") {
         if (homeAssistantFriendlyName=="") HAname=_devName;
         else HAname=homeAssistantFriendlyName;
+        macAddress = WiFi.macAddress();
         HAprefix=homeAssistantDiscoveryPrefix;
         tID=_tID;
         devName=_devName;
@@ -67,7 +68,7 @@ class HomeAssistant {
             [=](String topic, String msg, String originator) {
                 this->mqMsg(topic, msg, originator);
             };
-        macAddress = WiFi.macAddress();
+        if (macAddress=="") macAddress = WiFi.macAddress();
         pSched->subscribe(tID, "mqtt/state", fnmq);
         pSched->subscribe(tID, "net/network", fnmq);
         pSched->subscribe(tID, "net/rssi", fnmq);
@@ -77,6 +78,7 @@ class HomeAssistant {
     void addSensor(/*String devName, String HAname, */String topic_sub_name, String friendlyName, String unitDesc, String className, String iconName) {
         //sensor_devNames.add(devName);
         //sensor_HAnames.add(HAname);
+        if (macAddress=="") macAddress = WiFi.macAddress();
         sensor_topic_sub_names.add(topic_sub_name);
         sensor_friendlyNames.add(friendlyName);
         sensor_unitDescs.add(unitDesc);
@@ -87,17 +89,19 @@ class HomeAssistant {
     void addLight(/*String devName, String HAname*/) {
         //light_devNames.add(devName);
         //light_HAnames.add(HAname);
+        if (macAddress=="") macAddress = WiFi.macAddress();
         ++nrLights;
     }
 
     void addSwitch(/*String devName, String HAname*/) {
         //switch_devNames.add(devName);
         //switch_HAnames.add(HAname);
+        if (macAddress=="") macAddress = WiFi.macAddress();
         ++nrSwitches;
     }
 
     void publishAttrib(String attrTopic) {
-        if (macAddress="") return; // not initialized!
+        if (macAddress=="") macAddress = WiFi.macAddress();
         String attrib="{\"Rssi\":"+String(rssiVal)+","+
                        "\"Mac\": \""+macAddress+"\","+
                        "\"IP\": \""+ipAddress+"\","+
@@ -172,6 +176,7 @@ class HomeAssistant {
                     if (p1) HAmuPrefix=p1;
                     String HAnameNS=HAname;
                     HAnameNS.replace(" ","_");
+                    if (macAddress=="") macAddress = WiFi.macAddress();
 
                     for (unsigned int i=0; i<sensor_topic_sub_names.length(); i++) {
                         String subDevNo=String(i+1);

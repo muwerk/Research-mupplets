@@ -39,7 +39,7 @@ Note: third-party libraries may be subject to different licensing conditions.
 | ldr.h       | Illuminance | LDR connected to analog port | | ESP, ESP32 | yes
 | led.h       | LED diode | Digital out or PWM connected to led | | ESP, ESP32 | yes
 | mp3.h       | MP3 player | OpenSmart v1.1 [OpenSmart MP3 player](https://www.aliexpress.com/item/32782488336.html?spm=a2g0o.productlist.0.0.5a0e7823gMVTMa&algo_pvid=8fd3c7b0-09a7-4e95-bf8e-f3d37bd18300&algo_expid=8fd3c7b0-09a7-4e95-bf8e-f3d37bd18300-0&btsid=d8c8aa30-444b-4212-ba19-2decc528c422&ws_ab_test=searchweb0_0,searchweb201602_6,searchweb201603_52) | | ESP, ESP32
-| neocandle.h |
+| neocandle.h | butterlamp sim | [Adafruit neopixel feather wing](https://www.adafruit.com/product/2945) | [Adafruit Neopixel](https://github.com/adafruit/Adafruit_NeoPixel)
 | power_bl0397.h | Power meter | BL0937 sensor chip for power, volt, amp | | ESP, ESP32 | yes
 | pressure.h  | Air pressure and temperature sensor | BMP085, BMP180 | [Adafruit BMP085 unified](https://github.com/adafruit/Adafruit_BMP085_Unified), [Adafruit unified sensor](https://github.com/adafruit/Adafruit_Sensor) | ESP, ESP32 | yes
 | shift_reg_74595.h | serial to parallel output | 74HC595 shift register(s) | | ESP, ESP32

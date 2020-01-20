@@ -53,13 +53,13 @@ unsigned long getResetpIrqCount(uint8_t irqno) {
     return count;
 }
 
-double getResetpIrqFrequency(uint8_t irqno) {
+double getResetpIrqFrequency(uint8_t irqno, unsigned long minDtUs=50) {
     double frequency=0.0;
     noInterrupts();
     if (irqno < USTD_MAX_PIRQS) {
         unsigned long count=pirqcounter[irqno];
         unsigned long dt=timeDiff(pbeginIrqTimer[irqno],plastIrqTimer[irqno]);
-        if (dt>0) {
+        if (dt>minDtUs) { // Ignore small Irq flukes
             frequency = (count*500000.0)/dt;   // = count/2.0*1000.0000 uS / dt; no. of waves (count/2) / dt.
         }
         pbeginIrqTimer[irqno]=0;
@@ -212,27 +212,32 @@ class PowerBl0937 {
     }
 
     void loop() {
-        double cf_val=getResetpIrqFrequency(interruptIndex_CF);
-        if ((frequencyCF.lastVal==0.0 && cf_val>0.0) || (frequencyCF.lastVal>0.0 && cf_val==0.0)) frequencyCF.reset();
-        if (frequencyCF.filter(&cf_val)) {
-            cf_val=cf_val/powerRenormalization*userCalibrationPowerFactor;
-            CFfrequencyVal=cf_val;
-            publish_CF();
+        double watts=getResetpIrqFrequency(interruptIndex_CF)/powerRenormalization*userCalibrationPowerFactor;
+        if ((frequencyCF.lastVal==0.0 && watts>0.0) || (frequencyCF.lastVal>0.0 && watts==0.0)) frequencyCF.reset();
+        if (watts >= 0.0 watts < 3800) {
+            if (frequencyCF.filter(&watts)) {
+                CFfrequencyVal=watts;
+                publish_CF();
+            }
         }
-        cf_val=getResetpIrqFrequency(interruptIndex_CF1);
+        double mfreq=getResetpIrqFrequency(interruptIndex_CF1);
         if  (bSELi) {
-            cf_val=cf_val/voltageRenormalisation*userCalibrationVoltageFactor;
-            if ((frequencyCF1_V.lastVal==0.0 && cf_val>0.0) || (frequencyCF1_V.lastVal>0.0 && cf_val==0.0)) frequencyCF1_V.reset();
-            if (frequencyCF1_V.filter(&cf_val)) {
-                CF1_VfrequencyVal=cf_val;
-                publish_CF1_V();
+            double volts=mfreq/voltageRenormalisation*userCalibrationVoltageFactor;
+            if (volts<5.0 || (volts>=100.0 && volts<260)) {
+                if ((frequencyCF1_V.lastVal==0.0 && volts>0.0) || (frequencyCF1_V.lastVal>0.0 && volts==0.0)) frequencyCF1_V.reset();
+                if (frequencyCF1_V.filter(&volts)) {
+                    CF1_VfrequencyVal=volts;
+                    publish_CF1_V();
+                }
             }
         } else {
-            cf_val=cf_val/currentRenormalisation*userCalibrationCurrentFactor;
-            if ((frequencyCF1_I.lastVal==0.0 && cf_val>0.0) || (frequencyCF1_I.lastVal>0.0 && cf_val==0.0)) frequencyCF1_I.reset();
-            if (frequencyCF1_I.filter(&cf_val)) {
-                CF1_IfrequencyVal=cf_val;
-                publish_CF1_I();
+            double currents=mfreq/currentRenormalisation*userCalibrationCurrentFactor;
+            if (currents>=0.0 && currents < 16.0) {
+                if ((frequencyCF1_I.lastVal==0.0 && currents>0.0) || (frequencyCF1_I.lastVal>0.0 && currents==0.0)) frequencyCF1_I.reset();
+                if (frequencyCF1_I.filter(&currents)) {
+                    CF1_IfrequencyVal=currents;
+                    publish_CF1_I();
+                }
             }
         }
         bSELi=changeSELi(!bSELi, pin_SELi, interruptIndex_CF1);

@@ -1,7 +1,9 @@
 #pragma once
 
-#include "../.piolibdeps/Adafruit NeoPixel_ID28/Adafruit_NeoPixel.h"
+// Platformio lib finder collapses on space in 'Adafruit NeoPixel_ID28' name...
+#include "../.pio/libdeps/huzzah/Adafruit NeoPixel_ID28/Adafruit_NeoPixel.h"
 #include "scheduler.h"
+#include "mup_util.h"
 
 // Neopixel default hardware:
 // Soldered to pin 15 on neopixel feather-wing
@@ -14,6 +16,7 @@
 namespace ustd {
 class NeoCandle {
   public:
+    String NEOCANDLE_VERSION="0.1.0";
     Scheduler *pSched;
     int tID;
     String name;
@@ -34,6 +37,11 @@ class NeoCandle {
     double unitBrightness = 0.0;
     double oldMx = -1.0;
 
+    #ifdef __ESP__
+    HomeAssistant *pHA;
+    #endif
+
+
     NeoCandle(String name, uint8_t pin = NEOCANDLE_PIN,
               uint16_t numPixels = NEOCANDLE_NUMPIXELS,
               uint8_t options = NEOCANDLEX_OPTIONS, bool bUseModulator = true,
@@ -43,7 +51,7 @@ class NeoCandle {
           brightnessTopic(brightnessTopic) {
         if (bAutobrightness) {
             if (brightnessTopic == "") {
-                brightnessTopic = name + "/ldr/unitluminosity";
+                brightnessTopic = name + "/sensor/unitilluminance";
             }
         }
         if (bUseModulator) {
@@ -54,7 +62,7 @@ class NeoCandle {
 
     ~NeoCandle() {
     }
-
+/*
 // XXX: replace parseUnitLevel...
     int parseValue(const byte *msg, unsigned int len) {
         char buff[32];
@@ -82,6 +90,15 @@ class NeoCandle {
         }
         return ampx;
     }
+*/
+
+    #ifdef __ESP__
+    void registerHomeAssistant(String homeAssistantFriendlyName, String projectName="", String homeAssistantDiscoveryPrefix="homeassistant") {
+        pHA=new HomeAssistant(name, tID, homeAssistantFriendlyName, projectName, NEOCANDLE_VERSION, homeAssistantDiscoveryPrefix);
+        pHA->addLight();
+        pHA->begin(pSched);
+    }
+    #endif
 
     double modulator() {
         double m1 = 1.0;
@@ -250,8 +267,8 @@ class NeoCandle {
             Serial.println("] ");
 #endif
             int amp_old = amp;
-            amp =
-                parseValue((const byte *)msg.c_str(), strlen(msg.c_str()) + 1);
+            amp = parseUnitLevel(msg)*100;
+            //    parseValue((const byte *)msg.c_str(), strlen(msg.c_str()) + 1);
             if (amp < 0)
                 amp = 0;
             if (amp > 100)
@@ -270,8 +287,8 @@ class NeoCandle {
             Serial.println("] ");
 #endif
             int wind_old = wind;
-            wind =
-                parseValue((const byte *)msg.c_str(), strlen(msg.c_str()) + 1);
+            wind = parseUnitLevel(msg)*100;
+            //    parseValue((const byte *)msg.c_str(), strlen(msg.c_str()) + 1);
             if (wind < 0)
                 wind = 0;
             if (wind > 100)

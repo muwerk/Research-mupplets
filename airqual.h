@@ -171,7 +171,7 @@ class AirQuality {
         if (relHumid!=-1.0 && temper!=-99.0) {
             pAirQuality->setEnvironmentalData(relHumid, temper);
             char msg[128];
-            sprintf(msg,"{\"humidity\": \"%5.1f\", \"temperature\": \"%5.1f\"}",relHumid,temper);
+            sprintf(msg,"{\"humidity\":%5.1f, \"temperature\":%5.1f}",relHumid,temper);
             pSched->publish(name+"/sensor/calibration",msg);
             publishCO2();
             publishVOC();

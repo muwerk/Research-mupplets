@@ -98,14 +98,13 @@ class AirQuality {
         auto ft = [=]() { this->loop(); };
         tID = pSched->add(ft, name, 5000000);
 
-        /* std::function<void(String, String, String)> */ 
         auto fnall =
             [=](String topic, String msg, String originator) {
                 this->subsMsg(topic, msg, originator);
             };
-        pSched->subscribe(tID, name + "sensor/co2/get", fnall);
-        pSched->subscribe(tID, name + "sensor/voc/get", fnall);
-        if (calibrationTopic!="") pSched->subscribe(tID, name+"/"+calibrationTopic+"/+", fnall);
+        pSched->subscribe(tID, name + "/sensor/co2/get", fnall);
+        pSched->subscribe(tID, name + "/sensor/voc/get", fnall);
+        if (calibrationTopic!="") pSched->subscribe(tID, calibrationTopic+"/#", fnall);
     }
 
     #ifdef __ESP__
@@ -173,7 +172,7 @@ class AirQuality {
             pAirQuality->setEnvironmentalData(relHumid, temper);
             char msg[128];
             sprintf(msg,"CSS811 recalibration: %f %%, %f C",relHumid,temper);
-            pSched->publish(name+"sensor/calibration",msg);
+            pSched->publish(name+"/sensor/calibration",msg);
             publishCO2();
             publishVOC();
         }
@@ -186,11 +185,13 @@ class AirQuality {
         if (topic == name + "/sensor/voc/get") {
             publishVOC();
         }
-        if (topic == name + "/"+ calibrationTopic + "/temperature") {
+        if (topic == calibrationTopic + "/temperature") {
+            pSched->publish(name+"/sensor/calibration","temp calib.");
             temper=atof(msg.c_str());
             calibrate();
         }
-        if (topic == name + "/"+ calibrationTopic + "/humidity") {
+        if (topic == calibrationTopic + "/humidity") {
+            pSched->publish(name+"/sensor/calibration","humid calib.");
             relHumid=atof(msg.c_str());
             calibrate();
         }

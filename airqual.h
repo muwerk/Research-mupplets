@@ -21,19 +21,22 @@ class AirQuality {
     int tID;
     String name;
     uint8_t i2caddr;
+    String calibrationTopic;
     double co2Val;
     double vocVal;
     bool bActive = false;
     String errmsg="";
-    ustd::sensorprocessor co2 = ustd::sensorprocessor(4, 600, 1.0);
+    ustd::sensorprocessor co2 = ustd::sensorprocessor(12, 600, 1.0);
     ustd::sensorprocessor voc = ustd::sensorprocessor(4, 600, 0.2);
+    float relHumid=-1.0;
+    float temper=-99.0;
     CCS811 *pAirQuality;
     #ifdef __ESP__
     HomeAssistant *pHA;
     #endif
 
-    AirQuality(String name, uint8_t i2caddr = SPARKFUN_CCS811_ADDR)
-        : name(name), i2caddr(i2caddr) {
+    AirQuality(String name, uint8_t i2caddr = SPARKFUN_CCS811_ADDR, String calibrationTopic="")
+        : name(name), i2caddr(i2caddr), calibrationTopic(calibrationTopic) {
         pAirQuality = new CCS811(i2caddr);
     }
 
@@ -102,6 +105,7 @@ class AirQuality {
             };
         pSched->subscribe(tID, name + "sensor/co2/get", fnall);
         pSched->subscribe(tID, name + "sensor/voc/get", fnall);
+        if (calibrationTopic!="") pSched->subscribe(tID, name+"/"+calibrationTopic+"/+", fnall);
     }
 
     #ifdef __ESP__
@@ -164,12 +168,31 @@ class AirQuality {
         }
     }
 
+    void calibrate() {
+        if (relHumid!=-1.0 && temper!=-99.0) {
+            pAirQuality->setEnvironmentalData(relHumid, temper);
+            char msg[128];
+            sprintf(msg,"CSS811 recalibration: %f %%, %f C",relHumid,temper);
+            pSched->publish(name+"sensor/calibration",msg);
+            publishCO2();
+            publishVOC();
+        }
+    }
+
     void subsMsg(String topic, String msg, String originator) {
         if (topic == name + "/sensor/co2/get") {
             publishCO2();
         }
         if (topic == name + "/sensor/voc/get") {
             publishVOC();
+        }
+        if (topic == name + "/"+ calibrationTopic + "/temperature") {
+            temper=atof(msg.c_str());
+            calibrate();
+        }
+        if (topic == name + "/"+ calibrationTopic + "/humidity") {
+            relHumid=atof(msg.c_str());
+            calibrate();
         }
     };
 };  // AirQuality

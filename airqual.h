@@ -171,7 +171,7 @@ class AirQuality {
         if (relHumid!=-1.0 && temper!=-99.0) {
             pAirQuality->setEnvironmentalData(relHumid, temper);
             char msg[128];
-            sprintf(msg,"CSS811 recalibration: %f %%, %f C",relHumid,temper);
+            sprintf(msg,"{\"humidity\": \"%5.1f\", \"temperature\": \"%5.1f\"}",relHumid,temper);
             pSched->publish(name+"/sensor/calibration",msg);
             publishCO2();
             publishVOC();
@@ -186,12 +186,10 @@ class AirQuality {
             publishVOC();
         }
         if (topic == calibrationTopic + "/temperature") {
-            pSched->publish(name+"/sensor/calibration","temp calib.");
             temper=atof(msg.c_str());
             calibrate();
         }
         if (topic == calibrationTopic + "/humidity") {
-            pSched->publish(name+"/sensor/calibration","humid calib.");
             relHumid=atof(msg.c_str());
             calibrate();
         }

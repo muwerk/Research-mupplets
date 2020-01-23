@@ -125,23 +125,28 @@ class AirQuality {
     #endif
 
     void publishCO2() {
-        char buf[32];
-        sprintf(buf, "%5.1f", co2Val);
-        pSched->publish(name + "/sensor/co2", buf);
+        if (bActive && !bStartup) {
+            char buf[32];
+            sprintf(buf, "%5.1f", co2Val);
+            pSched->publish(name + "/sensor/co2", buf);
+        }
     }
 
     void publishVOC() {
-        char buf[32];
-        sprintf(buf, "%5.1f", vocVal);
-        pSched->publish(name + "/sensor/voc", buf);
+        if (bActive && !bStartup) {
+            char buf[32];
+            sprintf(buf, "%5.1f", vocVal);
+            pSched->publish(name + "/sensor/voc", buf);
+        }
     }
 
     void publishBaseline() {
         char buf[32];
-        if (bActive) {
+        if (bActive && !bStartup) {
             sprintf(buf, "%5d", pAirQuality->getBaseline());
         } else {
-            sprintf(buf,errmsg.c_str());
+            if (!bStartup) sprintf(buf,errmsg.c_str());
+            else sprintf(buf,"Startup phase");
         }
         pSched->publish(name + "/sensor/baseline", buf);
     }
@@ -153,7 +158,7 @@ class AirQuality {
     }
 
     void loop() {
-        if (startTime<10) startTime=time(NULL); // NTP data available.
+        if (startTime<100000) startTime=time(NULL); // NTP data available.
         if (bActive) {
             if (pAirQuality->dataAvailable()) {
                 double c, v;
@@ -197,11 +202,11 @@ class AirQuality {
     }
 
     void calibrate() {
-        if (relHumid!=-1.0 && temper!=-99.0 && bActive) {
+        if (relHumid!=-1.0 && temper!=-99.0 && bActive && !bStartup) {
             pAirQuality->setEnvironmentalData(relHumid, temper);
             baseline=pAirQuality->getBaseline();
             char msg[128];
-            if (startTime<10) startTime=time(NULL); // NTP is now available.
+            if (startTime<100000) startTime=time(NULL); // NTP is now available.
             double uptimeH=(time(NULL)-startTime)/3600.0;
             sprintf(msg,"{\"humidity\":%5.1f, \"temperature\":%5.1f, \"baseline\": %5d, \"co2\": %5.1f, \"voc\": %5.1f, \"upTimeHours\": %7.1f}",
                     relHumid,temper,baseline,co2Val,vocVal,uptimeH);

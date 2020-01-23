@@ -24,10 +24,13 @@ class AirQuality {
     String calibrationTopic;
     double co2Val;
     double vocVal;
+    time_t startTime=0;
+    bool bStartup=true;
+    uint16_t baseline=0xffff;
     bool bActive = false;
     String errmsg="";
-    ustd::sensorprocessor co2 = ustd::sensorprocessor(12, 600, 1.0);
-    ustd::sensorprocessor voc = ustd::sensorprocessor(4, 600, 0.2);
+    ustd::sensorprocessor co2 = ustd::sensorprocessor(12, 600, 2.0);
+    ustd::sensorprocessor voc = ustd::sensorprocessor(4, 600, 0.4);
     float relHumid=-1.0;
     float temper=-99.0;
     CCS811 *pAirQuality;
@@ -88,15 +91,20 @@ class AirQuality {
         CCS811Core::status returnCode = pAirQuality->begin();
         if (returnCode == CCS811Core::SENSOR_SUCCESS) {
             bActive = true;
+            //Mode 0 = Idle
+            //Mode 1 = read every 1s
+            //Mode 2 = every 10s
+            //Mode 3 = every 60s
+            //Mode 4 = RAW mode
+            startTime=time(NULL);
+            pAirQuality->setDriveMode(2); // measure every 10 secs.
         } else {
             printDriverError(returnCode);
         }
 
-        // give a c++11 lambda as callback scheduler task registration of
-        // this.loop():
-        /* std::function<void()> */ 
+        
         auto ft = [=]() { this->loop(); };
-        tID = pSched->add(ft, name, 5000000);
+        tID = pSched->add(ft, name, 12000000); // every 12sec
 
         auto fnall =
             [=](String topic, String msg, String originator) {
@@ -128,6 +136,22 @@ class AirQuality {
         pSched->publish(name + "/sensor/voc", buf);
     }
 
+    void publishBaseline() {
+        char buf[32];
+        if (bActive) {
+            sprintf(buf, "%5d", pAirQuality->getBaseline());
+        } else {
+            sprintf(buf,errmsg.c_str());
+        }
+        pSched->publish(name + "/sensor/baseline", buf);
+    }
+
+    void storeBaseline(uint16_t newBase) {
+        if (bActive) {
+            pAirQuality->setBaseline(newBase);
+        }
+    }
+
     void loop() {
         if (bActive) {
             if (pAirQuality->dataAvailable()) {
@@ -138,6 +162,10 @@ class AirQuality {
                 pAirQuality->readAlgorithmResults();
                 c = pAirQuality->getCO2();
                 v = pAirQuality->getTVOC();
+                if (bStartup) {
+                    if (c<350.0) return;  // invalid.
+                    bStartup=false;
+                }
 #ifdef USE_SERIAL_DBG
                 Serial.print("AirQuality sensor data available, co2: ");
                 Serial.print(c);
@@ -161,17 +189,20 @@ class AirQuality {
 #ifdef USE_SERIAL_DBG
             Serial.println("AirQuality sensor not active. Patch applied?");
 #endif
-        if (errmsg!="") {
-            pSched->publish(name+"/error",errmsg);
-        }
+            if (errmsg!="") {
+                pSched->publish(name+"/error",errmsg);
+            }
         }
     }
 
     void calibrate() {
-        if (relHumid!=-1.0 && temper!=-99.0) {
+        if (relHumid!=-1.0 && temper!=-99.0 && bActive) {
             pAirQuality->setEnvironmentalData(relHumid, temper);
+            baseline=pAirQuality->getBaseline();
             char msg[128];
-            sprintf(msg,"{\"humidity\":%5.1f, \"temperature\":%5.1f}",relHumid,temper);
+            double uptimeH=(time(NULL)-startTime)/3600.0;
+            sprintf(msg,"{\"humidity\":%5.1f, \"temperature\":%5.1f, \"baseline\": %5d, \"co2\": %5.1f, \"voc\": %5.1f, \"upTimeHours\": %7.1f}",
+                    relHumid,temper,baseline,co2Val,vocVal,uptimeH);
             pSched->publish(name+"/sensor/calibration",msg);
             publishCO2();
             publishVOC();
@@ -184,6 +215,12 @@ class AirQuality {
         }
         if (topic == name + "/sensor/voc/get") {
             publishVOC();
+        }
+        if (topic == name + "/sensor/baseline/get") {
+            publishBaseline();
+        }
+        if (topic == name + "/sensor/baseline/set") {
+            storeBaseline(atoi(msg.c_str()));
         }
         if (topic == calibrationTopic + "/temperature") {
             temper=atof(msg.c_str());

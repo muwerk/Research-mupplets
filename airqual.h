@@ -153,6 +153,7 @@ class AirQuality {
     }
 
     void loop() {
+        if (startTime<10) startTime=time(NULL); // NTP data available.
         if (bActive) {
             if (pAirQuality->dataAvailable()) {
                 double c, v;
@@ -200,6 +201,7 @@ class AirQuality {
             pAirQuality->setEnvironmentalData(relHumid, temper);
             baseline=pAirQuality->getBaseline();
             char msg[128];
+            if (startTime<10) startTime=time(NULL); // NTP is now available.
             double uptimeH=(time(NULL)-startTime)/3600.0;
             sprintf(msg,"{\"humidity\":%5.1f, \"temperature\":%5.1f, \"baseline\": %5d, \"co2\": %5.1f, \"voc\": %5.1f, \"upTimeHours\": %7.1f}",
                     relHumid,temper,baseline,co2Val,vocVal,uptimeH);

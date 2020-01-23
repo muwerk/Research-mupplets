@@ -205,7 +205,7 @@ class AirQuality {
     void publishCalibration() {
         if (bActive && !bStartup) {
             baseline=pAirQuality->getBaseline();
-            char msg[128];
+            char msg[192];
             if (startTime<100000) startTime=time(NULL); // NTP is now available.
             double uptimeH=(time(NULL)-startTime)/3600.0;
             sprintf(msg,"{\"humidity\":%5.1f, \"temperature\":%5.1f, \"baseline\": %5d, \"co2\": %5.1f, \"voc\": %5.1f, \"upTimeHours\": %7.1f}",

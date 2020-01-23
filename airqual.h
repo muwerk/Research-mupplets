@@ -110,8 +110,7 @@ class AirQuality {
             [=](String topic, String msg, String originator) {
                 this->subsMsg(topic, msg, originator);
             };
-        pSched->subscribe(tID, name + "/sensor/co2/get", fnall);
-        pSched->subscribe(tID, name + "/sensor/voc/get", fnall);
+        pSched->subscribe(tID, name + "/sensor/#", fnall);
         if (calibrationTopic!="") pSched->subscribe(tID, calibrationTopic+"/#", fnall);
     }
 
@@ -154,6 +153,8 @@ class AirQuality {
     void storeBaseline(uint16_t newBase) {
         if (bActive) {
             pAirQuality->setBaseline(newBase);
+            publishBaseline();
+            publishCalibration();
         }
     }
 
@@ -201,9 +202,8 @@ class AirQuality {
         }
     }
 
-    void calibrate() {
-        if (relHumid!=-1.0 && temper!=-99.0 && bActive && !bStartup) {
-            pAirQuality->setEnvironmentalData(relHumid, temper);
+    void publishCalibration() {
+        if (bActive && !bStartup) {
             baseline=pAirQuality->getBaseline();
             char msg[128];
             if (startTime<100000) startTime=time(NULL); // NTP is now available.
@@ -211,6 +211,13 @@ class AirQuality {
             sprintf(msg,"{\"humidity\":%5.1f, \"temperature\":%5.1f, \"baseline\": %5d, \"co2\": %5.1f, \"voc\": %5.1f, \"upTimeHours\": %7.1f}",
                     relHumid,temper,baseline,co2Val,vocVal,uptimeH);
             pSched->publish(name+"/sensor/calibration",msg);
+        }
+    }
+
+    void calibrate() {
+        if (relHumid!=-1.0 && temper!=-99.0 && bActive && !bStartup) {
+            pAirQuality->setEnvironmentalData(relHumid, temper);
+            publishCalibration();
             publishCO2();
             publishVOC();
         }
@@ -222,6 +229,9 @@ class AirQuality {
         }
         if (topic == name + "/sensor/voc/get") {
             publishVOC();
+        }
+        if (topic == name + "/sensor/calibration/get") {
+            publishCalibration();
         }
         if (topic == name + "/sensor/baseline/get") {
             publishBaseline();

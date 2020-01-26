@@ -33,6 +33,10 @@ class HomeAssistant {
     ustd::array<String> sensor_unitDescs;
     ustd::array<String> sensor_classNames;
     ustd::array<String> sensor_iconNames;
+
+    ustd::array<String> switch_iconNames;
+    ustd::array<String> light_iconNames;
+
 //    ustd::array<String> sensor_devNames;
 //    ustd::array<String> sensor_HAnames;
     ustd::array<String> sensorsAttribs;
@@ -86,16 +90,18 @@ class HomeAssistant {
         sensor_iconNames.add(iconName);
     }
 
-    void addLight(/*String devName, String HAname*/) {
+    void addLight(String iconName="mdi-lightbulb") {
         //light_devNames.add(devName);
         //light_HAnames.add(HAname);
+        light_iconNames.add(iconName);
         if (macAddress=="") macAddress = WiFi.macAddress();
         ++nrLights;
     }
 
-    void addSwitch(/*String devName, String HAname*/) {
+    void addSwitch(String iconName="mdi-light-switch") {
         //switch_devNames.add(devName);
         //switch_HAnames.add(HAname);
+        switch_iconNames.add(iconName);
         if (macAddress=="") macAddress = WiFi.macAddress();
         ++nrSwitches;
     }
@@ -227,7 +233,8 @@ class HomeAssistant {
                                 "\"bri_cmd_t\":\""+HAcommandBrTopic+"\","+
                                 "\"on_cmd_type\":\"brightness\","+
                                 "\"pl_on\":\"on\","+
-                                "\"pl_off\":\"off\"";
+                                "\"pl_off\":\"off\","+
+                                "\"icon\":\""+light_iconNames[i]+"\"";
                         HAdiscoEntityDef = HAdiscoEntityDef + ",\"device\":{"+
                                 "\"identifiers\":[\""+macAddress+"-"+devName+"\",\""+macAddress+"-"+devName+"-S"+subDevNo+"\"],"+
                                 "\"model\":\""+muProject+"\","+
@@ -256,7 +263,8 @@ class HomeAssistant {
                                 "\"state_on\":\"on\","+
                                 "\"state_off\":\"off\","+
                                 "\"pl_on\":\"on\","+
-                                "\"pl_off\":\"off\"";
+                                "\"pl_off\":\"off\","+
+                                "\"icon\":\""+switch_iconNames[i]+"\"";
                         HAdiscoEntityDef = HAdiscoEntityDef + ",\"device\":{"+
                                 "\"identifiers\":[\""+macAddress+"-"+devName+"\",\""+macAddress+"-"+devName+"-S"+subDevNo+"\"],"+
                                 "\"model\":\""+muProject+"\","+

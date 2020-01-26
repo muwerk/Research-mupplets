@@ -374,7 +374,7 @@ class TvSerial {
     #ifdef __ESP__
     void registerHomeAssistant(String homeAssistantFriendlyName, String projectName="", String homeAssistantDiscoveryPrefix="homeassistant") {
         pHA=new HomeAssistant(name, tID, homeAssistantFriendlyName, projectName, TVSERIAL_VERSION, homeAssistantDiscoveryPrefix);
-        pHA->addSwitch();
+        pHA->addSwitch("mdi-televison-classic");
         pHA->begin(pSched);
     }
     #endif

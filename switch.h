@@ -171,9 +171,9 @@ class Switch {
     }
 
     #ifdef __ESP__
-    void registerHomeAssistant(String homeAssistantFriendlyName, String projectName="", String homeAssistantDiscoveryPrefix="homeassistant") {
+    void registerHomeAssistant(String homeAssistantFriendlyName, String projectName="", String customIcon="mdi:light-switch", String homeAssistantDiscoveryPrefix="homeassistant") {
         pHA=new HomeAssistant(name, tID, homeAssistantFriendlyName, projectName, SWITCH_VERSION, homeAssistantDiscoveryPrefix);
-        pHA->addSwitch();
+        pHA->addSwitch(customIcon);
         pHA->begin(pSched);
     }
     #endif

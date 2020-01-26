@@ -90,7 +90,7 @@ class HomeAssistant {
         sensor_iconNames.add(iconName);
     }
 
-    void addLight(String iconName="mdi-lightbulb") {
+    void addLight(String iconName="mdi:lightbulb") {
         //light_devNames.add(devName);
         //light_HAnames.add(HAname);
         light_iconNames.add(iconName);
@@ -98,7 +98,7 @@ class HomeAssistant {
         ++nrLights;
     }
 
-    void addSwitch(String iconName="mdi-light-switch") {
+    void addSwitch(String iconName="mdi:light-switch") {
         //switch_devNames.add(devName);
         //switch_HAnames.add(HAname);
         switch_iconNames.add(iconName);

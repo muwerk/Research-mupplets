@@ -21,8 +21,8 @@ class Gy906 {
     double temperatureIRSensorVal;
     bool bActive = false;
     bool fastIR = false;
-    ustd::sensorprocessor temperatureAmbientSensor = ustd::sensorprocessor(4, 600, 0.05);
-    ustd::sensorprocessor temperatureIRSensor = ustd::sensorprocessor(4, 600, 0.05);
+    ustd::sensorprocessor temperatureAmbientSensor = ustd::sensorprocessor(4, 600, 0.1);
+    ustd::sensorprocessor temperatureIRSensor = ustd::sensorprocessor(4, 600, 0.1);
     Adafruit_MLX90614 *pGy;
     #ifdef __ESP__
     HomeAssistant *pHA;

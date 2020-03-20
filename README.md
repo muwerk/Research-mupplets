@@ -35,6 +35,7 @@ Note: third-party libraries may be subject to different licensing conditions.
 | clock7seg.h | Simple 4 digit clock with timer | [4x 7segment display with HT16K33](https://www.adafruit.com/product/881) | [Adafruit GFX Library](https://github.com/adafruit/Adafruit-GFX-Library) [Adafruit LED Backpack Library](https://github.com/adafruit/Adafruit_LED_Backpack) | ESP
 | dhtxx.h     | Temperature, humidity sensor | DHT 11, DHT 21, DHT 22 | [DHT sensor library](https://github.com/adafruit/DHT-sensor-library), [Adafruit unified sensor](https://github.com/adafruit/Adafruit_Sensor) | ESP, ESP32 | yes
 | digital_out.h | GPIO output | switch external hardware via GPIO | | ESP, ESP32 | yes
+| gy906_temp.h   | IR and ambient temperature | GY-906 / MLX90614 I2C Sensor | https://github.com/adafruit/Adafruit-MLX90614-Library | ESP, ESP32 | yes
 | i2c_pwm.h   | 16 channel PWM via I2C | [PCA9685 based I2C 16 channel board](https://www.adafruit.com/products/815) | https://github.com/adafruit/Adafruit-PWM-Servo-Driver-Library | ESP
 | ldr.h       | Illuminance | LDR connected to analog port | | ESP, ESP32 | yes
 | led.h       | LED diode | Digital out or PWM connected to led | | ESP, ESP32 | yes

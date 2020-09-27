@@ -1,5 +1,6 @@
 // i2c_pwm.h
-// Adafruit PWM Servo Driver Library, https://github.com/adafruit/Adafruit-PWM-Servo-Driver-Library
+// Adafruit PWM Servo Driver Library,
+// https://github.com/adafruit/Adafruit-PWM-Servo-Driver-Library
 #pragma once
 
 #include "scheduler.h"
@@ -34,7 +35,7 @@ double parseUnitLevel(String msg) {
                     buff[strlen(buff) - 1] = 0;
                     br = atoi((char *)buff) / 100.0;
                 } else {
-                    if (strchr((char *)buff,'.')) {
+                    if (strchr((char *)buff, '.')) {
                         br = atof((char *)buff);
                     } else {
                         br = atoi((char *)buff) / 100.0;
@@ -43,32 +44,35 @@ double parseUnitLevel(String msg) {
             }
         }
     }
-    if (br<0.0) br=0.0;
-    if (br>1.0) br=1.0;
+    if (br < 0.0)
+        br = 0.0;
+    if (br > 1.0)
+        br = 1.0;
     return br;
 }
 
-bool spiffsBeginDone=false;
+#ifdef __ESP__
+bool spiffsBeginDone = false;
 
 bool writeJson(String filename, JSONVar jsonobj) {
     if (!spiffsBeginDone) {
         SPIFFS.begin();
-        spiffsBeginDone=true;
+        spiffsBeginDone = true;
     }
     fs::File f = SPIFFS.open(filename, "w");
     if (!f) {
         return false;
     }
-    String jsonstr=JSON.stringify(jsonobj);
+    String jsonstr = JSON.stringify(jsonobj);
     f.println(jsonstr);
     f.close();
     return true;
 }
 
-bool readJson(String filename, String& content) {
+bool readJson(String filename, String &content) {
     if (!spiffsBeginDone) {
         SPIFFS.begin();
-        spiffsBeginDone=true;
+        spiffsBeginDone = true;
     }
     content = "";
     fs::File f = SPIFFS.open(filename, "r");
@@ -84,21 +88,21 @@ bool readJson(String filename, String& content) {
     return true;
 }
 
-bool readNetJsonString(String key, String& value) {
-/*
-    SPIFFS.begin();
-    fs::File f = SPIFFS.open("/net.json", "r");
-    if (!f) {
-        return false;
-    } else {
-        String jsonstr = "";
-        while (f.available()) {
-            // Lets read line by line from the file
-            String lin = f.readStringUntil('\n');
-            jsonstr = jsonstr + lin;
-        }
-        f.close();
-*/
+bool readNetJsonString(String key, String &value) {
+    /*
+        SPIFFS.begin();
+        fs::File f = SPIFFS.open("/net.json", "r");
+        if (!f) {
+            return false;s
+        } else {
+            String jsonstr = "";
+            while (f.available()) {
+                // Lets read line by line from the file
+                String lin = f.readStringUntil('\n');
+                jsonstr = jsonstr + lin;
+            }
+            f.close();
+    */
     String jsonstr;
     if (readJson("/net.json", jsonstr)) {
         JSONVar configObj = JSON.parse(jsonstr);
@@ -116,13 +120,13 @@ bool readNetJsonString(String key, String& value) {
     }
 }
 
-
-bool readFriendlyName(String& friendlyName) {
-    if (readNetJsonString("friendlyname",friendlyName)) return true;
-    if (readNetJsonString("hostname",friendlyName)) return true;
+bool readFriendlyName(String &friendlyName) {
+    if (readNetJsonString("friendlyname", friendlyName))
+        return true;
+    if (readNetJsonString("hostname", friendlyName))
+        return true;
     return false;
 }
-
-
+#endif  // __ESP__
 
 }  // namespace ustd

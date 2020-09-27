@@ -52,14 +52,22 @@ double parseUnitLevel(String msg) {
 }
 
 #ifdef __ESP__
-bool spiffsBeginDone = false;
+bool fsBeginDone = false;
 
 bool writeJson(String filename, JSONVar jsonobj) {
-    if (!spiffsBeginDone) {
+    if (!fsBeginDone) {
+#ifdef __USE_OLD_FS__
         SPIFFS.begin();
-        spiffsBeginDone = true;
+#else
+        LittleFS.begin();
+#endif
+        fsBeginDone = true;
     }
+#ifdef __USE_OLD_FS__
     fs::File f = SPIFFS.open(filename, "w");
+#else
+    fs::File f = LittleFS.open(filename, "w");
+#endif
     if (!f) {
         return false;
     }
@@ -70,12 +78,20 @@ bool writeJson(String filename, JSONVar jsonobj) {
 }
 
 bool readJson(String filename, String &content) {
-    if (!spiffsBeginDone) {
+    if (!fsBeginDone) {
+#ifdef __USE_OLD_FS__
         SPIFFS.begin();
-        spiffsBeginDone = true;
+#else
+        LittleFS.begin();
+#endif
+        fsBeginDone = true;
     }
     content = "";
-    fs::File f = SPIFFS.open(filename, "r");
+#ifdef __USE_OLD_FS__
+    fs::File f = SPIFFS.open(filename, "w");
+#else
+    fs::File f = LittleFS.open(filename, "w");
+#endif
     if (!f) {
         return false;
     } else {

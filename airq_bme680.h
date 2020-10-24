@@ -96,7 +96,7 @@ class AirQualityBme680 {
         pHA->addSensor("temperature", "Temperature", "\\u00B0C","temperature","mdi:thermometer");
         pHA->addSensor("humidity", "Humidity", "%","humidity","mdi:water-percent");
         pHA->addSensor("pressure", "Pressure", "hPa","pressure","mdi:altimeter");
-        pHA->addSensor("kohmsgas", "kOhmsGas", "k\\u003a9","None","mdi:air-filter");
+        pHA->addSensor("kohmsgas", "k\\u2126-Gas", "k\\u2126","None","mdi:air-filter");
         pHA->begin(pSched);
     }
     #endif

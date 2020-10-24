@@ -22,15 +22,15 @@ class AirQualityBme680 {
     int tID;
     String name;
     uint8_t i2caddr;
-    double kOhmsVal, temperatureVal, humidityVal, pressureVal;
+    double kOhmsVal=0.0, temperatureVal=0.0, humidityVal=0.0, pressureVal=0.0;
     time_t startTime=0;
-    bool bStartup=true;
+    bool bStartup=false;
     bool bActive = false;
     String errmsg="";
-    ustd::sensorprocessor kOhmsGas = ustd::sensorprocessor(12, 600, 2.0);
-    ustd::sensorprocessor temperature = ustd::sensorprocessor(12, 600, 2.0);
-    ustd::sensorprocessor humidity = ustd::sensorprocessor(12, 600, 2.0);
-    ustd::sensorprocessor pressure = ustd::sensorprocessor(12, 600, 2.0);
+    ustd::sensorprocessor kOhmsGas = ustd::sensorprocessor(4, 30, 1.0);
+    ustd::sensorprocessor temperature = ustd::sensorprocessor(4, 30, 0.1);
+    ustd::sensorprocessor humidity = ustd::sensorprocessor(4, 30, 0.1);
+    ustd::sensorprocessor pressure = ustd::sensorprocessor(4, 30, 0.01);
     Adafruit_BME680 *pAirQuality;
     #ifdef __ESP__
     HomeAssistant *pHA;
@@ -66,7 +66,7 @@ class AirQualityBme680 {
 
         if (!pAirQuality->begin()) {
             errmsg="Could not find a valid BME680 sensor, check wiring!";
-            #ifdef USE_SERIAL_DEBUG
+            #ifdef USE_SERIAL_DBG
             Serial.println(errmsg);
             #endif
         } else {
@@ -113,7 +113,7 @@ class AirQualityBme680 {
         if (bActive && !bStartup) {
             char buf[32];
             sprintf(buf, "%5.1f", humidityVal);
-            pSched->publish(name + "/sensor/humdidity", buf);
+            pSched->publish(name + "/sensor/humidity", buf);
         }
     }
 
@@ -134,9 +134,18 @@ class AirQualityBme680 {
     }
 
     void loop() {
+        #ifdef USE_SERIAL_DBG
+        Serial.println("BME680 enter loop");
+        #endif
         if (startTime<100000) startTime=time(NULL); // NTP data available.
         if (bActive) {
+            #if defined(__ESP__) && !defined(__ESP32__)
+            ESP.wdtDisable();
+            #endif
             if (pAirQuality->performReading()) {
+                #if defined(__ESP__) && !defined(__ESP32__)
+                ESP.wdtEnable(WDTO_8S);
+                #endif
                 double t,h,p,k;
 #ifdef USE_SERIAL_DBG
                 Serial.println("AirQualityBme680 sensor data available");
@@ -161,7 +170,16 @@ class AirQualityBme680 {
                     kOhmsVal = k;
                     publishkOhmsGas();
                 }
+                #ifdef USE_SERIAL_DBG
+                Serial.println(t);
+                Serial.println(h);
+                Serial.println(p);
+                Serial.println(k);
+                #endif
             } else {
+                #if defined(__ESP__) && !defined(__ESP32__)
+                ESP.wdtEnable(WDTO_8S);
+                #endif
 #ifdef USE_SERIAL_DBG
                 Serial.println("AirQualityBme680 sensor no data available");
 #endif
@@ -175,6 +193,9 @@ class AirQualityBme680 {
                 errmsg="";
             }
         }
+        #ifdef USE_SERIAL_DBG
+        Serial.println("BME680 exit loop.");
+        #endif
     }
 
     void subsMsg(String topic, String msg, String originator) {

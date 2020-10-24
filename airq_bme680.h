@@ -139,13 +139,13 @@ class AirQualityBme680 {
         #endif
         if (startTime<100000) startTime=time(NULL); // NTP data available.
         if (bActive) {
-            #if defined(__ESP__) && !defined(__ESP32__)
-            ESP.wdtDisable();
-            #endif
+            //#if defined(__ESP__) && !defined(__ESP32__)
+            //ESP.wdtDisable();
+            //#endif
             if (pAirQuality->performReading()) {
-                #if defined(__ESP__) && !defined(__ESP32__)
-                ESP.wdtEnable(WDTO_8S);
-                #endif
+                //#if defined(__ESP__) && !defined(__ESP32__)
+                //ESP.wdtEnable(WDTO_8S);
+                //#endif
                 double t,h,p,k;
 #ifdef USE_SERIAL_DBG
                 Serial.println("AirQualityBme680 sensor data available");
@@ -177,9 +177,9 @@ class AirQualityBme680 {
                 Serial.println(k);
                 #endif
             } else {
-                #if defined(__ESP__) && !defined(__ESP32__)
-                ESP.wdtEnable(WDTO_8S);
-                #endif
+                //#if defined(__ESP__) && !defined(__ESP32__)
+                //ESP.wdtEnable(WDTO_8S);
+                //#endif
 #ifdef USE_SERIAL_DBG
                 Serial.println("AirQualityBme680 sensor no data available");
 #endif

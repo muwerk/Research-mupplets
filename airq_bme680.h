@@ -21,7 +21,7 @@ class AirQualityBme680 {
     Scheduler *pSched;
     int tID;
     String name;
-    uint8_t i2caddr;
+    //uint8_t i2caddr;
     double kOhmsVal=0.0, temperatureVal=0.0, humidityVal=0.0, pressureVal=0.0;
     time_t startTime=0;
     bool bStartup=false;
@@ -36,9 +36,9 @@ class AirQualityBme680 {
     HomeAssistant *pHA;
     #endif
 
-    AirQualityBme680(String name, uint8_t i2caddr = 0)
-        : name(name), i2caddr(i2caddr) {
-        pAirQuality = new Adafruit_BME680();
+    AirQualityBme680(String name)
+        : name(name) {
+        pAirQuality = new Adafruit_BME680(); // seems to be on i2c port 0x77 always
     }
 
     ~AirQualityBme680() {

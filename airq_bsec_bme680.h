@@ -29,6 +29,7 @@
     */
 
 namespace ustd {
+
 class AirQualityBsecBme680 {
   public:
     String AIRQUALITY_VERSION="0.1.0";
@@ -143,30 +144,33 @@ class AirQualityBsecBme680 {
         }
         return true;
     }
-
-    void begin(Scheduler *_pSched, TwoWire wire) {
-        pSched = _pSched;
-
-        pAirQuality->begin(i2caddr, wire);
-        
-        if (checkIaqSensorStatus()) {
-            bActive=true;
-            #ifdef USE_SERIAL_DBG
-            Serial.println("BSEC library version " + String(pAirQuality->version.major) + "." + String(pAirQuality->version.minor) + "." + String(pAirQuality->version.major_bugfix) + "." + String(pAirQuality->version.minor_bugfix));
-            #endif
             bsec_virtual_sensor_t sensorList[10] = {
                 BSEC_OUTPUT_RAW_TEMPERATURE,
                 BSEC_OUTPUT_RAW_PRESSURE,
                 BSEC_OUTPUT_RAW_HUMIDITY,
                 BSEC_OUTPUT_RAW_GAS,
                 BSEC_OUTPUT_IAQ,
+                BSEC_OUTPUT_SENSOR_HEAT_COMPENSATED_TEMPERATURE,
+                BSEC_OUTPUT_SENSOR_HEAT_COMPENSATED_HUMIDITY,
                 BSEC_OUTPUT_STATIC_IAQ,
                 BSEC_OUTPUT_CO2_EQUIVALENT,
                 BSEC_OUTPUT_BREATH_VOC_EQUIVALENT,
-                BSEC_OUTPUT_SENSOR_HEAT_COMPENSATED_TEMPERATURE,
-                BSEC_OUTPUT_SENSOR_HEAT_COMPENSATED_HUMIDITY,
             };
-            pAirQuality->updateSubscription(sensorList, 10, BSEC_SAMPLE_RATE_LP);
+
+    void begin(Scheduler *_pSched, TwoWire wire) {
+        pSched = _pSched;
+
+        pAirQuality->begin(i2caddr, wire);
+        #ifdef USE_SERIAL_DBG
+        Serial.println("BSEC library version " + String(pAirQuality->version.major) + "." + String(pAirQuality->version.minor) + "." + String(pAirQuality->version.major_bugfix) + "." + String(pAirQuality->version.minor_bugfix));
+        #endif
+        
+        if (checkIaqSensorStatus()) {
+            bActive=true;
+            #ifdef USE_SERIAL_DBG
+            Serial.println("Found BME680");
+            #endif
+            pAirQuality->updateSubscription(sensorList, 7, BSEC_SAMPLE_RATE_LP);
             if (!checkIaqSensorStatus()) {
                 bActive=false;
                 #ifdef USE_SERIAL_DBG
@@ -181,7 +185,7 @@ class AirQualityBsecBme680 {
         }
         
         auto ft = [=]() { this->loop(); };
-        tID = pSched->add(ft, name, 2000000); // every 2sec
+        tID = pSched->add(ft, name, 5000000); // every 5s
 
         auto fnall =
             [=](String topic, String msg, String originator) {
@@ -299,8 +303,11 @@ class AirQualityBsecBme680 {
         #ifdef USE_SERIAL_DBG
         Serial.println("BSECBME680 enter loop");
         #endif
-        if (startTime<100000) startTime=time(NULL); // NTP data available.
+        //if (startTime<100000) startTime=time(NULL); // NTP data available.
         if (bActive) {
+            #ifdef USE_SERIAL_DBG
+            Serial.println("BSECBME680 active, enter run()");
+            #endif
             if (pAirQuality->run()) { // If new data is available
                 double t,h,rt,rh,p,k,c,v,ia,iaqacc,siaq;
 #ifdef USE_SERIAL_DBG
@@ -370,10 +377,10 @@ class AirQualityBsecBme680 {
                 Serial.println(voc);
                 #endif
             } else {
-                checkIaqSensorStatus();
 #ifdef USE_SERIAL_DBG
                 Serial.println("AirQualityBsecBme680 sensor no data available");
 #endif
+                checkIaqSensorStatus();
             }
         } else {
 #ifdef USE_SERIAL_DBG

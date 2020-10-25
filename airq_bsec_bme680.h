@@ -10,7 +10,7 @@
 
 #include "sensors.h"
 
-#include <Wire.h>
+//#include <Wire.h>
 #include "bsec.h"   // taints license.
 
 #include "home_assistant.h"
@@ -59,12 +59,12 @@ class AirQualityBsecBme680 {
     HomeAssistant *pHA;
     #endif
 
-    AirQualityBsecBme680(String name, unsigned uint_8 i2cAddress)
-        : name(name), i2caddr(i2cAddress=BME680_I2C_ADDR_PRIMARY) {
+    AirQualityBsecBme680(String name, uint8_t i2cAddress=BME680_I2C_ADDR_PRIMARY)
+        : name(name), i2caddr(i2cAddress) {
         pAirQuality = new Bsec();
     }
 
-    ~AirQualityBme680() {
+    ~AirQualityBsecBme680() {
     }
 
     double getTemperature() {
@@ -112,47 +112,47 @@ class AirQualityBsecBme680 {
     }
 
     bool checkIaqSensorStatus(void) {
-        if (iaqSensor.status != BSEC_OK) {
-            if (iaqSensor.status < BSEC_OK) {
-                errmsg = "BSEC error code: " + String(iaqSensor.status);
+        if (pAirQuality->status != BSEC_OK) {
+            if (pAirQuality->status < BSEC_OK) {
+                errmsg = "BSEC error code: " + String(pAirQuality->status);
                 #ifdef USE_SERIAL_DBG
-                Serial.println(output);
+                Serial.println(errmsg);
                 #endif
                 return false;
             } else {
-                errmsg = "BSEC warning code: " + String(iaqSensor.status);
+                errmsg = "BSEC warning code: " + String(pAirQuality->status);
                 #ifdef USE_SERIAL_DBG
-                Serial.println(output);
+                Serial.println(errmsg);
                 #endif
             }
         }
 
-        if (iaqSensor.bme680Status != BME680_OK) {
-            if (iaqSensor.bme680Status < BME680_OK) {
-                errmsg = "BME680 error code: " + String(iaqSensor.bme680Status);
+        if (pAirQuality->bme680Status != BME680_OK) {
+            if (pAirQuality->bme680Status < BME680_OK) {
+                errmsg = "BME680 error code: " + String(pAirQuality->bme680Status);
                 #ifdef USE_SERIAL_DBG
-                Serial.println(output);
+                Serial.println(errmsg);
                 #endif
                 return false;
             } else {
-                errmsg = "BME680 warning code: " + String(iaqSensor.bme680Status);
+                errmsg = "BME680 warning code: " + String(pAirQuality->bme680Status);
                 #ifdef USE_SERIAL_DBG
-                Serial.println(output);
+                Serial.println(errmsg);
                 #endif
             }
         }
         return true;
     }
 
-    void begin(Scheduler *_pSched, Wire wire) {
+    void begin(Scheduler *_pSched, TwoWire wire) {
         pSched = _pSched;
 
-        pAirQuality->begin(i2caddr, wire));
+        pAirQuality->begin(i2caddr, wire);
         
         if (checkIaqSensorStatus()) {
             bActive=true;
             #ifdef USE_SERIAL_DBG
-            Serial.println("BSEC library version " + String(iaqSensor.version.major) + "." + String(iaqSensor.version.minor) + "." + String(iaqSensor.version.major_bugfix) + "." + String(iaqSensor.version.minor_bugfix);
+            Serial.println("BSEC library version " + String(pAirQuality->version.major) + "." + String(pAirQuality->version.minor) + "." + String(pAirQuality->version.major_bugfix) + "." + String(pAirQuality->version.minor_bugfix));
             #endif
             bsec_virtual_sensor_t sensorList[10] = {
                 BSEC_OUTPUT_RAW_TEMPERATURE,
@@ -166,7 +166,7 @@ class AirQualityBsecBme680 {
                 BSEC_OUTPUT_SENSOR_HEAT_COMPENSATED_TEMPERATURE,
                 BSEC_OUTPUT_SENSOR_HEAT_COMPENSATED_HUMIDITY,
             };
-            iaqSensor.updateSubscription(sensorList, 10, BSEC_SAMPLE_RATE_LP);
+            pAirQuality->updateSubscription(sensorList, 10, BSEC_SAMPLE_RATE_LP);
             if (!checkIaqSensorStatus()) {
                 bActive=false;
                 #ifdef USE_SERIAL_DBG
@@ -301,7 +301,7 @@ class AirQualityBsecBme680 {
         #endif
         if (startTime<100000) startTime=time(NULL); // NTP data available.
         if (bActive) {
-            if (iaqSensor.run()) { // If new data is available
+            if (pAirQuality->run()) { // If new data is available
                 double t,h,rt,rh,p,k,c,v,ia,iaqacc,siaq;
 #ifdef USE_SERIAL_DBG
                 Serial.println("AirQualityBseBme680 sensor data available");
@@ -358,7 +358,7 @@ class AirQualityBsecBme680 {
                     voc=v;
                     publishVOC();
                 }
-                if (co2Sensor.filter($c)) {
+                if (co2Sensor.filter(&c)) {
                     co2=c;
                     publishCO2();
                 }
@@ -418,10 +418,10 @@ class AirQualityBsecBme680 {
             publishStaticIaq();
         }
         if (topic == name + "/sensor/voc/get") {
-            publishVoc();
+            publishVOC();
         }
         if (topic == name + "/sensor/co2/get") {
-            publishCo2();
+            publishCO2();
         }
     };
 };  // AirQuality

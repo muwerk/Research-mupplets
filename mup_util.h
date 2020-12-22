@@ -3,6 +3,13 @@
 // https://github.com/adafruit/Adafruit-PWM-Servo-Driver-Library
 #pragma once
 
+#ifdef __USE_SPIFFS_FS__
+//#include <FS.h>
+#ifdef __ESP32__
+//#include "SPIFFS.h"
+#endif
+#endif
+
 #include "scheduler.h"
 
 namespace ustd {

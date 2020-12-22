@@ -233,8 +233,8 @@ class HomeAssistant {
                                 "\"bri_cmd_t\":\""+HAcommandBrTopic+"\","+
                                 "\"on_cmd_type\":\"brightness\","+
                                 "\"pl_on\":\"on\","+
-                                "\"pl_off\":\"off\","+
-                                "\"icon\":\""+light_iconNames[i]+"\"";
+                                "\"pl_off\":\"off\"";
+                                //"\"icon\":\""+light_iconNames[i]+"\"";
                         HAdiscoEntityDef = HAdiscoEntityDef + ",\"device\":{"+
                                 "\"identifiers\":[\""+macAddress+"-"+devName+"\",\""+macAddress+"-"+devName+"-S"+subDevNo+"\"],"+
                                 "\"model\":\""+muProject+"\","+

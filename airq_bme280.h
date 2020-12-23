@@ -21,6 +21,7 @@ class AirQualityBme280 {
     Scheduler *pSched;
     int tID;
     String name;
+    uint8_t i2c_addr;
     //uint8_t i2caddr;
     double temperatureVal=0.0, humidityVal=0.0, pressureVal=0.0;
     time_t startTime=0;
@@ -39,8 +40,8 @@ class AirQualityBme280 {
     HomeAssistant *pHA;
     #endif
 
-    AirQualityBme280(String name)
-        : name(name) {
+    AirQualityBme280(String name, uint i2c_addr=BME280_ADDRESS)  // i2c_addr: usually 0x77 or 0x76
+        : name(name), i2c_addr(i2c_addr) {
         pAirQuality = new Adafruit_BME280(); // seems to be on i2c port 0x77 always
     }
 
@@ -62,7 +63,7 @@ class AirQualityBme280 {
     void begin(Scheduler *_pSched) {
         pSched = _pSched;
 
-        if (!pAirQuality->begin()) {
+        if (!pAirQuality->begin(i2c_addr)) {
             errmsg="Could not find a valid BME280 sensor, check wiring!";
             #ifdef USE_SERIAL_DBG
             Serial.println(errmsg);
@@ -125,7 +126,7 @@ class AirQualityBme280 {
         #endif
         if (startTime<100000) startTime=time(NULL); // NTP data available.
         if (bActive) {
-            double t,h,p,k;
+            double t,h,p;
             sensors_event_t temp_event, pressure_event, humidity_event;
             bme_temp->getEvent(&temp_event);
             bme_pressure->getEvent(&pressure_event);

@@ -45,6 +45,7 @@ Note: third-party libraries may be subject to different licensing conditions.
 | neocandle.h | butterlamp sim | [Adafruit neopixel feather wing](https://www.adafruit.com/product/2945) | [Adafruit Neopixel](https://github.com/adafruit/Adafruit_NeoPixel)
 | power_bl0397.h | Power meter | BL0937 sensor chip for power, volt, amp | | ESP, ESP32 | yes
 | pressure.h  | Air pressure and temperature sensor | BMP085, BMP180 | [Adafruit BMP085 unified](https://github.com/adafruit/Adafruit_BMP085_Unified), [Adafruit unified sensor](https://github.com/adafruit/Adafruit_Sensor) | ESP, ESP32 | yes
+| pressure_bmp280.h  | Air pressure and temperature sensor | BMP280 | [Adafruit BMP280](https://github.com/adafruit/Adafruit_BMP280_Library), [Adafruit unified sensor](https://github.com/adafruit/Adafruit_Sensor) | ESP, ESP32 | yes
 | shift_reg_74595.h | serial to parallel output | 74HC595 shift register(s) | | ESP, ESP32
 | switch.h    | Button | any push button |   | ESP, ESP32 | yes
 | tsl2561.h     | Illuminance | [Adafruit TSL2561](https://learn.adafruit.com/tsl2561/overview) | Wire, [Adafruit unified sensor](https://github.com/adafruit/Adafruit_Sensor), [Adafruit TSL2561](https://github.com/adafruit/Adafruit_TSL2561) | ESP, ESP32 | yes

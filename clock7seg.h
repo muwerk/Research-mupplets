@@ -6,6 +6,8 @@
 //"/Users/dsc/git/avr/muwerk/borgclock/.piolibdeps/Adafruit_GFX_ID3115/Adafruit_GFX.h"
 //#include "/Users/dsc/git/avr/muwerk/borgclock/.piolibdeps/Adafruit LED
 // Backpack Library_ID25/Adafruit_LEDBackpack.h" #include <Adafruit_GFX.h>
+#include <Adafruit_I2CDevice.h>
+#include <Adafruit_GFX.h>
 #include <Adafruit_LEDBackpack.h>
 
 #include "scheduler.h"

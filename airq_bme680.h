@@ -104,6 +104,7 @@ class AirQualityBme680 {
     void publishTemperature() {
         if (bActive && !bStartup) {
             char buf[32];
+            pSched->publish(name+"/sensor/result","OK");
             sprintf(buf, "%5.1f", temperatureVal);
             pSched->publish(name + "/sensor/temperature", buf);
         }
@@ -112,6 +113,7 @@ class AirQualityBme680 {
     void publishHumidity() {
         if (bActive && !bStartup) {
             char buf[32];
+            pSched->publish(name+"/sensor/result","OK");
             sprintf(buf, "%5.1f", humidityVal);
             pSched->publish(name + "/sensor/humidity", buf);
         }
@@ -120,6 +122,7 @@ class AirQualityBme680 {
     void publishPressure() {
         if (bActive && !bStartup) {
             char buf[32];
+            pSched->publish(name+"/sensor/result","OK");
             sprintf(buf, "%5.1f", pressureVal);
             pSched->publish(name + "/sensor/pressure", buf);
         }
@@ -128,6 +131,7 @@ class AirQualityBme680 {
     void publishkOhmsGas() {
         if (bActive && !bStartup) {
             char buf[32];
+            pSched->publish(name+"/sensor/result","OK");
             sprintf(buf, "%5.1f", kOhmsVal);
             pSched->publish(name + "/sensor/kohmsgas", buf);
         }
@@ -189,7 +193,7 @@ class AirQualityBme680 {
             Serial.println("AirQualityBme680 sensor not active.");
 #endif
             if (errmsg!="") {
-                pSched->publish(name+"/sensor/error",errmsg);
+                pSched->publish(name+"/sensor/result",errmsg);
                 errmsg="";
             }
         }

@@ -78,6 +78,7 @@ class Gy906 {
 
     void publishIRTemperature() {
         char buf[32];
+        pSched->publish(name+"/sensor/result","OK");
         sprintf(buf, "%5.2f", temperatureIRSensorVal);
         pSched->publish(name + "/sensor/ir_temperature", buf);
 
@@ -85,6 +86,7 @@ class Gy906 {
 
     void publishAmbientTemperature() {
         char buf[32];
+        pSched->publish(name+"/sensor/result","OK");
         sprintf(buf, "%5.2f", temperatureAmbientSensorVal);
         pSched->publish(name + "/sensor/ambient_temperature", buf);
 
@@ -110,7 +112,7 @@ class Gy906 {
                 }
             }
         } else {
-            pSched->publish(name+"/sensor/error", "hardware not initialized");
+            pSched->publish(name+"/sensor/result", "hardware not initialized");
         }
     }
 

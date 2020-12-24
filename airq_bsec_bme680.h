@@ -387,7 +387,7 @@ class AirQualityBsecBme680 {
             Serial.println("AirQualityBsecBme680 sensor not active.");
 #endif
             if (errmsg!="") {
-                pSched->publish(name+"/sensor/error",errmsg);
+                pSched->publish(name+"/sensor/result",errmsg);
                 errmsg="";
             }
         }

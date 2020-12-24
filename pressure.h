@@ -75,6 +75,7 @@ class Pressure {
 
     void publishPressure() {
         char buf[32];
+        pSched->publish(name+"/sensor/result","OK");
         sprintf(buf, "%5.1f", pressureSensorVal);
         pSched->publish(name + "/sensor/pressure", buf);
 
@@ -82,6 +83,7 @@ class Pressure {
 
     void publishTemperature() {
         char buf[32];
+        pSched->publish(name+"/sensor/result","OK");
         sprintf(buf, "%5.1f", temperatureSensorVal);
         pSched->publish(name + "/sensor/temperature", buf);
 
@@ -109,7 +111,7 @@ class Pressure {
                 }
             }
         } else {
-            pSched->publish(name+"/sensor/error", "hardware not initialized");
+            pSched->publish(name+"/sensor/result", "hardware not initialized");
         }
     }
 

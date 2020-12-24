@@ -90,6 +90,7 @@ class PressureBmp280 {
 
     void publishPressure() {
         char buf[32];
+        pSched->publish(name+"/sensor/result","OK");
         sprintf(buf, "%5.1f", pressureSensorVal);
         pSched->publish(name + "/sensor/pressure", buf);
 
@@ -97,6 +98,7 @@ class PressureBmp280 {
 
     void publishTemperature() {
         char buf[32];
+        pSched->publish(name+"/sensor/result","OK");
         sprintf(buf, "%5.1f", temperatureSensorVal);
         pSched->publish(name + "/sensor/temperature", buf);
 
@@ -122,7 +124,7 @@ class PressureBmp280 {
                 publishPressure();
             }
         } else {
-            pSched->publish(name+"/sensor/error", errmsg);
+            pSched->publish(name+"/sensor/result", errmsg);
         }
     }
 

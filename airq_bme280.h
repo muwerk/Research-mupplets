@@ -74,6 +74,7 @@ class AirQualityBme280 {
             bme_humidity = pAirQuality->getHumiditySensor();
 
             bActive=true;
+            pSched->publish(name+"/sensor/result","OK");
         }
         
         auto ft = [=]() { this->loop(); };
@@ -100,6 +101,7 @@ class AirQualityBme280 {
         if (bActive && !bStartup) {
             char buf[32];
             sprintf(buf, "%5.1f", temperatureVal);
+            pSched->publish(name+"/sensor/result","OK");
             pSched->publish(name + "/sensor/temperature", buf);
         }
     }
@@ -108,6 +110,7 @@ class AirQualityBme280 {
         if (bActive && !bStartup) {
             char buf[32];
             sprintf(buf, "%5.1f", humidityVal);
+            pSched->publish(name+"/sensor/result","OK");
             pSched->publish(name + "/sensor/humidity", buf);
         }
     }
@@ -116,6 +119,7 @@ class AirQualityBme280 {
         if (bActive && !bStartup) {
             char buf[32];
             sprintf(buf, "%5.1f", pressureVal);
+            pSched->publish(name+"/sensor/result","OK");
             pSched->publish(name + "/sensor/pressure", buf);
         }
     }
@@ -161,7 +165,7 @@ class AirQualityBme280 {
             Serial.println("AirQualityBme280 sensor not active.");
 #endif
             if (errmsg!="") {
-                pSched->publish(name+"/sensor/error",errmsg);
+                pSched->publish(name+"/sensor/result",errmsg);
                 errmsg="";
             }
         }

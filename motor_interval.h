@@ -207,12 +207,8 @@ namespace ustd {
 
         void vpublishf( String topic, const char* format, va_list args ) {
             char buffer[ MAX_MESSAGE_SIZE ];
-            Serial.print( "Before vsnprintf:" );
-            Serial.println( format );
             vsnprintf( buffer, MAX_MESSAGE_SIZE - 1, format, args );
             buffer[ MAX_MESSAGE_SIZE - 1 ] = 0;
-            Serial.print( "After vsnprintf:" );
-            Serial.println( buffer );
             pSched->publish( topic, buffer );
         }
 

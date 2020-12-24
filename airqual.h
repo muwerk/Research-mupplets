@@ -54,27 +54,27 @@ class AirQuality {
         return vocVal;
     }
 
-    void printDriverError(CCS811Core::status errorCode) {
+    void printDriverError(CCS811Core::CCS811_Status_e errorCode) {
 #ifdef USE_SERIAL_DBG
         switch (errorCode) {
-        case CCS811Core::SENSOR_SUCCESS:
+        case CCS811Core::CCS811_Status_e::CCS811_Stat_SUCCESS:
             Serial.print("SUCCESS");
             break;
-        case CCS811Core::SENSOR_ID_ERROR:
+        case CCS811Core::CCS811_Status_e::CCS811_Stat_ID_ERROR:
             errmsg="ID_ERROR";
             Serial.print(errmsg);
             break;
-        case CCS811Core::SENSOR_I2C_ERROR:
+        case CCS811Core::CCS811_Status_e::CCS811_Stat_I2C_ERROR:
             errmsg="I2C_ERROR (did you put WAK low? Required!) See code for more.";
             Serial.println(errmsg);
             Serial.println("You need a patch: "
                            "https://github.com/sparkfun/SparkFun_CCS811_Arduino_Library/issues/6");
             break;
-        case CCS811Core::SENSOR_INTERNAL_ERROR:
+        case CCS811Core::CCS811_Status_e::CCS811_Stat_INTERNAL_ERROR:
             errmsg="INTERNAL_ERROR";
             Serial.print(errmsg);
             break;
-        case CCS811Core::SENSOR_GENERIC_ERROR:
+        case CCS811Core::CCS811_Status_e::CCS811_Stat_GENERIC_ERROR:
             errmsg="GENERIC_ERROR";
             Serial.print(errmsg);
             break;
@@ -88,8 +88,8 @@ class AirQuality {
     void begin(Scheduler *_pSched) {
         pSched = _pSched;
 
-        CCS811Core::status returnCode = pAirQuality->begin();
-        if (returnCode == CCS811Core::SENSOR_SUCCESS) {
+        CCS811Core::CCS811_Status_e returnCode = pAirQuality->beginWithStatus();
+        if (returnCode == CCS811Core::CCS811_Status_e::CCS811_Stat_SUCCESS) {
             bActive = true;
             //Mode 0 = Idle
             //Mode 1 = read every 1s

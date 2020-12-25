@@ -1,9 +1,11 @@
 #pragma once
 
 // Platformio lib finder collapses on space in 'Adafruit NeoPixel_ID28' name...
-#include "../.pio/libdeps/huzzah/Adafruit NeoPixel_ID28/Adafruit_NeoPixel.h"
+#include "../.pio/libdeps/huzzah/Adafruit NeoPixel/Adafruit_NeoPixel.h"
 #include "scheduler.h"
 #include "mup_util.h"
+
+//#include "Adafruit_NeoPixel.h"
 
 // Neopixel default hardware:
 // Soldered to pin 15 on neopixel feather-wing
@@ -36,6 +38,7 @@ class NeoCandle {
     bool bUnitBrightness = false;
     double unitBrightness = 0.0;
     double oldMx = -1.0;
+    bool state = false;
 
 #ifdef __ESP__
     HomeAssistant *pHA;
@@ -60,35 +63,6 @@ class NeoCandle {
 
     ~NeoCandle() {
     }
-    /*
-    // XXX: replace parseUnitLevel...
-        int parseValue(const byte *msg, unsigned int len) {
-            char buff[32];
-            int l;
-            int ampx = 0;
-            memset(buff, 0, 32);
-            if (len > 31)
-                l = 31;
-            else
-                l = len;
-            strncpy(buff, (const char *)msg, l);
-
-            if (l >= 2 && !strncmp((const char *)buff, "on", 2)) {
-                ampx = 100;
-            } else {
-                if (l >= 3 && !strncmp((const char *)buff, "off", 3)) {
-                    ampx = 0;
-                } else {
-                    if (l >= 4 && !strncmp((const char *)buff, "pct ", 4)) {
-                        ampx = atoi((char *)(buff + 4));
-                    } else {
-                        ampx = atoi((char *)buff);
-                    }
-                }
-            }
-            return ampx;
-        }
-    */
 
 #ifdef __ESP__
     void registerHomeAssistant(String homeAssistantFriendlyName, String projectName = "",
@@ -118,8 +92,9 @@ class NeoCandle {
             m1 = (24.0 - (pTm->tm_hour + pTm->tm_min / 60.0)) / (24.0 - 18.0);
         }
         if (bUnitBrightness) {
-            if (m1 > 0.0) {
+            if (m1 > 0.0 || m2 > 0.0) {
                 m1 = m1 * unitBrightness;
+                m2 = m2 * unitBrightness;
             }
         }
         if (m2 != 0.0) {
@@ -134,7 +109,7 @@ class NeoCandle {
     void begin(Scheduler *_pSched) {
         // Make sure _clientName is Unique! Otherwise MQTT server will
         // rapidly disconnect.
-        char buf[32];
+        //char buf[32];
         pSched = _pSched;
 
         pPixels = new Adafruit_NeoPixel(numPixels, pin, options);
@@ -149,18 +124,46 @@ class NeoCandle {
         auto fnall = [=](String topic, String msg, String originator) {
             this->subsMsg(topic, msg, originator);
         };
-        pSched->subscribe(tID, name + "/light/brightness/set", fnall);
-        pSched->subscribe(tID, "/light/windlevel/set", fnall);
+        pSched->subscribe(tID, name + "/light/set", fnall);
         pSched->subscribe(tID, name + "/light/windlevel/set", fnall);
         if (bAutobrightness)
             pSched->subscribe(tID, brightnessTopic, fnall);
-        sprintf(buf, "%d", wind);
-        pSched->publish(name + "/light/windlevel", buf);
-        sprintf(buf, "%d", amp);
-        pSched->publish(name + "/light/brightness", buf);
+
+        publishState();
+
         manualSet = 0;
         bStarted = true;
     }
+
+    void publishState() {
+        if (unitBrightness > 0.0) {
+            pSched->publish(name + "/light/state", "on");
+            this->state = true;
+        } else {
+            pSched->publish(name + "/light/state", "off");
+            this->state = false;
+        }
+        char buf[32];
+        sprintf(buf, "%5.3f", unitBrightness);
+        pSched->publish(name + "/light/unitbrightness", buf);
+    }
+
+    void brightness(double bright) {
+        if (bright < 0.0) {
+            bright = 0.0;
+        }
+        if (bright > 1.0)
+            bright = 1.0;
+        unitBrightness = bright;
+        bUnitBrightness = true;
+        if (bright>0.0) {
+            manualSet = time(nullptr);
+        } else {
+            manualSet = 0;
+        }
+        publishState();
+    }
+
 
     int f1 = 0, f2 = 0, max_b = 20;
     void butterlamp() {
@@ -259,12 +262,16 @@ class NeoCandle {
         if (msg == "dummyOn") {
             return;  // Ignore, homebridge hack
         }
-        if (topic == name + "/light/brightness/set") {
+        if (topic == name + "/light/set") {
 #ifdef USE_SERIAL_DBG
             Serial.print("Message arrived [");
             Serial.print(topic.c_str());
             Serial.println("] ");
 #endif
+            double br;
+            br = parseUnitLevel(msg);
+            brightness(br);
+            /*
             int amp_old = amp;
             amp = parseUnitLevel(msg) * 100;
             //    parseValue((const byte *)msg.c_str(), strlen(msg.c_str()) +
@@ -279,6 +286,7 @@ class NeoCandle {
                 pSched->publish(name + "/light/brightness", buf);
                 manualSet = time(nullptr);
             }
+            */
         }
         if (topic == "windlevel/set" || topic == name + "/light/windlevel/set") {
 #ifdef USE_SERIAL_DBG

@@ -13,19 +13,20 @@
 namespace ustd {
 class Pressure {
   public:
-    String PRESSURE_VERSION="0.1.0";
+    String PRESSURE_VERSION = "0.1.0";
     Scheduler *pSched;
     int tID;
     String name;
     double temperatureSensorVal;
     double pressureSensorVal;
     bool bActive = false;
-    ustd::sensorprocessor temperatureSensor = ustd::sensorprocessor(4, 600, 0.1);
+    ustd::sensorprocessor temperatureSensor =
+        ustd::sensorprocessor(4, 600, 0.1);
     ustd::sensorprocessor pressureSensor = ustd::sensorprocessor(4, 600, 1.0);
     Adafruit_BMP085_Unified *pPressure;
-    #ifdef __ESP__
+#ifdef __ESP__
     HomeAssistant *pHA;
-    #endif
+#endif
 
     Pressure(String name) : name(name) {
         pPressure = new Adafruit_BMP085_Unified(10085);
@@ -56,37 +57,40 @@ class Pressure {
         tID = pSched->add(ft, name, 5000000);
 
         /* std::function<void(String, String, String)> */
-        auto fnall =
-            [=](String topic, String msg, String originator) {
-                this->subsMsg(topic, msg, originator);
-            };
+        auto fnall = [=](String topic, String msg, String originator) {
+            this->subsMsg(topic, msg, originator);
+        };
         pSched->subscribe(tID, name + "/sensor/temperature/get", fnall);
         pSched->subscribe(tID, name + "/sensor/pressure/get", fnall);
     }
 
-    #ifdef __ESP__
-    void registerHomeAssistant(String homeAssistantFriendlyName, String projectName="", String homeAssistantDiscoveryPrefix="homeassistant") {
-        pHA=new HomeAssistant(name, tID, homeAssistantFriendlyName, projectName, PRESSURE_VERSION, homeAssistantDiscoveryPrefix);
-        pHA->addSensor("temperature", "Temperature", "\\u00B0C","temperature","mdi:thermometer");
-        pHA->addSensor("pressure", "Pressure", "hPa","pressure","mdi:altimeter");
+#ifdef __ESP__
+    void registerHomeAssistant(
+        String homeAssistantFriendlyName, String projectName = "",
+        String homeAssistantDiscoveryPrefix = "homeassistant") {
+        pHA =
+            new HomeAssistant(name, tID, homeAssistantFriendlyName, projectName,
+                              PRESSURE_VERSION, homeAssistantDiscoveryPrefix);
+        pHA->addSensor("temperature", "Temperature", "\\u00B0C", "temperature",
+                       "mdi:thermometer");
+        pHA->addSensor("pressure", "Pressure", "hPa", "pressure",
+                       "mdi:altimeter");
         pHA->begin(pSched);
     }
-    #endif
+#endif
 
     void publishPressure() {
         char buf[32];
-        pSched->publish(name+"/sensor/result","OK");
+        pSched->publish(name + "/sensor/result", "OK");
         sprintf(buf, "%5.1f", pressureSensorVal);
         pSched->publish(name + "/sensor/pressure", buf);
-
     }
 
     void publishTemperature() {
         char buf[32];
-        pSched->publish(name+"/sensor/result","OK");
+        pSched->publish(name + "/sensor/result", "OK");
         sprintf(buf, "%5.1f", temperatureSensorVal);
         pSched->publish(name + "/sensor/temperature", buf);
-
     }
 
     void loop() {
@@ -111,7 +115,8 @@ class Pressure {
                 }
             }
         } else {
-            pSched->publish(name+"/sensor/result", "hardware not initialized");
+            pSched->publish(name + "/sensor/result",
+                            "hardware not initialized");
         }
     }
 

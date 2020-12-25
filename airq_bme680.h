@@ -13,32 +13,32 @@
 
 #include "home_assistant.h"
 
-
 namespace ustd {
 class AirQualityBme680 {
   public:
-    String AIRQUALITY_VERSION="0.1.0";
+    String AIRQUALITY_VERSION = "0.1.0";
     Scheduler *pSched;
     int tID;
     String name;
-    //uint8_t i2caddr;
-    double kOhmsVal=0.0, temperatureVal=0.0, humidityVal=0.0, pressureVal=0.0;
-    time_t startTime=0;
-    bool bStartup=false;
+    // uint8_t i2caddr;
+    double kOhmsVal = 0.0, temperatureVal = 0.0, humidityVal = 0.0,
+           pressureVal = 0.0;
+    time_t startTime = 0;
+    bool bStartup = false;
     bool bActive = false;
-    String errmsg="";
+    String errmsg = "";
     ustd::sensorprocessor kOhmsGas = ustd::sensorprocessor(4, 30, 1.0);
     ustd::sensorprocessor temperature = ustd::sensorprocessor(4, 30, 0.1);
     ustd::sensorprocessor humidity = ustd::sensorprocessor(4, 30, 0.1);
     ustd::sensorprocessor pressure = ustd::sensorprocessor(4, 30, 0.01);
     Adafruit_BME680 *pAirQuality;
-    #ifdef __ESP__
+#ifdef __ESP__
     HomeAssistant *pHA;
-    #endif
+#endif
 
-    AirQualityBme680(String name)
-        : name(name) {
-        pAirQuality = new Adafruit_BME680(); // seems to be on i2c port 0x77 always
+    AirQualityBme680(String name) : name(name) {
+        pAirQuality =
+            new Adafruit_BME680();  // seems to be on i2c port 0x77 always
     }
 
     ~AirQualityBme680() {
@@ -60,51 +60,57 @@ class AirQualityBme680 {
         return kOhmsVal;
     }
 
-
     void begin(Scheduler *_pSched) {
         pSched = _pSched;
 
         if (!pAirQuality->begin()) {
-            errmsg="Could not find a valid BME680 sensor, check wiring!";
-            #ifdef USE_SERIAL_DBG
+            errmsg = "Could not find a valid BME680 sensor, check wiring!";
+#ifdef USE_SERIAL_DBG
             Serial.println(errmsg);
-            #endif
+#endif
         } else {
             // Set up oversampling and filter initialization
             pAirQuality->setTemperatureOversampling(BME680_OS_8X);
             pAirQuality->setHumidityOversampling(BME680_OS_2X);
             pAirQuality->setPressureOversampling(BME680_OS_4X);
             pAirQuality->setIIRFilterSize(BME680_FILTER_SIZE_3);
-            pAirQuality->setGasHeater(320, 150); // 320*C for 150 ms
+            pAirQuality->setGasHeater(320, 150);  // 320*C for 150 ms
 
-            bActive=true;
+            bActive = true;
         }
-        
-        auto ft = [=]() { this->loop(); };
-        tID = pSched->add(ft, name, 2000000); // every 2sec
 
-        auto fnall =
-            [=](String topic, String msg, String originator) {
-                this->subsMsg(topic, msg, originator);
-            };
+        auto ft = [=]() { this->loop(); };
+        tID = pSched->add(ft, name, 2000000);  // every 2sec
+
+        auto fnall = [=](String topic, String msg, String originator) {
+            this->subsMsg(topic, msg, originator);
+        };
         pSched->subscribe(tID, name + "/sensor/#", fnall);
     }
 
-    #ifdef __ESP__
-    void registerHomeAssistant(String homeAssistantFriendlyName, String projectName="", String homeAssistantDiscoveryPrefix="homeassistant") {
-        pHA=new HomeAssistant(name, tID, homeAssistantFriendlyName, projectName, AIRQUALITY_VERSION, homeAssistantDiscoveryPrefix);
-        pHA->addSensor("temperature", "Temperature", "\\u00B0C","temperature","mdi:thermometer");
-        pHA->addSensor("humidity", "Humidity", "%","humidity","mdi:water-percent");
-        pHA->addSensor("pressure", "Pressure", "hPa","pressure","mdi:altimeter");
-        pHA->addSensor("kohmsgas", "k\\u2126-Gas", "k\\u2126","None","mdi:air-filter");
+#ifdef __ESP__
+    void registerHomeAssistant(
+        String homeAssistantFriendlyName, String projectName = "",
+        String homeAssistantDiscoveryPrefix = "homeassistant") {
+        pHA =
+            new HomeAssistant(name, tID, homeAssistantFriendlyName, projectName,
+                              AIRQUALITY_VERSION, homeAssistantDiscoveryPrefix);
+        pHA->addSensor("temperature", "Temperature", "\\u00B0C", "temperature",
+                       "mdi:thermometer");
+        pHA->addSensor("humidity", "Humidity", "%", "humidity",
+                       "mdi:water-percent");
+        pHA->addSensor("pressure", "Pressure", "hPa", "pressure",
+                       "mdi:altimeter");
+        pHA->addSensor("kohmsgas", "k\\u2126-Gas", "k\\u2126", "None",
+                       "mdi:air-filter");
         pHA->begin(pSched);
     }
-    #endif
+#endif
 
     void publishTemperature() {
         if (bActive && !bStartup) {
             char buf[32];
-            pSched->publish(name+"/sensor/result","OK");
+            pSched->publish(name + "/sensor/result", "OK");
             sprintf(buf, "%5.1f", temperatureVal);
             pSched->publish(name + "/sensor/temperature", buf);
         }
@@ -113,7 +119,7 @@ class AirQualityBme680 {
     void publishHumidity() {
         if (bActive && !bStartup) {
             char buf[32];
-            pSched->publish(name+"/sensor/result","OK");
+            pSched->publish(name + "/sensor/result", "OK");
             sprintf(buf, "%5.1f", humidityVal);
             pSched->publish(name + "/sensor/humidity", buf);
         }
@@ -122,7 +128,7 @@ class AirQualityBme680 {
     void publishPressure() {
         if (bActive && !bStartup) {
             char buf[32];
-            pSched->publish(name+"/sensor/result","OK");
+            pSched->publish(name + "/sensor/result", "OK");
             sprintf(buf, "%5.1f", pressureVal);
             pSched->publish(name + "/sensor/pressure", buf);
         }
@@ -131,33 +137,34 @@ class AirQualityBme680 {
     void publishkOhmsGas() {
         if (bActive && !bStartup) {
             char buf[32];
-            pSched->publish(name+"/sensor/result","OK");
+            pSched->publish(name + "/sensor/result", "OK");
             sprintf(buf, "%5.1f", kOhmsVal);
             pSched->publish(name + "/sensor/kohmsgas", buf);
         }
     }
 
     void loop() {
-        #ifdef USE_SERIAL_DBG
+#ifdef USE_SERIAL_DBG
         Serial.println("BME680 enter loop");
-        #endif
-        if (startTime<100000) startTime=time(NULL); // NTP data available.
+#endif
+        if (startTime < 100000)
+            startTime = time(NULL);  // NTP data available.
         if (bActive) {
             //#if defined(__ESP__) && !defined(__ESP32__)
-            //ESP.wdtDisable();
+            // ESP.wdtDisable();
             //#endif
             if (pAirQuality->performReading()) {
                 //#if defined(__ESP__) && !defined(__ESP32__)
-                //ESP.wdtEnable(WDTO_8S);
+                // ESP.wdtEnable(WDTO_8S);
                 //#endif
-                double t,h,p,k;
+                double t, h, p, k;
 #ifdef USE_SERIAL_DBG
                 Serial.println("AirQualityBme680 sensor data available");
 #endif
-                t=pAirQuality->temperature;
-                h=pAirQuality->humidity;
-                p = pAirQuality->pressure/100.0;
-                k=pAirQuality->gas_resistance/1000.0;
+                t = pAirQuality->temperature;
+                h = pAirQuality->humidity;
+                p = pAirQuality->pressure / 100.0;
+                k = pAirQuality->gas_resistance / 1000.0;
                 if (temperature.filter(&t)) {
                     temperatureVal = t;
                     publishTemperature();
@@ -174,15 +181,15 @@ class AirQualityBme680 {
                     kOhmsVal = k;
                     publishkOhmsGas();
                 }
-                #ifdef USE_SERIAL_DBG
+#ifdef USE_SERIAL_DBG
                 Serial.println(t);
                 Serial.println(h);
                 Serial.println(p);
                 Serial.println(k);
-                #endif
+#endif
             } else {
                 //#if defined(__ESP__) && !defined(__ESP32__)
-                //ESP.wdtEnable(WDTO_8S);
+                // ESP.wdtEnable(WDTO_8S);
                 //#endif
 #ifdef USE_SERIAL_DBG
                 Serial.println("AirQualityBme680 sensor no data available");
@@ -192,14 +199,14 @@ class AirQualityBme680 {
 #ifdef USE_SERIAL_DBG
             Serial.println("AirQualityBme680 sensor not active.");
 #endif
-            if (errmsg!="") {
-                pSched->publish(name+"/sensor/result",errmsg);
-                errmsg="";
+            if (errmsg != "") {
+                pSched->publish(name + "/sensor/result", errmsg);
+                errmsg = "";
             }
         }
-        #ifdef USE_SERIAL_DBG
+#ifdef USE_SERIAL_DBG
         Serial.println("BME680 exit loop.");
-        #endif
+#endif
     }
 
     void subsMsg(String topic, String msg, String originator) {

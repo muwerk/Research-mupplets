@@ -1,8 +1,8 @@
 // dht.h
 #pragma once
 
-#include "DHT.h"   // from "DHT sensor library", https://github.com/adafruit/DHT-sensor-library
-                   // and "Adafruit Unified Sensor", https://github.com/adafruit/Adafruit_Sensor
+#include "DHT.h"  // from "DHT sensor library", https://github.com/adafruit/DHT-sensor-library
+    // and "Adafruit Unified Sensor", https://github.com/adafruit/Adafruit_Sensor
 #include "scheduler.h"
 #include "sensors.h"
 #include "home_assistant.h"
@@ -10,7 +10,7 @@
 namespace ustd {
 class Dht {
   public:
-    String DHT_VERSION="0.1.0";
+    String DHT_VERSION = "0.1.0";
     Scheduler *pSched;
     int tID;
     String name;
@@ -18,12 +18,13 @@ class Dht {
     uint8_t type;
     double temperatureSensorVal;
     double humiditySensorVal;
-    ustd::sensorprocessor temperatureSensor = ustd::sensorprocessor(4, 600, 0.1);
+    ustd::sensorprocessor temperatureSensor =
+        ustd::sensorprocessor(4, 600, 0.1);
     ustd::sensorprocessor humiditySensor = ustd::sensorprocessor(4, 600, 1.0);
     DHT *pDht;
-    #ifdef __ESP__
+#ifdef __ESP__
     HomeAssistant *pHA;
-    #endif
+#endif
 
     Dht(String name, uint8_t port, uint8_t type = DHT22)
         : name(name), port(port), type(type) {
@@ -55,22 +56,27 @@ class Dht {
         tID = pSched->add(ft, name, 5000000);
 
         /* std::function<void(String, String, String)> */
-        auto fnall =
-            [=](String topic, String msg, String originator) {
-                this->subsMsg(topic, msg, originator);
-            };
+        auto fnall = [=](String topic, String msg, String originator) {
+            this->subsMsg(topic, msg, originator);
+        };
         pSched->subscribe(tID, name + "/sensor/temperature/get", fnall);
         pSched->subscribe(tID, name + "/sensor/humidity/get", fnall);
     }
 
-    #ifdef __ESP__
-    void registerHomeAssistant(String homeAssistantFriendlyName, String projectName="", String homeAssistantDiscoveryPrefix="homeassistant") {
-        pHA=new HomeAssistant(name, tID, homeAssistantFriendlyName, projectName, DHT_VERSION, homeAssistantDiscoveryPrefix);
-        pHA->addSensor("temperature", "Temperature", "\\u00B0C","temperature","mdi:thermometer");
-        pHA->addSensor("humidity", "Humidity", "%","humidity","mdi:water-percent");
+#ifdef __ESP__
+    void registerHomeAssistant(
+        String homeAssistantFriendlyName, String projectName = "",
+        String homeAssistantDiscoveryPrefix = "homeassistant") {
+        pHA =
+            new HomeAssistant(name, tID, homeAssistantFriendlyName, projectName,
+                              DHT_VERSION, homeAssistantDiscoveryPrefix);
+        pHA->addSensor("temperature", "Temperature", "\\u00B0C", "temperature",
+                       "mdi:thermometer");
+        pHA->addSensor("humidity", "Humidity", "%", "humidity",
+                       "mdi:water-percent");
         pHA->begin(pSched);
     }
-    #endif
+#endif
 
     void publishTemperature() {
         char buf[32];
@@ -83,7 +89,7 @@ class Dht {
         sprintf(buf, "%5.1f", humiditySensorVal);
         pSched->publish(name + "/sensor/humidity", buf);
     }
-    
+
     void loop() {
         double t = pDht->readTemperature();
         double h = pDht->readHumidity();

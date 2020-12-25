@@ -10,7 +10,7 @@
 namespace ustd {
 class Illuminance {
   public:
-    String TSL_VERSION="0.1.0";
+    String TSL_VERSION = "0.1.0";
     Scheduler *pSched;
     int tID;
     String name;
@@ -18,7 +18,8 @@ class Illuminance {
     double luxvalue = 0.0;
     double unitIlluminanceValue = 0.0;
     double maxLux = 800.0;
-    ustd::sensorprocessor illuminanceSensor = ustd::sensorprocessor(4, 600, 5.0);
+    ustd::sensorprocessor illuminanceSensor =
+        ustd::sensorprocessor(4, 600, 5.0);
 
     Adafruit_TSL2561_Unified *pTsl;
     bool bActive = false;
@@ -26,12 +27,12 @@ class Illuminance {
     tsl2561IntegrationTime_t tSpeed = TSL2561_INTEGRATIONTIME_101MS;
     bool bAutogain = false;
     double amp = 1.0;
-    #ifdef __ESP__
+#ifdef __ESP__
     HomeAssistant *pHA;
-    #endif
+#endif
 
     Illuminance(String _name, uint8_t _port, String _gain = "16x",
-          String _speed = "fast", double _amp = 1.0) {
+                String _speed = "fast", double _amp = 1.0) {
         name = _name;
         port = _port;
         amp = _amp;
@@ -163,25 +164,30 @@ class Illuminance {
             tID = pSched->add(ft, name, 300000);
 
             /* std::function<void(String, String, String)> */
-            auto fnall =
-                [=](String topic, String msg, String originator) {
-                    this->subsMsg(topic, msg, originator);
-                };
+            auto fnall = [=](String topic, String msg, String originator) {
+                this->subsMsg(topic, msg, originator);
+            };
             pSched->subscribe(tID, name + "/sensor/illuminance/#", fnall);
             pSched->subscribe(tID, name + "/sensor/unitilluminance/#", fnall);
             bActive = true;
-       pSched->subscribe(tID, name + "/sensor/unitilluminance/#", fnall);
+            pSched->subscribe(tID, name + "/sensor/unitilluminance/#", fnall);
         }
     }
 
-    #ifdef __ESP__
-    void registerHomeAssistant(String homeAssistantFriendlyName, String projectName="", String homeAssistantDiscoveryPrefix="homeassistant") {
-        pHA=new HomeAssistant(name, tID, homeAssistantFriendlyName, projectName, TSL_VERSION, homeAssistantDiscoveryPrefix);
-        pHA->addSensor("unitilluminance", "Unit-Illuminance", "[0..1]","illuminance","mdi:brightness-6");
-        pHA->addSensor("illuminance", "Illuminance", "lux","illuminance","mdi:brightness-6");
+#ifdef __ESP__
+    void registerHomeAssistant(
+        String homeAssistantFriendlyName, String projectName = "",
+        String homeAssistantDiscoveryPrefix = "homeassistant") {
+        pHA =
+            new HomeAssistant(name, tID, homeAssistantFriendlyName, projectName,
+                              TSL_VERSION, homeAssistantDiscoveryPrefix);
+        pHA->addSensor("unitilluminance", "Unit-Illuminance", "[0..1]",
+                       "illuminance", "mdi:brightness-6");
+        pHA->addSensor("illuminance", "Illuminance", "lux", "illuminance",
+                       "mdi:brightness-6");
         pHA->begin(pSched);
     }
-    #endif
+#endif
 
     void publishIlluminance() {
         char buf[32];

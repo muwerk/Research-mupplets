@@ -126,7 +126,7 @@ class Clock7Seg {
         if (oldIBr != iBr) {
             oldIBr = iBr;
             String sbr = String(iBr);
-            pSched->publish(name + "/light/brightness", sbr);   // XXX: normalize
+            pSched->publish(name + "/light/brightness", sbr);  // XXX: normalize
         }
     }
 
@@ -147,10 +147,9 @@ class Clock7Seg {
         tID = pSched->add(ft, name, 50000);
 
         /* std::function<void(String, String, String)> */
-        auto fnall =
-            [=](String topic, String msg, String originator) {
-                this->subsMsg(topic, msg, originator);
-            };
+        auto fnall = [=](String topic, String msg, String originator) {
+            this->subsMsg(topic, msg, originator);
+        };
         pSched->subscribe(tID, name + "/#", fnall);
         if (bAutobrightness) {
             if (brightnessTopic != "")

@@ -13,7 +13,7 @@
 namespace ustd {
 class PressureBmp280 {
   public:
-    String PRESSURE_VERSION="0.1.0";
+    String PRESSURE_VERSION = "0.1.0";
     Scheduler *pSched;
     int tID;
     String name;
@@ -22,18 +22,20 @@ class PressureBmp280 {
     double temperatureSensorVal;
     double pressureSensorVal;
     bool bActive = false;
-    ustd::sensorprocessor temperatureSensor = ustd::sensorprocessor(4, 600, 0.1);
+    ustd::sensorprocessor temperatureSensor =
+        ustd::sensorprocessor(4, 600, 0.1);
     ustd::sensorprocessor pressureSensor = ustd::sensorprocessor(4, 600, 1.0);
     Adafruit_BMP280 *pPressure;
     Adafruit_Sensor *bmp_temp;
     Adafruit_Sensor *bmp_pressure;
     String errmsg;
-    #ifdef __ESP__
+#ifdef __ESP__
     HomeAssistant *pHA;
-    #endif
+#endif
 
     // i2c_addr: usually 0x76 or 0x77, chip_id should be 0x58 for bmp280.
-    PressureBmp280(String name, uint8_t i2c_addr=0x76, uint8_t chip_id=0x58) : name(name), i2c_addr(i2c_addr), chip_id(chip_id) {
+    PressureBmp280(String name, uint8_t i2c_addr = 0x76, uint8_t chip_id = 0x58)
+        : name(name), i2c_addr(i2c_addr), chip_id(chip_id) {
         pPressure = new Adafruit_BMP280();
     }
 
@@ -54,54 +56,58 @@ class PressureBmp280 {
         if (pPressure->begin(i2c_addr, chip_id)) {
             bActive = true;
             /* Default settings from datasheet. */
-            pPressure->setSampling(Adafruit_BMP280::MODE_NORMAL,     /* Operating Mode. */
-                  Adafruit_BMP280::SAMPLING_X2,     /* Temp. oversampling */
-                  Adafruit_BMP280::SAMPLING_X16,    /* Pressure oversampling */
-                  Adafruit_BMP280::FILTER_X16,      /* Filtering. */
-                  Adafruit_BMP280::STANDBY_MS_500); /* Standby time. */
+            pPressure->setSampling(
+                Adafruit_BMP280::MODE_NORMAL,     /* Operating Mode. */
+                Adafruit_BMP280::SAMPLING_X2,     /* Temp. oversampling */
+                Adafruit_BMP280::SAMPLING_X16,    /* Pressure oversampling */
+                Adafruit_BMP280::FILTER_X16,      /* Filtering. */
+                Adafruit_BMP280::STANDBY_MS_500); /* Standby time. */
             bmp_temp = pPressure->getTemperatureSensor();
             bmp_pressure = pPressure->getPressureSensor();
         } else {
-            errmsg="Could not find a valid BMP280 sensor, check wiring!";
-            #ifdef USE_SERIAL_DBG
+            errmsg = "Could not find a valid BMP280 sensor, check wiring!";
+#ifdef USE_SERIAL_DBG
             Serial.println(errmsg);
-            #endif        
+#endif
         }
 
         auto ft = [=]() { this->loop(); };
         tID = pSched->add(ft, name, 5000000);
 
-        auto fnall =
-            [=](String topic, String msg, String originator) {
-                this->subsMsg(topic, msg, originator);
-            };
+        auto fnall = [=](String topic, String msg, String originator) {
+            this->subsMsg(topic, msg, originator);
+        };
         pSched->subscribe(tID, name + "/sensor/temperature/get", fnall);
         pSched->subscribe(tID, name + "/sensor/pressure/get", fnall);
     }
 
-    #ifdef __ESP__
-    void registerHomeAssistant(String homeAssistantFriendlyName, String projectName="", String homeAssistantDiscoveryPrefix="homeassistant") {
-        pHA=new HomeAssistant(name, tID, homeAssistantFriendlyName, projectName, PRESSURE_VERSION, homeAssistantDiscoveryPrefix);
-        pHA->addSensor("temperature", "Temperature", "\\u00B0C","temperature","mdi:thermometer");
-        pHA->addSensor("pressure", "Pressure", "hPa","pressure","mdi:altimeter");
+#ifdef __ESP__
+    void registerHomeAssistant(
+        String homeAssistantFriendlyName, String projectName = "",
+        String homeAssistantDiscoveryPrefix = "homeassistant") {
+        pHA =
+            new HomeAssistant(name, tID, homeAssistantFriendlyName, projectName,
+                              PRESSURE_VERSION, homeAssistantDiscoveryPrefix);
+        pHA->addSensor("temperature", "Temperature", "\\u00B0C", "temperature",
+                       "mdi:thermometer");
+        pHA->addSensor("pressure", "Pressure", "hPa", "pressure",
+                       "mdi:altimeter");
         pHA->begin(pSched);
     }
-    #endif
+#endif
 
     void publishPressure() {
         char buf[32];
-        pSched->publish(name+"/sensor/result","OK");
+        pSched->publish(name + "/sensor/result", "OK");
         sprintf(buf, "%5.1f", pressureSensorVal);
         pSched->publish(name + "/sensor/pressure", buf);
-
     }
 
     void publishTemperature() {
         char buf[32];
-        pSched->publish(name+"/sensor/result","OK");
+        pSched->publish(name + "/sensor/result", "OK");
         sprintf(buf, "%5.1f", temperatureSensorVal);
         pSched->publish(name + "/sensor/temperature", buf);
-
     }
 
     void loop() {
@@ -113,7 +119,7 @@ class PressureBmp280 {
             double p, t;
             /* Display atmospheric pressue in hPa */
             p = pressure_event.pressure;  // hPa
-            t = temp_event.temperature;  // C
+            t = temp_event.temperature;   // C
 
             if (temperatureSensor.filter(&t)) {
                 temperatureSensorVal = t;
@@ -124,7 +130,7 @@ class PressureBmp280 {
                 publishPressure();
             }
         } else {
-            pSched->publish(name+"/sensor/result", errmsg);
+            pSched->publish(name + "/sensor/result", errmsg);
         }
     }
 

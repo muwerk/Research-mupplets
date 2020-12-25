@@ -16,7 +16,7 @@
 namespace ustd {
 class NeoCandle {
   public:
-    String NEOCANDLE_VERSION="0.1.0";
+    String NEOCANDLE_VERSION = "0.1.0";
     Scheduler *pSched;
     int tID;
     String name;
@@ -37,10 +37,9 @@ class NeoCandle {
     double unitBrightness = 0.0;
     double oldMx = -1.0;
 
-    #ifdef __ESP__
+#ifdef __ESP__
     HomeAssistant *pHA;
-    #endif
-
+#endif
 
     NeoCandle(String name, uint8_t pin = NEOCANDLE_PIN,
               uint16_t numPixels = NEOCANDLE_NUMPIXELS,
@@ -62,43 +61,47 @@ class NeoCandle {
 
     ~NeoCandle() {
     }
-/*
-// XXX: replace parseUnitLevel...
-    int parseValue(const byte *msg, unsigned int len) {
-        char buff[32];
-        int l;
-        int ampx = 0;
-        memset(buff, 0, 32);
-        if (len > 31)
-            l = 31;
-        else
-            l = len;
-        strncpy(buff, (const char *)msg, l);
+    /*
+    // XXX: replace parseUnitLevel...
+        int parseValue(const byte *msg, unsigned int len) {
+            char buff[32];
+            int l;
+            int ampx = 0;
+            memset(buff, 0, 32);
+            if (len > 31)
+                l = 31;
+            else
+                l = len;
+            strncpy(buff, (const char *)msg, l);
 
-        if (l >= 2 && !strncmp((const char *)buff, "on", 2)) {
-            ampx = 100;
-        } else {
-            if (l >= 3 && !strncmp((const char *)buff, "off", 3)) {
-                ampx = 0;
+            if (l >= 2 && !strncmp((const char *)buff, "on", 2)) {
+                ampx = 100;
             } else {
-                if (l >= 4 && !strncmp((const char *)buff, "pct ", 4)) {
-                    ampx = atoi((char *)(buff + 4));
+                if (l >= 3 && !strncmp((const char *)buff, "off", 3)) {
+                    ampx = 0;
                 } else {
-                    ampx = atoi((char *)buff);
+                    if (l >= 4 && !strncmp((const char *)buff, "pct ", 4)) {
+                        ampx = atoi((char *)(buff + 4));
+                    } else {
+                        ampx = atoi((char *)buff);
+                    }
                 }
             }
+            return ampx;
         }
-        return ampx;
-    }
-*/
+    */
 
-    #ifdef __ESP__
-    void registerHomeAssistant(String homeAssistantFriendlyName, String projectName="", String homeAssistantDiscoveryPrefix="homeassistant") {
-        pHA=new HomeAssistant(name, tID, homeAssistantFriendlyName, projectName, NEOCANDLE_VERSION, homeAssistantDiscoveryPrefix);
+#ifdef __ESP__
+    void registerHomeAssistant(
+        String homeAssistantFriendlyName, String projectName = "",
+        String homeAssistantDiscoveryPrefix = "homeassistant") {
+        pHA =
+            new HomeAssistant(name, tID, homeAssistantFriendlyName, projectName,
+                              NEOCANDLE_VERSION, homeAssistantDiscoveryPrefix);
         pHA->addLight();
         pHA->begin(pSched);
     }
-    #endif
+#endif
 
     double modulator() {
         double m1 = 1.0;
@@ -146,10 +149,9 @@ class NeoCandle {
         tID = pSched->add(ft, name, 100000);
 
         /* std::function<void(String, String, String)> */
-        auto fnall =
-            [=](String topic, String msg, String originator) {
-                this->subsMsg(topic, msg, originator);
-            };
+        auto fnall = [=](String topic, String msg, String originator) {
+            this->subsMsg(topic, msg, originator);
+        };
         pSched->subscribe(tID, name + "/light/brightness/set", fnall);
         pSched->subscribe(tID, "/light/windlevel/set", fnall);
         pSched->subscribe(tID, name + "/light/windlevel/set", fnall);
@@ -267,8 +269,9 @@ class NeoCandle {
             Serial.println("] ");
 #endif
             int amp_old = amp;
-            amp = parseUnitLevel(msg)*100;
-            //    parseValue((const byte *)msg.c_str(), strlen(msg.c_str()) + 1);
+            amp = parseUnitLevel(msg) * 100;
+            //    parseValue((const byte *)msg.c_str(), strlen(msg.c_str()) +
+            //    1);
             if (amp < 0)
                 amp = 0;
             if (amp > 100)
@@ -280,15 +283,17 @@ class NeoCandle {
                 manualSet = time(nullptr);
             }
         }
-        if (topic == "windlevel/set" || topic == name + "/light/windlevel/set") {
+        if (topic == "windlevel/set" ||
+            topic == name + "/light/windlevel/set") {
 #ifdef USE_SERIAL_DBG
             Serial.print("Message arrived [");
             Serial.print(topic.c_str());
             Serial.println("] ");
 #endif
             int wind_old = wind;
-            wind = parseUnitLevel(msg)*100;
-            //    parseValue((const byte *)msg.c_str(), strlen(msg.c_str()) + 1);
+            wind = parseUnitLevel(msg) * 100;
+            //    parseValue((const byte *)msg.c_str(), strlen(msg.c_str()) +
+            //    1);
             if (wind < 0)
                 wind = 0;
             if (wind > 100)

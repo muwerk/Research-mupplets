@@ -13,21 +13,20 @@
 
 #include "home_assistant.h"
 
-
 namespace ustd {
 class AirQualityBme280 {
   public:
-    String AIRQUALITY_VERSION="0.1.0";
+    String AIRQUALITY_VERSION = "0.1.0";
     Scheduler *pSched;
     int tID;
     String name;
     uint8_t i2c_addr;
-    //uint8_t i2caddr;
-    double temperatureVal=0.0, humidityVal=0.0, pressureVal=0.0;
-    time_t startTime=0;
-    bool bStartup=false;
+    // uint8_t i2caddr;
+    double temperatureVal = 0.0, humidityVal = 0.0, pressureVal = 0.0;
+    time_t startTime = 0;
+    bool bStartup = false;
     bool bActive = false;
-    String errmsg="";
+    String errmsg = "";
     ustd::sensorprocessor temperature = ustd::sensorprocessor(4, 30, 0.1);
     ustd::sensorprocessor humidity = ustd::sensorprocessor(4, 30, 0.1);
     ustd::sensorprocessor pressure = ustd::sensorprocessor(4, 30, 0.01);
@@ -36,13 +35,16 @@ class AirQualityBme280 {
     Adafruit_Sensor *bme_pressure;
     Adafruit_Sensor *bme_humidity;
 
-    #ifdef __ESP__
+#ifdef __ESP__
     HomeAssistant *pHA;
-    #endif
+#endif
 
-    AirQualityBme280(String name, uint i2c_addr=BME280_ADDRESS)  // i2c_addr: usually 0x77 or 0x76
+    AirQualityBme280(
+        String name,
+        uint i2c_addr = BME280_ADDRESS)  // i2c_addr: usually 0x77 or 0x76
         : name(name), i2c_addr(i2c_addr) {
-        pAirQuality = new Adafruit_BME280(); // seems to be on i2c port 0x77 always
+        pAirQuality =
+            new Adafruit_BME280();  // seems to be on i2c port 0x77 always
     }
 
     ~AirQualityBme280() {
@@ -64,44 +66,50 @@ class AirQualityBme280 {
         pSched = _pSched;
 
         if (!pAirQuality->begin(i2c_addr)) {
-            errmsg="Could not find a valid BME280 sensor, check wiring!";
-            #ifdef USE_SERIAL_DBG
+            errmsg = "Could not find a valid BME280 sensor, check wiring!";
+#ifdef USE_SERIAL_DBG
             Serial.println(errmsg);
-            #endif
+#endif
         } else {
             bme_temp = pAirQuality->getTemperatureSensor();
             bme_pressure = pAirQuality->getPressureSensor();
             bme_humidity = pAirQuality->getHumiditySensor();
 
-            bActive=true;
-            pSched->publish(name+"/sensor/result","OK");
+            bActive = true;
+            pSched->publish(name + "/sensor/result", "OK");
         }
-        
-        auto ft = [=]() { this->loop(); };
-        tID = pSched->add(ft, name, 2000000); // every 2sec
 
-        auto fnall =
-            [=](String topic, String msg, String originator) {
-                this->subsMsg(topic, msg, originator);
-            };
+        auto ft = [=]() { this->loop(); };
+        tID = pSched->add(ft, name, 2000000);  // every 2sec
+
+        auto fnall = [=](String topic, String msg, String originator) {
+            this->subsMsg(topic, msg, originator);
+        };
         pSched->subscribe(tID, name + "/sensor/#", fnall);
     }
 
-    #ifdef __ESP__
-    void registerHomeAssistant(String homeAssistantFriendlyName, String projectName="", String homeAssistantDiscoveryPrefix="homeassistant") {
-        pHA=new HomeAssistant(name, tID, homeAssistantFriendlyName, projectName, AIRQUALITY_VERSION, homeAssistantDiscoveryPrefix);
-        pHA->addSensor("temperature", "Temperature", "\\u00B0C","temperature","mdi:thermometer");
-        pHA->addSensor("humidity", "Humidity", "%","humidity","mdi:water-percent");
-        pHA->addSensor("pressure", "Pressure", "hPa","pressure","mdi:altimeter");
+#ifdef __ESP__
+    void registerHomeAssistant(
+        String homeAssistantFriendlyName, String projectName = "",
+        String homeAssistantDiscoveryPrefix = "homeassistant") {
+        pHA =
+            new HomeAssistant(name, tID, homeAssistantFriendlyName, projectName,
+                              AIRQUALITY_VERSION, homeAssistantDiscoveryPrefix);
+        pHA->addSensor("temperature", "Temperature", "\\u00B0C", "temperature",
+                       "mdi:thermometer");
+        pHA->addSensor("humidity", "Humidity", "%", "humidity",
+                       "mdi:water-percent");
+        pHA->addSensor("pressure", "Pressure", "hPa", "pressure",
+                       "mdi:altimeter");
         pHA->begin(pSched);
     }
-    #endif
+#endif
 
     void publishTemperature() {
         if (bActive && !bStartup) {
             char buf[32];
             sprintf(buf, "%5.1f", temperatureVal);
-            pSched->publish(name+"/sensor/result","OK");
+            pSched->publish(name + "/sensor/result", "OK");
             pSched->publish(name + "/sensor/temperature", buf);
         }
     }
@@ -110,7 +118,7 @@ class AirQualityBme280 {
         if (bActive && !bStartup) {
             char buf[32];
             sprintf(buf, "%5.1f", humidityVal);
-            pSched->publish(name+"/sensor/result","OK");
+            pSched->publish(name + "/sensor/result", "OK");
             pSched->publish(name + "/sensor/humidity", buf);
         }
     }
@@ -119,18 +127,19 @@ class AirQualityBme280 {
         if (bActive && !bStartup) {
             char buf[32];
             sprintf(buf, "%5.1f", pressureVal);
-            pSched->publish(name+"/sensor/result","OK");
+            pSched->publish(name + "/sensor/result", "OK");
             pSched->publish(name + "/sensor/pressure", buf);
         }
     }
 
     void loop() {
-        #ifdef USE_SERIAL_DBG
+#ifdef USE_SERIAL_DBG
         Serial.println("BME280 enter loop");
-        #endif
-        if (startTime<100000) startTime=time(NULL); // NTP data available.
+#endif
+        if (startTime < 100000)
+            startTime = time(NULL);  // NTP data available.
         if (bActive) {
-            double t,h,p;
+            double t, h, p;
             sensors_event_t temp_event, pressure_event, humidity_event;
             bme_temp->getEvent(&temp_event);
             bme_pressure->getEvent(&pressure_event);
@@ -140,8 +149,8 @@ class AirQualityBme280 {
             Serial.print(humidity_event.relative_humidity);
             Serial.print(pressure_event.pressure);
 
-            t=temp_event.temperature;
-            h=humidity_event.relative_humidity;
+            t = temp_event.temperature;
+            h = humidity_event.relative_humidity;
             p = pressure_event.pressure;
             if (temperature.filter(&t)) {
                 temperatureVal = t;
@@ -155,23 +164,23 @@ class AirQualityBme280 {
                 pressureVal = p;
                 publishPressure();
             }
-            #ifdef USE_SERIAL_DBG
+#ifdef USE_SERIAL_DBG
             Serial.println(t);
             Serial.println(h);
             Serial.println(p);
-            #endif
+#endif
         } else {
 #ifdef USE_SERIAL_DBG
             Serial.println("AirQualityBme280 sensor not active.");
 #endif
-            if (errmsg!="") {
-                pSched->publish(name+"/sensor/result",errmsg);
-                errmsg="";
+            if (errmsg != "") {
+                pSched->publish(name + "/sensor/result", errmsg);
+                errmsg = "";
             }
         }
-        #ifdef USE_SERIAL_DBG
+#ifdef USE_SERIAL_DBG
         Serial.println("BME280 exit loop.");
-        #endif
+#endif
     }
 
     void subsMsg(String topic, String msg, String originator) {

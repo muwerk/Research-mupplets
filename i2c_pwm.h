@@ -42,9 +42,8 @@ class I2CPWM {
         pPwm->setPWMFreq(frequency);
     }
 
-    void
-    setServoMinMax(int minP = 150,
-                   int maxP = 600) {  // pulses out of 4096 at 60hz (frequency)
+    void setServoMinMax(int minP = 150,
+                        int maxP = 600) {  // pulses out of 4096 at 60hz (frequency)
         if (minP < 0)
             minP = 0;
         if (maxP > 4096)
@@ -75,7 +74,7 @@ class I2CPWM {
 
     void setState(uint8_t port, bool state) {
         if (mode != Mode::SERVO) {
-            if (state) {  // XXX: negative logic, save state?!
+            if (state) {                      // XXX: negative logic, save state?!
                 pPwm->setPWM(port, 4096, 0);  // turns pin fully on
             } else {
                 pPwm->setPWM(port, 0, 4096);  // turns pin fully off
@@ -89,8 +88,7 @@ class I2CPWM {
             int l2 = 4096 - l1;
             pPwm->setPWM(port, l1, l2);
         } else {  // Servo
-            int pulseLen =
-                (int)((double)(servoMax - servoMin) * level) + servoMin;
+            int pulseLen = (int)((double)(servoMax - servoMin) * level) + servoMin;
             pPwm->setPWM(port, 0, pulseLen);
         }
     }

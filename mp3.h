@@ -100,8 +100,7 @@ class Mp3PlayerCatalex : Mp3PlayerProtocol {  // Untested!
         _selectSD();
         return true;
     }
-    virtual bool playFolderTrack(uint8_t folder = 0,
-                                 uint8_t track = 0) override {
+    virtual bool playFolderTrack(uint8_t folder = 0, uint8_t track = 0) override {
         _sendMP3(MP3_CMD::PLAYFOLDERTRACK, folder, track);
         return true;
     }
@@ -151,11 +150,7 @@ class Mp3PlayerOpenSmart : Mp3PlayerProtocol {
         PLAYFOLDERTRACK = 0x42,
         INJECTFOLDERTRACK = 0x44
     };
-    enum MP3_SUBCMD {
-        REPEAT_LOOP = 0x00,
-        REPEAT_SINGLE = 0x01,
-        SELECT_SD_TF = 0x01
-    };
+    enum MP3_SUBCMD { REPEAT_LOOP = 0x00, REPEAT_SINGLE = 0x01, SELECT_SD_TF = 0x01 };
 
   private:
     const uint8_t recBufLen = 32;
@@ -224,8 +219,7 @@ class Mp3PlayerOpenSmart : Mp3PlayerProtocol {
         return true;
     }
 
-    virtual bool playFolderTrack(uint8_t folder = 0,
-                                 uint8_t track = 0) override {
+    virtual bool playFolderTrack(uint8_t folder = 0, uint8_t track = 0) override {
         const uint8_t len = 0x03;
         uint8_t cmd[len] = {MP3_CMD::PLAYFOLDERTRACK, folder, track};
         _sendMP3(cmd, len);
@@ -515,8 +509,7 @@ class Mp3Player {
     bool interleaveFolderTrack(uint8_t folder, uint8_t track) {
         return mp3prot->interleaveFolderTrack(folder, track);
     }
-    bool setRepeatMode(Mp3PlayerProtocol::RepeatMode mode =
-                           Mp3PlayerProtocol::RepeatMode::once) {
+    bool setRepeatMode(Mp3PlayerProtocol::RepeatMode mode = Mp3PlayerProtocol::RepeatMode::once) {
         return mp3prot->setRepeatMode(mode);
     }
     bool pause() {

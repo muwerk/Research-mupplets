@@ -18,11 +18,9 @@ namespace ustd {
 
 #define USTD_MAX_IRQS (10)
 
-volatile unsigned long irqcounter[USTD_MAX_IRQS] = {0, 0, 0, 0, 0,
-                                                    0, 0, 0, 0, 0};
+volatile unsigned long irqcounter[USTD_MAX_IRQS] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 volatile unsigned long lastIrq[USTD_MAX_IRQS] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
-volatile unsigned long debounceMs[USTD_MAX_IRQS] = {0, 0, 0, 0, 0,
-                                                    0, 0, 0, 0, 0};
+volatile unsigned long debounceMs[USTD_MAX_IRQS] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 
 void G_INT_ATTR ustd_irq_master(uint8_t irqno) {
     unsigned long curr = millis();
@@ -69,9 +67,8 @@ void G_INT_ATTR ustd_irq9() {
     ustd_irq_master(9);
 }
 
-void (*ustd_irq_table[USTD_MAX_IRQS])() = {
-    ustd_irq0, ustd_irq1, ustd_irq2, ustd_irq3, ustd_irq4,
-    ustd_irq5, ustd_irq6, ustd_irq7, ustd_irq8, ustd_irq9};
+void (*ustd_irq_table[USTD_MAX_IRQS])() = {ustd_irq0, ustd_irq1, ustd_irq2, ustd_irq3, ustd_irq4,
+                                           ustd_irq5, ustd_irq6, ustd_irq7, ustd_irq8, ustd_irq9};
 
 unsigned long getResetIrqCount(uint8_t irqno) {
     unsigned long count = (unsigned long)-1;
@@ -107,8 +104,7 @@ class Switch {
     bool overriddenPhysicalState = false;
     bool overridePhysicalActive = false;
 
-    bool flipflop =
-        true;  // This starts with 'off', since state is initially changed once.
+    bool flipflop = true;  // This starts with 'off', since state is initially changed once.
     unsigned long activeTimer = 0;
     unsigned long timerDuration = 1000;  // ms
     unsigned long startEvent = 0;        // ms
@@ -117,12 +113,10 @@ class Switch {
     HomeAssistant *pHA;
 #endif
 
-    Switch(String name, uint8_t port, Mode mode = Mode::Default,
-           bool activeLogic = false, String customTopic = "",
-           int8_t interruptIndex = -1, unsigned long debounceTimeMs = 0)
-        : name(name), port(port), mode(mode), activeLogic(activeLogic),
-          customTopic(customTopic), interruptIndex(interruptIndex),
-          debounceTimeMs(debounceTimeMs) {
+    Switch(String name, uint8_t port, Mode mode = Mode::Default, bool activeLogic = false,
+           String customTopic = "", int8_t interruptIndex = -1, unsigned long debounceTimeMs = 0)
+        : name(name), port(port), mode(mode), activeLogic(activeLogic), customTopic(customTopic),
+          interruptIndex(interruptIndex), debounceTimeMs(debounceTimeMs) {
         setMode(mode);
     }
 
@@ -202,13 +196,11 @@ class Switch {
     }
 
 #ifdef __ESP__
-    void registerHomeAssistant(
-        String homeAssistantFriendlyName, String projectName = "",
-        String customIcon = "mdi:light-switch",
-        String homeAssistantDiscoveryPrefix = "homeassistant") {
-        pHA =
-            new HomeAssistant(name, tID, homeAssistantFriendlyName, projectName,
-                              SWITCH_VERSION, homeAssistantDiscoveryPrefix);
+    void registerHomeAssistant(String homeAssistantFriendlyName, String projectName = "",
+                               String customIcon = "mdi:light-switch",
+                               String homeAssistantDiscoveryPrefix = "homeassistant") {
+        pHA = new HomeAssistant(name, tID, homeAssistantFriendlyName, projectName, SWITCH_VERSION,
+                                homeAssistantDiscoveryPrefix);
         pHA->addSwitch(customIcon);
         pHA->begin(pSched);
     }
@@ -256,8 +248,7 @@ class Switch {
                     } else if (dt < durations[1]) {
                         pSched->publish(name + "/switch/longpress", "trigger");
                     } else {
-                        pSched->publish(name + "/switch/verylongpress",
-                                        "trigger");
+                        pSched->publish(name + "/switch/verylongpress", "trigger");
                     }
                 }
             }
@@ -313,10 +304,8 @@ class Switch {
             }
             if (overridePhysicalActive)
                 return;
-            if (newState != physicalState || mode == Mode::Falling ||
-                mode == Mode::Rising) {
-                if (timeDiff(lastChangeMs, millis()) > debounceTimeMs ||
-                    useInterrupt) {
+            if (newState != physicalState || mode == Mode::Falling || mode == Mode::Rising) {
+                if (timeDiff(lastChangeMs, millis()) > debounceTimeMs || useInterrupt) {
                     lastChangeMs = millis();
                     physicalState = newState;
                     decodeLogicalState(physicalState);

@@ -38,8 +38,7 @@ class AirQuality {
     HomeAssistant *pHA;
 #endif
 
-    AirQuality(String name, uint8_t i2caddr = SPARKFUN_CCS811_ADDR,
-               String calibrationTopic = "")
+    AirQuality(String name, uint8_t i2caddr = SPARKFUN_CCS811_ADDR, String calibrationTopic = "")
         : name(name), i2caddr(i2caddr), calibrationTopic(calibrationTopic) {
         pAirQuality = new CCS811(i2caddr);
     }
@@ -66,8 +65,7 @@ class AirQuality {
             Serial.print(errmsg);
             break;
         case CCS811Core::CCS811_Status_e::CCS811_Stat_I2C_ERROR:
-            errmsg =
-                "I2C_ERROR (did you put WAK low? Required!) See code for more.";
+            errmsg = "I2C_ERROR (did you put WAK low? Required!) See code for more.";
             Serial.println(errmsg);
             Serial.println("You need a patch: "
                            "https://github.com/sparkfun/"
@@ -117,12 +115,10 @@ class AirQuality {
     }
 
 #ifdef __ESP__
-    void registerHomeAssistant(
-        String homeAssistantFriendlyName, String projectName = "",
-        String homeAssistantDiscoveryPrefix = "homeassistant") {
-        pHA =
-            new HomeAssistant(name, tID, homeAssistantFriendlyName, projectName,
-                              AIRQUALITY_VERSION, homeAssistantDiscoveryPrefix);
+    void registerHomeAssistant(String homeAssistantFriendlyName, String projectName = "",
+                               String homeAssistantDiscoveryPrefix = "homeassistant") {
+        pHA = new HomeAssistant(name, tID, homeAssistantFriendlyName, projectName,
+                                AIRQUALITY_VERSION, homeAssistantDiscoveryPrefix);
         pHA->addSensor("co2", "CO2", "ppm", "None", "mdi:air-filter");
         pHA->addSensor("voc", "VOC", "ppb", "None", "mdi:air-filter");
         pHA->begin(pSched);
@@ -221,11 +217,10 @@ class AirQuality {
             if (startTime < 100000)
                 startTime = time(NULL);  // NTP is now available.
             double uptimeH = (time(NULL) - startTime) / 3600.0;
-            sprintf(
-                msg,
-                "{\"humidity\":%5.1f, \"temperature\":%5.1f, \"baseline\": "
-                "%5d, \"co2\": %5.1f, \"voc\": %5.1f, \"upTimeHours\": %7.1f}",
-                relHumid, temper, baseline, co2Val, vocVal, uptimeH);
+            sprintf(msg,
+                    "{\"humidity\":%5.1f, \"temperature\":%5.1f, \"baseline\": "
+                    "%5d, \"co2\": %5.1f, \"voc\": %5.1f, \"upTimeHours\": %7.1f}",
+                    relHumid, temper, baseline, co2Val, vocVal, uptimeH);
             pSched->publish(name + "/sensor/calibration", msg);
         }
     }

@@ -37,24 +37,21 @@ class AirQualityBsecBme680 {
     int tID;
     String name;
     uint8_t i2caddr;
-    double rawTemperature = 0.0, temperature = 0.0, pressure = 0.0,
-           rawHumidity = 0.0, humidity = 0.0, gasResistance = 0.0, iaq = 0.0,
-           iaqAccuracy = 0.0, staticIaq = 0.0, co2 = 0.0, voc = 0.0;
+    double rawTemperature = 0.0, temperature = 0.0, pressure = 0.0, rawHumidity = 0.0,
+           humidity = 0.0, gasResistance = 0.0, iaq = 0.0, iaqAccuracy = 0.0, staticIaq = 0.0,
+           co2 = 0.0, voc = 0.0;
     time_t startTime = 0;
     bool bStartup = false;
     bool bActive = false;
     String errmsg = "";
-    ustd::sensorprocessor rawTemperatureSensor =
-        ustd::sensorprocessor(4, 30, 0.1);
+    ustd::sensorprocessor rawTemperatureSensor = ustd::sensorprocessor(4, 30, 0.1);
     ustd::sensorprocessor temperatureSensor = ustd::sensorprocessor(4, 30, 0.1);
     ustd::sensorprocessor rawhumiditySensor = ustd::sensorprocessor(4, 30, 0.1);
     ustd::sensorprocessor humiditySensor = ustd::sensorprocessor(4, 30, 0.1);
     ustd::sensorprocessor pressureSensor = ustd::sensorprocessor(4, 30, 0.01);
-    ustd::sensorprocessor gasResistanceSensor =
-        ustd::sensorprocessor(4, 30, 0.01);
+    ustd::sensorprocessor gasResistanceSensor = ustd::sensorprocessor(4, 30, 0.01);
     ustd::sensorprocessor iaqSensor = ustd::sensorprocessor(4, 30, 0.01);
-    ustd::sensorprocessor iaqAccuracySensor =
-        ustd::sensorprocessor(4, 30, 0.01);
+    ustd::sensorprocessor iaqAccuracySensor = ustd::sensorprocessor(4, 30, 0.01);
     ustd::sensorprocessor staticIaqSensor = ustd::sensorprocessor(4, 30, 0.01);
     ustd::sensorprocessor co2Sensor = ustd::sensorprocessor(4, 30, 0.01);
     ustd::sensorprocessor vocSensor = ustd::sensorprocessor(4, 30, 0.01);
@@ -64,8 +61,7 @@ class AirQualityBsecBme680 {
     HomeAssistant *pHA;
 #endif
 
-    AirQualityBsecBme680(String name,
-                         uint8_t i2cAddress = BME680_I2C_ADDR_PRIMARY)
+    AirQualityBsecBme680(String name, uint8_t i2cAddress = BME680_I2C_ADDR_PRIMARY)
         : name(name), i2caddr(i2cAddress) {
         pAirQuality = new Bsec();
     }
@@ -135,15 +131,13 @@ class AirQualityBsecBme680 {
 
         if (pAirQuality->bme680Status != BME680_OK) {
             if (pAirQuality->bme680Status < BME680_OK) {
-                errmsg =
-                    "BME680 error code: " + String(pAirQuality->bme680Status);
+                errmsg = "BME680 error code: " + String(pAirQuality->bme680Status);
 #ifdef USE_SERIAL_DBG
                 Serial.println(errmsg);
 #endif
                 return false;
             } else {
-                errmsg =
-                    "BME680 warning code: " + String(pAirQuality->bme680Status);
+                errmsg = "BME680 warning code: " + String(pAirQuality->bme680Status);
 #ifdef USE_SERIAL_DBG
                 Serial.println(errmsg);
 #endif
@@ -169,8 +163,7 @@ class AirQualityBsecBme680 {
 
         pAirQuality->begin(i2caddr, wire);
 #ifdef USE_SERIAL_DBG
-        Serial.println("BSEC library version " +
-                       String(pAirQuality->version.major) + "." +
+        Serial.println("BSEC library version " + String(pAirQuality->version.major) + "." +
                        String(pAirQuality->version.minor) + "." +
                        String(pAirQuality->version.major_bugfix) + "." +
                        String(pAirQuality->version.minor_bugfix));
@@ -205,18 +198,13 @@ class AirQualityBsecBme680 {
     }
 
 #ifdef __ESP__
-    void registerHomeAssistant(
-        String homeAssistantFriendlyName, String projectName = "",
-        String homeAssistantDiscoveryPrefix = "homeassistant") {
-        pHA =
-            new HomeAssistant(name, tID, homeAssistantFriendlyName, projectName,
-                              AIRQUALITY_VERSION, homeAssistantDiscoveryPrefix);
-        pHA->addSensor("temperature", "Temperature", "\\u00B0C", "temperature",
-                       "mdi:thermometer");
-        pHA->addSensor("humidity", "Humidity", "%", "humidity",
-                       "mdi:water-percent");
-        pHA->addSensor("pressure", "Pressure", "hPa", "pressure",
-                       "mdi:altimeter");
+    void registerHomeAssistant(String homeAssistantFriendlyName, String projectName = "",
+                               String homeAssistantDiscoveryPrefix = "homeassistant") {
+        pHA = new HomeAssistant(name, tID, homeAssistantFriendlyName, projectName,
+                                AIRQUALITY_VERSION, homeAssistantDiscoveryPrefix);
+        pHA->addSensor("temperature", "Temperature", "\\u00B0C", "temperature", "mdi:thermometer");
+        pHA->addSensor("humidity", "Humidity", "%", "humidity", "mdi:water-percent");
+        pHA->addSensor("pressure", "Pressure", "hPa", "pressure", "mdi:altimeter");
         pHA->addSensor("co2", "CO2", "ppm", "None", "mdi:air-filter");
         pHA->addSensor("voc", "VOC", "ppb", "None", "mdi:air-filter");
         pHA->addSensor("iaq", "iaq", "?%", "None", "mdi:air-filter");

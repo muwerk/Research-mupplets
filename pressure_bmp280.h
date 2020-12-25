@@ -22,8 +22,7 @@ class PressureBmp280 {
     double temperatureSensorVal;
     double pressureSensorVal;
     bool bActive = false;
-    ustd::sensorprocessor temperatureSensor =
-        ustd::sensorprocessor(4, 600, 0.1);
+    ustd::sensorprocessor temperatureSensor = ustd::sensorprocessor(4, 600, 0.1);
     ustd::sensorprocessor pressureSensor = ustd::sensorprocessor(4, 600, 1.0);
     Adafruit_BMP280 *pPressure;
     Adafruit_Sensor *bmp_temp;
@@ -56,12 +55,11 @@ class PressureBmp280 {
         if (pPressure->begin(i2c_addr, chip_id)) {
             bActive = true;
             /* Default settings from datasheet. */
-            pPressure->setSampling(
-                Adafruit_BMP280::MODE_NORMAL,     /* Operating Mode. */
-                Adafruit_BMP280::SAMPLING_X2,     /* Temp. oversampling */
-                Adafruit_BMP280::SAMPLING_X16,    /* Pressure oversampling */
-                Adafruit_BMP280::FILTER_X16,      /* Filtering. */
-                Adafruit_BMP280::STANDBY_MS_500); /* Standby time. */
+            pPressure->setSampling(Adafruit_BMP280::MODE_NORMAL,     /* Operating Mode. */
+                                   Adafruit_BMP280::SAMPLING_X2,     /* Temp. oversampling */
+                                   Adafruit_BMP280::SAMPLING_X16,    /* Pressure oversampling */
+                                   Adafruit_BMP280::FILTER_X16,      /* Filtering. */
+                                   Adafruit_BMP280::STANDBY_MS_500); /* Standby time. */
             bmp_temp = pPressure->getTemperatureSensor();
             bmp_pressure = pPressure->getPressureSensor();
         } else {
@@ -82,16 +80,12 @@ class PressureBmp280 {
     }
 
 #ifdef __ESP__
-    void registerHomeAssistant(
-        String homeAssistantFriendlyName, String projectName = "",
-        String homeAssistantDiscoveryPrefix = "homeassistant") {
-        pHA =
-            new HomeAssistant(name, tID, homeAssistantFriendlyName, projectName,
-                              PRESSURE_VERSION, homeAssistantDiscoveryPrefix);
-        pHA->addSensor("temperature", "Temperature", "\\u00B0C", "temperature",
-                       "mdi:thermometer");
-        pHA->addSensor("pressure", "Pressure", "hPa", "pressure",
-                       "mdi:altimeter");
+    void registerHomeAssistant(String homeAssistantFriendlyName, String projectName = "",
+                               String homeAssistantDiscoveryPrefix = "homeassistant") {
+        pHA = new HomeAssistant(name, tID, homeAssistantFriendlyName, projectName, PRESSURE_VERSION,
+                                homeAssistantDiscoveryPrefix);
+        pHA->addSensor("temperature", "Temperature", "\\u00B0C", "temperature", "mdi:thermometer");
+        pHA->addSensor("pressure", "Pressure", "hPa", "pressure", "mdi:altimeter");
         pHA->begin(pSched);
     }
 #endif

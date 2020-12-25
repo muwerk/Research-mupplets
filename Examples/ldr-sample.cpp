@@ -8,7 +8,7 @@
 void appLoop();
 
 ustd::Scheduler sched;
-ustd::Ldr ldr("myLDR",A0);
+ustd::Ldr ldr("myLDR", A0);
 
 void task0(String topic, String msg, String originator) {
     if (topic == "myLDR/sensor/illuminance") {
@@ -18,7 +18,6 @@ void task0(String topic, String msg, String originator) {
 #endif
     }
 }
-
 
 void setup() {
 #ifdef USE_SERIAL_DBG

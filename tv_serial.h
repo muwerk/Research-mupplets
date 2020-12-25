@@ -328,8 +328,7 @@ class TVSerialLG : TvSerialProtocol {
             // pSched->publish(topic+"/debug",dbg);
             switch (recState) {
             case recStateType::none:
-                if (b == 'a' ||
-                    b == 'b') {  // Answer to state ('a') or input ('b')
+                if (b == 'a' || b == 'b') {  // Answer to state ('a') or input ('b')
                     recBufPtr = 0;
                     recBuf[recBufPtr] = b;
                     ++recBufPtr;
@@ -418,12 +417,10 @@ class TvSerial {
 // This registers the TV as switch in home assistant and automatically
 // syncs information.
 #ifdef __ESP__
-    void registerHomeAssistant(
-        String homeAssistantFriendlyName, String projectName = "",
-        String homeAssistantDiscoveryPrefix = "homeassistant") {
-        pHA =
-            new HomeAssistant(name, tID, homeAssistantFriendlyName, projectName,
-                              TVSERIAL_VERSION, homeAssistantDiscoveryPrefix);
+    void registerHomeAssistant(String homeAssistantFriendlyName, String projectName = "",
+                               String homeAssistantDiscoveryPrefix = "homeassistant") {
+        pHA = new HomeAssistant(name, tID, homeAssistantFriendlyName, projectName, TVSERIAL_VERSION,
+                                homeAssistantDiscoveryPrefix);
         pHA->addSwitch("mdi:television-classic");
         pHA->begin(pSched);
     }
@@ -461,9 +458,8 @@ class TvSerial {
     void loop() {
         if (pollActive) {
             ++checker;
-            if (checker >
-                20) {  // 20*50ms = 1sec, request TV status to make sure it's
-                       // in sync, if user manually switch TV.
+            if (checker > 20) {  // 20*50ms = 1sec, request TV status to make sure it's
+                                 // in sync, if user manually switch TV.
                 checker = 0;
                 tvProt->asyncCheckState();
                 tvProt->asyncCheckInput();

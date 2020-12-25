@@ -20,8 +20,7 @@ class Pressure {
     double temperatureSensorVal;
     double pressureSensorVal;
     bool bActive = false;
-    ustd::sensorprocessor temperatureSensor =
-        ustd::sensorprocessor(4, 600, 0.1);
+    ustd::sensorprocessor temperatureSensor = ustd::sensorprocessor(4, 600, 0.1);
     ustd::sensorprocessor pressureSensor = ustd::sensorprocessor(4, 600, 1.0);
     Adafruit_BMP085_Unified *pPressure;
 #ifdef __ESP__
@@ -65,16 +64,12 @@ class Pressure {
     }
 
 #ifdef __ESP__
-    void registerHomeAssistant(
-        String homeAssistantFriendlyName, String projectName = "",
-        String homeAssistantDiscoveryPrefix = "homeassistant") {
-        pHA =
-            new HomeAssistant(name, tID, homeAssistantFriendlyName, projectName,
-                              PRESSURE_VERSION, homeAssistantDiscoveryPrefix);
-        pHA->addSensor("temperature", "Temperature", "\\u00B0C", "temperature",
-                       "mdi:thermometer");
-        pHA->addSensor("pressure", "Pressure", "hPa", "pressure",
-                       "mdi:altimeter");
+    void registerHomeAssistant(String homeAssistantFriendlyName, String projectName = "",
+                               String homeAssistantDiscoveryPrefix = "homeassistant") {
+        pHA = new HomeAssistant(name, tID, homeAssistantFriendlyName, projectName, PRESSURE_VERSION,
+                                homeAssistantDiscoveryPrefix);
+        pHA->addSensor("temperature", "Temperature", "\\u00B0C", "temperature", "mdi:thermometer");
+        pHA->addSensor("pressure", "Pressure", "hPa", "pressure", "mdi:altimeter");
         pHA->begin(pSched);
     }
 #endif
@@ -115,8 +110,7 @@ class Pressure {
                 }
             }
         } else {
-            pSched->publish(name + "/sensor/result",
-                            "hardware not initialized");
+            pSched->publish(name + "/sensor/result", "hardware not initialized");
         }
     }
 

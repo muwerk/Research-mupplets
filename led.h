@@ -34,8 +34,7 @@ class Led {
     HomeAssistant *pHA;
 #endif
 
-    Led(String name, uint8_t port, bool activeLogic = false,
-        uint8_t channel = 0)
+    Led(String name, uint8_t port, bool activeLogic = false, uint8_t channel = 0)
         : name(name), port(port), activeLogic(activeLogic), channel(channel) {
     }
 
@@ -64,25 +63,23 @@ class Led {
         setOff();
         mode = Mode::Passive;
         interval = 1000;  // ms
-        // give a c++11 lambda as callback scheduler task registration of
-        // this.loop():
+                          // give a c++11 lambda as callback scheduler task registration of
+                          // this.loop():
         /* std::function<void()> */ auto ft = [=]() { this->loop(); };
         tID = pSched->add(ft, name, 50000);
 
-        /* std::function<void(String, String, String)> */ auto fnall =
-            [=](String topic, String msg, String originator) {
-                this->subsMsg(topic, msg, originator);
-            };
+        /* std::function<void(String, String, String)> */ auto fnall = [=](String topic, String msg,
+                                                                           String originator) {
+            this->subsMsg(topic, msg, originator);
+        };
         pSched->subscribe(tID, name + "/light/#", fnall);
     }
 
 #ifdef __ESP__
-    void registerHomeAssistant(
-        String homeAssistantFriendlyName, String projectName = "",
-        String homeAssistantDiscoveryPrefix = "homeassistant") {
-        pHA =
-            new HomeAssistant(name, tID, homeAssistantFriendlyName, projectName,
-                              LED_VERSION, homeAssistantDiscoveryPrefix);
+    void registerHomeAssistant(String homeAssistantFriendlyName, String projectName = "",
+                               String homeAssistantDiscoveryPrefix = "homeassistant") {
+        pHA = new HomeAssistant(name, tID, homeAssistantFriendlyName, projectName, LED_VERSION,
+                                homeAssistantDiscoveryPrefix);
         pHA->addLight();
         pHA->begin(pSched);
     }
@@ -144,8 +141,7 @@ class Led {
         }
     }
 
-    void setMode(Mode newmode, unsigned int interval_ms = 1000,
-                 double phase_unit = 0.0) {
+    void setMode(Mode newmode, unsigned int interval_ms = 1000, double phase_unit = 0.0) {
         mode = newmode;
         if (mode == Mode::Passive)
             return;

@@ -38,14 +38,13 @@ typedef struct t_dcc_cmd {
 
 hw_timer_t *dccTimer[USTD_MAX_DCC_TIMERS] = {NULL, NULL, NULL, NULL};
 portMUX_TYPE dccTimerMux[USTD_MAX_DCC_TIMERS] = {
-    portMUX_INITIALIZER_UNLOCKED, portMUX_INITIALIZER_UNLOCKED,
-    portMUX_INITIALIZER_UNLOCKED, portMUX_INITIALIZER_UNLOCKED};
+    portMUX_INITIALIZER_UNLOCKED, portMUX_INITIALIZER_UNLOCKED, portMUX_INITIALIZER_UNLOCKED,
+    portMUX_INITIALIZER_UNLOCKED};
 volatile bool waveState[USTD_MAX_DCC_TIMERS] = {false, false, false, false};
 volatile uint8_t wavePin[USTD_MAX_DCC_TIMERS] = {0xff, 0xff, 0xff, 0xff};
 
 typedef ustd::queue<T_DCC_CMD> T_DQ;
-T_DQ dcc_cmd_que[USTD_MAX_DCC_TIMERS] = {T_DQ(16), T_DQ(16), T_DQ(16),
-                                         T_DQ(16)};
+T_DQ dcc_cmd_que[USTD_MAX_DCC_TIMERS] = {T_DQ(16), T_DQ(16), T_DQ(16), T_DQ(16)};
 T_DCC_CMD dcc_curData[USTD_MAX_DCC_TIMERS];
 
 volatile uint8_t dcc_currentBit[USTD_MAX_DCC_TIMERS] = {1, 1, 1, 1};
@@ -120,8 +119,7 @@ void G_INT_ATTR ustd_dcc_timer_irq3() {
 }
 
 void (*ustd_dcc_timer_irq_table[USTD_MAX_DCC_TIMERS])() = {
-    ustd_dcc_timer_irq0, ustd_dcc_timer_irq1, ustd_dcc_timer_irq2,
-    ustd_dcc_timer_irq3};
+    ustd_dcc_timer_irq0, ustd_dcc_timer_irq1, ustd_dcc_timer_irq2, ustd_dcc_timer_irq3};
 
 class Dcc {
   public:
@@ -147,10 +145,10 @@ class Dcc {
     #endif
     */
 
-    Dcc(String name, Mode mode, uint8_t pin_pwm, int8_t channel,
-        uint8_t pin_in1 = 0xff, uint8_t pin_in2 = 0xff)
-        : name(name), mode(mode), pin_pwm(pin_pwm), channel(channel),
-          pin_in1(pin_in1), pin_in2(pin_in2) {
+    Dcc(String name, Mode mode, uint8_t pin_pwm, int8_t channel, uint8_t pin_in1 = 0xff,
+        uint8_t pin_in2 = 0xff)
+        : name(name), mode(mode), pin_pwm(pin_pwm), channel(channel), pin_in1(pin_in1),
+          pin_in2(pin_in2) {
     }
 
     ~Dcc() {
@@ -180,8 +178,7 @@ class Dcc {
                 // Reference Manual for more info).
                 dccTimer[channel] = timerBegin(channel, 80, true);
                 // Attach onTimer function to our timer.
-                timerAttachInterrupt(dccTimer[channel],
-                                     ustd_dcc_timer_irq_table[channel], true);
+                timerAttachInterrupt(dccTimer[channel], ustd_dcc_timer_irq_table[channel], true);
                 // Set alarm to call onTimer function every second (value in
                 // microseconds). Repeat the alarm (third parameter)
                 timerAlarmWrite(dccTimer[channel], 58, true);  // every 58 uSec
@@ -277,8 +274,7 @@ class Dcc {
         return false;
     }
 
-    bool setTrainSpeed(uint8_t _trainSpeed, bool direction = true,
-                       uint8_t trainDccAddress = 0x00) {
+    bool setTrainSpeed(uint8_t _trainSpeed, bool direction = true, uint8_t trainDccAddress = 0x00) {
         trainSpeed = _trainSpeed;
         switch (mode) {
         case Mode::DCC:

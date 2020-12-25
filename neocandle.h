@@ -41,8 +41,7 @@ class NeoCandle {
     HomeAssistant *pHA;
 #endif
 
-    NeoCandle(String name, uint8_t pin = NEOCANDLE_PIN,
-              uint16_t numPixels = NEOCANDLE_NUMPIXELS,
+    NeoCandle(String name, uint8_t pin = NEOCANDLE_PIN, uint16_t numPixels = NEOCANDLE_NUMPIXELS,
               uint8_t options = NEOCANDLEX_OPTIONS, bool bUseModulator = true,
               bool bAutobrightness = true, String brightnessTopic = "")
         : name(name), pin(pin), numPixels(numPixels), options(options),
@@ -92,12 +91,10 @@ class NeoCandle {
     */
 
 #ifdef __ESP__
-    void registerHomeAssistant(
-        String homeAssistantFriendlyName, String projectName = "",
-        String homeAssistantDiscoveryPrefix = "homeassistant") {
-        pHA =
-            new HomeAssistant(name, tID, homeAssistantFriendlyName, projectName,
-                              NEOCANDLE_VERSION, homeAssistantDiscoveryPrefix);
+    void registerHomeAssistant(String homeAssistantFriendlyName, String projectName = "",
+                               String homeAssistantDiscoveryPrefix = "homeassistant") {
+        pHA = new HomeAssistant(name, tID, homeAssistantFriendlyName, projectName,
+                                NEOCANDLE_VERSION, homeAssistantDiscoveryPrefix);
         pHA->addLight();
         pHA->begin(pSched);
     }
@@ -283,8 +280,7 @@ class NeoCandle {
                 manualSet = time(nullptr);
             }
         }
-        if (topic == "windlevel/set" ||
-            topic == name + "/light/windlevel/set") {
+        if (topic == "windlevel/set" || topic == name + "/light/windlevel/set") {
 #ifdef USE_SERIAL_DBG
             Serial.print("Message arrived [");
             Serial.print(topic.c_str());

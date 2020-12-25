@@ -26,16 +26,13 @@ double parseUnitLevel(String msg) {
         l = len;
     strncpy(buff, (const char *)msg.c_str(), l);
 
-    if ((!strcmp((const char *)buff, "on")) ||
-        (!strcmp((const char *)buff, "true"))) {
+    if ((!strcmp((const char *)buff, "on")) || (!strcmp((const char *)buff, "true"))) {
         br = 1.0;
     } else {
-        if ((!strcmp((const char *)buff, "off")) ||
-            (!strcmp((const char *)buff, "false"))) {
+        if ((!strcmp((const char *)buff, "off")) || (!strcmp((const char *)buff, "false"))) {
             br = 0.0;
         } else {
-            if ((strlen(buff) > 4) &&
-                (!strncmp((const char *)buff, "pct ", 4))) {
+            if ((strlen(buff) > 4) && (!strncmp((const char *)buff, "pct ", 4))) {
                 br = atoi((char *)(buff + 4)) / 100.0;
             } else {
                 if (strlen(buff) > 1 && buff[strlen(buff) - 1] == '%') {

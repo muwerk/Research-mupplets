@@ -45,11 +45,10 @@ class ShiftReg {
     unsigned long bitPulseTimer[8] = {0, 0, 0, 0, 0, 0, 0, 0};
     unsigned long bitPulseDelta[8] = {0, 0, 0, 0, 0, 0, 0, 0};
 
-    ShiftReg(String name, uint8_t port_data_mosi, uint8_t port_clock_sck,
-             uint8_t port_latch, bool useSPI = true)
-        : name(name), port_data_mosi(port_data_mosi),
-          port_clock_sck(port_clock_sck), port_latch(port_latch),
-          useSPI(useSPI) {
+    ShiftReg(String name, uint8_t port_data_mosi, uint8_t port_clock_sck, uint8_t port_latch,
+             bool useSPI = true)
+        : name(name), port_data_mosi(port_data_mosi), port_clock_sck(port_clock_sck),
+          port_latch(port_latch), useSPI(useSPI) {
         /*! Create 74HC595 mupplet
          *
          * This either use hardware SPI or 3 GPIOs. Functionality is equivalent.
@@ -83,7 +82,7 @@ class ShiftReg {
             SPI.begin();
         } else {
             digitalWrite(port_data_mosi,
-                         HIGH);  // first writing, then setting output-mode
+                         HIGH);                  // first writing, then setting output-mode
             digitalWrite(port_clock_sck, HIGH);  // generates safe start state
             pinMode(port_data_mosi, OUTPUT);
             pinMode(port_clock_sck, OUTPUT);
@@ -175,8 +174,7 @@ class ShiftReg {
     void loop() {
         for (uint8_t bit = 0; bit < 8; bit++) {
             if (bitPulseTimer[bit]) {
-                if (timeDiff(bitPulseTimer[bit], millis()) >
-                    bitPulseDelta[bit]) {
+                if (timeDiff(bitPulseTimer[bit], millis()) > bitPulseDelta[bit]) {
                     bitPulseTimer[bit] = 0;
                     bitPulseDelta[bit] = 0;
                     setBit(bit, false);
@@ -201,8 +199,7 @@ class ShiftReg {
             uint8_t data = atoi(msgbuf);
             set(data, mask);
         } else {
-            String wct =
-                name + "/shiftreg/set/*";  // 8Bits:  /shiftreg/set/[0..7]
+            String wct = name + "/shiftreg/set/*";  // 8Bits:  /shiftreg/set/[0..7]
             int bit;
             if (pSched->mqttmatch(topic, wct)) {
                 if (topic.length() >= wct.length()) {

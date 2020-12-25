@@ -21,10 +21,8 @@ class Gy906 {
     double temperatureIRSensorVal;
     bool bActive = false;
     bool fastIR = false;
-    ustd::sensorprocessor temperatureAmbientSensor =
-        ustd::sensorprocessor(4, 600, 0.1);
-    ustd::sensorprocessor temperatureIRSensor =
-        ustd::sensorprocessor(4, 600, 0.1);
+    ustd::sensorprocessor temperatureAmbientSensor = ustd::sensorprocessor(4, 600, 0.1);
+    ustd::sensorprocessor temperatureIRSensor = ustd::sensorprocessor(4, 600, 0.1);
     Adafruit_MLX90614 *pGy;
 #ifdef __ESP__
     HomeAssistant *pHA;
@@ -69,16 +67,13 @@ class Gy906 {
     }
 
 #ifdef __ESP__
-    void registerHomeAssistant(
-        String homeAssistantFriendlyName, String projectName = "",
-        String homeAssistantDiscoveryPrefix = "homeassistant") {
-        pHA =
-            new HomeAssistant(name, tID, homeAssistantFriendlyName, projectName,
-                              GY906_TEMP_VERSION, homeAssistantDiscoveryPrefix);
-        pHA->addSensor("temperature", "Ambient temperature", "\\u00B0C",
-                       "temperature", "mdi:thermometer");
-        pHA->addSensor("temperature", "IR Temperature", "\\u00B0C", "pressure",
+    void registerHomeAssistant(String homeAssistantFriendlyName, String projectName = "",
+                               String homeAssistantDiscoveryPrefix = "homeassistant") {
+        pHA = new HomeAssistant(name, tID, homeAssistantFriendlyName, projectName,
+                                GY906_TEMP_VERSION, homeAssistantDiscoveryPrefix);
+        pHA->addSensor("temperature", "Ambient temperature", "\\u00B0C", "temperature",
                        "mdi:thermometer");
+        pHA->addSensor("temperature", "IR Temperature", "\\u00B0C", "pressure", "mdi:thermometer");
         pHA->begin(pSched);
     }
 #endif
@@ -117,8 +112,7 @@ class Gy906 {
                 }
             }
         } else {
-            pSched->publish(name + "/sensor/result",
-                            "hardware not initialized");
+            pSched->publish(name + "/sensor/result", "hardware not initialized");
         }
     }
 

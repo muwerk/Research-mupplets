@@ -18,8 +18,7 @@ class Illuminance {
     double luxvalue = 0.0;
     double unitIlluminanceValue = 0.0;
     double maxLux = 800.0;
-    ustd::sensorprocessor illuminanceSensor =
-        ustd::sensorprocessor(4, 600, 5.0);
+    ustd::sensorprocessor illuminanceSensor = ustd::sensorprocessor(4, 600, 5.0);
 
     Adafruit_TSL2561_Unified *pTsl;
     bool bActive = false;
@@ -31,8 +30,8 @@ class Illuminance {
     HomeAssistant *pHA;
 #endif
 
-    Illuminance(String _name, uint8_t _port, String _gain = "16x",
-                String _speed = "fast", double _amp = 1.0) {
+    Illuminance(String _name, uint8_t _port, String _gain = "16x", String _speed = "fast",
+                double _amp = 1.0) {
         name = _name;
         port = _port;
         amp = _amp;
@@ -175,16 +174,13 @@ class Illuminance {
     }
 
 #ifdef __ESP__
-    void registerHomeAssistant(
-        String homeAssistantFriendlyName, String projectName = "",
-        String homeAssistantDiscoveryPrefix = "homeassistant") {
-        pHA =
-            new HomeAssistant(name, tID, homeAssistantFriendlyName, projectName,
-                              TSL_VERSION, homeAssistantDiscoveryPrefix);
-        pHA->addSensor("unitilluminance", "Unit-Illuminance", "[0..1]",
-                       "illuminance", "mdi:brightness-6");
-        pHA->addSensor("illuminance", "Illuminance", "lux", "illuminance",
+    void registerHomeAssistant(String homeAssistantFriendlyName, String projectName = "",
+                               String homeAssistantDiscoveryPrefix = "homeassistant") {
+        pHA = new HomeAssistant(name, tID, homeAssistantFriendlyName, projectName, TSL_VERSION,
+                                homeAssistantDiscoveryPrefix);
+        pHA->addSensor("unitilluminance", "Unit-Illuminance", "[0..1]", "illuminance",
                        "mdi:brightness-6");
+        pHA->addSensor("illuminance", "Illuminance", "lux", "illuminance", "mdi:brightness-6");
         pHA->begin(pSched);
     }
 #endif

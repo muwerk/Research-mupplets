@@ -33,9 +33,8 @@ class Clock7Seg {
     String brightnessTopic = "";
     int oldBuzzState = 0;
 
-    Clock7Seg(String name, uint8_t i2cAddress = DISPLAY_ADDRESS,
-              uint8_t buzzerPin = 0xff, bool bAutobrightness = true,
-              String brightnessTopic = "")
+    Clock7Seg(String name, uint8_t i2cAddress = DISPLAY_ADDRESS, uint8_t buzzerPin = 0xff,
+              bool bAutobrightness = true, String brightnessTopic = "")
         : name(name), i2cAddress(i2cAddress), buzzerPin(buzzerPin),
           bAutobrightness(bAutobrightness), brightnessTopic(brightnessTopic) {
     }
@@ -46,8 +45,7 @@ class Clock7Seg {
     uint8_t old_hr = 0xFF;
     uint8_t old_mn = 0xFF;
     uint8_t old_dots = 0xFF;
-    void displayClockDigits(uint8_t hr, uint8_t mn, uint8_t dots = 0x1,
-                            bool cache = true) {
+    void displayClockDigits(uint8_t hr, uint8_t mn, uint8_t dots = 0x1, bool cache = true) {
         if (cache && old_hr == hr && old_mn == mn && old_dots == dots)
             return;
 

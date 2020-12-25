@@ -50,14 +50,12 @@ class MotorInterval {
     String lastResult = "Not initialized";
     Switch intervalSensor;
 
-    MotorInterval(String name, uint8_t motorPort, uint8_t sensorPort,
-                  unsigned long sensorTimeout, bool motorActiveLogic = false,
-                  bool sensorActiveLogic = false)
-        : name(name), motorPort(motorPort), sensorPort(sensorPort),
-          sensorTimeout(sensorTimeout), motorActiveLogic(motorActiveLogic),
-          sensorActiveLogic(sensorActiveLogic),
-          intervalSensor(name + ".sensor", sensorPort,
-                         ustd::Switch::Mode::Default, sensorActiveLogic) {
+    MotorInterval(String name, uint8_t motorPort, uint8_t sensorPort, unsigned long sensorTimeout,
+                  bool motorActiveLogic = false, bool sensorActiveLogic = false)
+        : name(name), motorPort(motorPort), sensorPort(sensorPort), sensorTimeout(sensorTimeout),
+          motorActiveLogic(motorActiveLogic), sensorActiveLogic(sensorActiveLogic),
+          intervalSensor(name + ".sensor", sensorPort, ustd::Switch::Mode::Default,
+                         sensorActiveLogic) {
         /*! Instantiate an Interval Motor
          * @param name              The name of the entity
          * @param motorPort         The pin identifier for the digital output
@@ -152,8 +150,7 @@ class MotorInterval {
         } else if (state) {
             // stop at next finished interval
             target_interval = current_interval + 1;
-            publishf(name + "/switch/requestedintervals", "%u",
-                     target_interval);
+            publishf(name + "/switch/requestedintervals", "%u", target_interval);
         }
     }
 
@@ -169,23 +166,19 @@ class MotorInterval {
          */
         if (state) {
             if (intervals) {
-                target_interval =
-                    intervals == UINT_MAX ? maxIntervals : intervals;
-                publishf(name + "/switch/requestedintervals", "%u",
-                         target_interval);
+                target_interval = intervals == UINT_MAX ? maxIntervals : intervals;
+                publishf(name + "/switch/requestedintervals", "%u", target_interval);
             } else {
                 stop();
             }
         } else {
             if (intervals) {
-                target_interval =
-                    intervals == UINT_MAX ? maxIntervals : intervals;
+                target_interval = intervals == UINT_MAX ? maxIntervals : intervals;
                 current_interval = 0;
                 lastResult = "OK";
                 startMotor();
                 pSched->publish(name + "/switch/state", "on");
-                publishf(name + "/switch/requestedintervals", "%u",
-                         target_interval);
+                publishf(name + "/switch/requestedintervals", "%u", target_interval);
             }
         }
     }
@@ -195,8 +188,7 @@ class MotorInterval {
         pSched->publish(name + "/switch/result", lastResult.c_str());
         publishf(name + "/switch/requestedintervals", "%u", target_interval);
         publishf(name + "/switch/intervals", "%u", current_interval);
-        publishf(name + "/switch/duration", "%lu",
-                 timeDiff(startTime, stopTime));
+        publishf(name + "/switch/duration", "%lu", timeDiff(startTime, stopTime));
     }
 
     virtual void loop() {

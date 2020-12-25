@@ -23,8 +23,7 @@ class Ldr {
 #endif
 
   public:
-    ustd::sensorprocessor illuminanceSensor =
-        ustd::sensorprocessor(4, 600, 0.005);
+    ustd::sensorprocessor illuminanceSensor = ustd::sensorprocessor(4, 600, 0.005);
 
     Ldr(String name, uint8_t port) : name(name), port(port) {
     }
@@ -59,14 +58,12 @@ class Ldr {
     }
 
 #ifdef __ESP__
-    void registerHomeAssistant(
-        String homeAssistantFriendlyName, String projectName = "",
-        String homeAssistantDiscoveryPrefix = "homeassistant") {
-        pHA =
-            new HomeAssistant(name, tID, homeAssistantFriendlyName, projectName,
-                              LDR_VERSION, homeAssistantDiscoveryPrefix);
-        pHA->addSensor("unitilluminance", "Unit-Illuminance", "[0..1]",
-                       "illuminance", "mdi:brightness-6");
+    void registerHomeAssistant(String homeAssistantFriendlyName, String projectName = "",
+                               String homeAssistantDiscoveryPrefix = "homeassistant") {
+        pHA = new HomeAssistant(name, tID, homeAssistantFriendlyName, projectName, LDR_VERSION,
+                                homeAssistantDiscoveryPrefix);
+        pHA->addSensor("unitilluminance", "Unit-Illuminance", "[0..1]", "illuminance",
+                       "mdi:brightness-6");
         pHA->begin(pSched);
     }
 #endif

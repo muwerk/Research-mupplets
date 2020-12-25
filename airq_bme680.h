@@ -21,8 +21,7 @@ class AirQualityBme680 {
     int tID;
     String name;
     // uint8_t i2caddr;
-    double kOhmsVal = 0.0, temperatureVal = 0.0, humidityVal = 0.0,
-           pressureVal = 0.0;
+    double kOhmsVal = 0.0, temperatureVal = 0.0, humidityVal = 0.0, pressureVal = 0.0;
     time_t startTime = 0;
     bool bStartup = false;
     bool bActive = false;
@@ -37,8 +36,7 @@ class AirQualityBme680 {
 #endif
 
     AirQualityBme680(String name) : name(name) {
-        pAirQuality =
-            new Adafruit_BME680();  // seems to be on i2c port 0x77 always
+        pAirQuality = new Adafruit_BME680();  // seems to be on i2c port 0x77 always
     }
 
     ~AirQualityBme680() {
@@ -89,20 +87,14 @@ class AirQualityBme680 {
     }
 
 #ifdef __ESP__
-    void registerHomeAssistant(
-        String homeAssistantFriendlyName, String projectName = "",
-        String homeAssistantDiscoveryPrefix = "homeassistant") {
-        pHA =
-            new HomeAssistant(name, tID, homeAssistantFriendlyName, projectName,
-                              AIRQUALITY_VERSION, homeAssistantDiscoveryPrefix);
-        pHA->addSensor("temperature", "Temperature", "\\u00B0C", "temperature",
-                       "mdi:thermometer");
-        pHA->addSensor("humidity", "Humidity", "%", "humidity",
-                       "mdi:water-percent");
-        pHA->addSensor("pressure", "Pressure", "hPa", "pressure",
-                       "mdi:altimeter");
-        pHA->addSensor("kohmsgas", "k\\u2126-Gas", "k\\u2126", "None",
-                       "mdi:air-filter");
+    void registerHomeAssistant(String homeAssistantFriendlyName, String projectName = "",
+                               String homeAssistantDiscoveryPrefix = "homeassistant") {
+        pHA = new HomeAssistant(name, tID, homeAssistantFriendlyName, projectName,
+                                AIRQUALITY_VERSION, homeAssistantDiscoveryPrefix);
+        pHA->addSensor("temperature", "Temperature", "\\u00B0C", "temperature", "mdi:thermometer");
+        pHA->addSensor("humidity", "Humidity", "%", "humidity", "mdi:water-percent");
+        pHA->addSensor("pressure", "Pressure", "hPa", "pressure", "mdi:altimeter");
+        pHA->addSensor("kohmsgas", "k\\u2126-Gas", "k\\u2126", "None", "mdi:air-filter");
         pHA->begin(pSched);
     }
 #endif

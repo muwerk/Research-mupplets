@@ -2,7 +2,7 @@
 #pragma once
 
 #include "DHT.h"  // from "DHT sensor library", https://github.com/adafruit/DHT-sensor-library
-    // and "Adafruit Unified Sensor", https://github.com/adafruit/Adafruit_Sensor
+// and "Adafruit Unified Sensor", https://github.com/adafruit/Adafruit_Sensor
 #include "scheduler.h"
 #include "sensors.h"
 #include "home_assistant.h"
@@ -18,16 +18,14 @@ class Dht {
     uint8_t type;
     double temperatureSensorVal;
     double humiditySensorVal;
-    ustd::sensorprocessor temperatureSensor =
-        ustd::sensorprocessor(4, 600, 0.1);
+    ustd::sensorprocessor temperatureSensor = ustd::sensorprocessor(4, 600, 0.1);
     ustd::sensorprocessor humiditySensor = ustd::sensorprocessor(4, 600, 1.0);
     DHT *pDht;
 #ifdef __ESP__
     HomeAssistant *pHA;
 #endif
 
-    Dht(String name, uint8_t port, uint8_t type = DHT22)
-        : name(name), port(port), type(type) {
+    Dht(String name, uint8_t port, uint8_t type = DHT22) : name(name), port(port), type(type) {
         pDht = new DHT(port, type);
 
         pinMode(port, INPUT_PULLUP);
@@ -64,16 +62,12 @@ class Dht {
     }
 
 #ifdef __ESP__
-    void registerHomeAssistant(
-        String homeAssistantFriendlyName, String projectName = "",
-        String homeAssistantDiscoveryPrefix = "homeassistant") {
-        pHA =
-            new HomeAssistant(name, tID, homeAssistantFriendlyName, projectName,
-                              DHT_VERSION, homeAssistantDiscoveryPrefix);
-        pHA->addSensor("temperature", "Temperature", "\\u00B0C", "temperature",
-                       "mdi:thermometer");
-        pHA->addSensor("humidity", "Humidity", "%", "humidity",
-                       "mdi:water-percent");
+    void registerHomeAssistant(String homeAssistantFriendlyName, String projectName = "",
+                               String homeAssistantDiscoveryPrefix = "homeassistant") {
+        pHA = new HomeAssistant(name, tID, homeAssistantFriendlyName, projectName, DHT_VERSION,
+                                homeAssistantDiscoveryPrefix);
+        pHA->addSensor("temperature", "Temperature", "\\u00B0C", "temperature", "mdi:thermometer");
+        pHA->addSensor("humidity", "Humidity", "%", "humidity", "mdi:water-percent");
         pHA->begin(pSched);
     }
 #endif

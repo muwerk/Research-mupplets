@@ -39,12 +39,10 @@ class AirQualityBme280 {
     HomeAssistant *pHA;
 #endif
 
-    AirQualityBme280(
-        String name,
-        uint i2c_addr = BME280_ADDRESS)  // i2c_addr: usually 0x77 or 0x76
+    AirQualityBme280(String name,
+                     uint i2c_addr = BME280_ADDRESS)  // i2c_addr: usually 0x77 or 0x76
         : name(name), i2c_addr(i2c_addr) {
-        pAirQuality =
-            new Adafruit_BME280();  // seems to be on i2c port 0x77 always
+        pAirQuality = new Adafruit_BME280();  // seems to be on i2c port 0x77 always
     }
 
     ~AirQualityBme280() {
@@ -89,18 +87,13 @@ class AirQualityBme280 {
     }
 
 #ifdef __ESP__
-    void registerHomeAssistant(
-        String homeAssistantFriendlyName, String projectName = "",
-        String homeAssistantDiscoveryPrefix = "homeassistant") {
-        pHA =
-            new HomeAssistant(name, tID, homeAssistantFriendlyName, projectName,
-                              AIRQUALITY_VERSION, homeAssistantDiscoveryPrefix);
-        pHA->addSensor("temperature", "Temperature", "\\u00B0C", "temperature",
-                       "mdi:thermometer");
-        pHA->addSensor("humidity", "Humidity", "%", "humidity",
-                       "mdi:water-percent");
-        pHA->addSensor("pressure", "Pressure", "hPa", "pressure",
-                       "mdi:altimeter");
+    void registerHomeAssistant(String homeAssistantFriendlyName, String projectName = "",
+                               String homeAssistantDiscoveryPrefix = "homeassistant") {
+        pHA = new HomeAssistant(name, tID, homeAssistantFriendlyName, projectName,
+                                AIRQUALITY_VERSION, homeAssistantDiscoveryPrefix);
+        pHA->addSensor("temperature", "Temperature", "\\u00B0C", "temperature", "mdi:thermometer");
+        pHA->addSensor("humidity", "Humidity", "%", "humidity", "mdi:water-percent");
+        pHA->addSensor("pressure", "Pressure", "hPa", "pressure", "mdi:altimeter");
         pHA->begin(pSched);
     }
 #endif

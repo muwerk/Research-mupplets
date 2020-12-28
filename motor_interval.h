@@ -31,7 +31,7 @@ class MotorInterval {
      * A security mechanism performs a hard emergency stop if the sensor switch
      * does not report any activity during a specified timeout.
      */
-    String MOTORINTERVAL_VERSION = "0.1.0";
+    String MOTORINTERVAL_VERSION = "0.2.0";
     Scheduler *pSched;
     int tID;
     String name;
@@ -39,6 +39,7 @@ class MotorInterval {
     uint8_t sensorPort;
     unsigned long sensorTimeout;
     unsigned maxIntervals = UINT_MAX;
+    unsigned defaultIntervals = UINT_MAX;
     bool motorActiveLogic = false;
     bool sensorActiveLogic = false;
     bool state;
@@ -58,17 +59,16 @@ class MotorInterval {
                          sensorActiveLogic) {
         /*! Instantiate an Interval Motor
          * @param name              The name of the entity
-         * @param motorPort         The pin identifier for the digital output
-         * GPIO port that controls the motor
-         * @param sensorPort        The pin identifier for the digital input
-         * GPIO port connected to the swicth triggered at each interval
-         * @param sensorTimeout     The timeout in milliseconds for the motor to
-         * advance for one interval. If no sensor input is received, the motor
-         * will perform an emergecy stop and report an error
-         * @param motorActiveLogic  If true, the motor logic is inverted (motor
-         * on on LOW). Default is false
-         * @param sensorActiveLogic If true, the sensor logic is inverted.
-         * Default is false
+         * @param motorPort         The pin identifier for the digital output GPIO port that
+         *                          controls the motor
+         * @param sensorPort        The pin identifier for the digital input GPIO port connected to
+         *                          the swicth triggered at each interval
+         * @param sensorTimeout     The timeout in milliseconds for the motor to advance for one
+         *                          interval. If no sensor input is received, the motor will
+         *                          perform an emergecy stop and report an error
+         * @param motorActiveLogic  If true, the motor logic is inverted (motor on on LOW).
+         *                          Default is false
+         * @param sensorActiveLogic If true, the sensor logic is inverted. Default is false
          */
     }
 
@@ -77,20 +77,34 @@ class MotorInterval {
 
     void setSensorTimeout(unsigned long ms) {
         /*! Change the sensor timeout
-         * @param sensorTimeout The timeout in milliseconds for the motor to
-         * advance for one interval. If no sensor input is received, the motor
-         * will perform an emergecy stop and report an error
+         * @param ms    The timeout in milliseconds for the motor to advance for one interval. If no
+         *              sensor input is received, the motor will perform an emergecy stop and report
+         *              an error
          */
         sensorTimeout = ms;
     }
 
+    void setDefaultIntervals(unsigned intervals) {
+        /*! Change the number of default intervals to advance when a start command is issued without
+         * specifying a number of intervals
+         * @param intervals The default number of intervals that the motor will advance on a start
+         *                  command without a specified number of intervals. If the speicifed value
+         *                  is higher than the value of maxIntervals, the value new value is capped
+         *                  to maxIntervals.
+         */
+        defaultIntervals = intervals > maxIntervals ? maxIntervals : intervals;
+    }
+
     void setMaxIntervals(unsigned intervals) {
-        /*! Change the number of maximum intervals to advance on undetermined
-         * start
-         * @param intervals The maximum number of intervals that the entity will
-         * advance on an undetermined start command
+        /*! Change the number of maximum intervals that the motor can advance
+         * @param intervals Set the limit of the maximum number of intervals that the motor can
+         *                  advance. If the value is lower as defaultIntervals, defaultIntervals
+         *                  will be capped to the new value.
          */
         maxIntervals = intervals;
+        if (defaultIntervals > maxIntervals) {
+            defaultIntervals = maxIntervals;
+        }
     }
 
     void begin(Scheduler *_pSched) {
@@ -122,13 +136,13 @@ class MotorInterval {
 
     void start(unsigned intervals = UINT_MAX) {
         /*! Starts the motor
-         * @param intervals Number of intervals before automatically stopping
-         * the motor. Default is the maxIntervals settings.
+         * @param intervals Number of intervals before automatically stopping the motor. Default is
+         *                  the defaultInterval setting.
          *
-         * If the motor is already running, the number of intervals to advance
-         * is changed to the specified value. By specifing a value equal or
-         * lesser than the vallue of the already advanced intervals, the motor
-         * will stop as soon as the current interval has been completed.
+         * If the motor is already running, the number of intervals to advance is changed to the
+         * specified value. By specifing a value equal or lesser than the value of the already
+         * advanced intervals, the motor will stop as soon as the current interval has been
+         * completed.
          */
         set(intervals);
     }
@@ -136,12 +150,11 @@ class MotorInterval {
     void stop(bool hardstop = false) {
         /*! Stops the motor when the current interval is finished
          *
-         * @param hardstop  If true, the motor is stopped immediately without
-         * waiting for the current interval to complete. In this case the
-         * reported number of intervals will only include the last fully
-         * completed interval. If the motor is restarted the next interval will
-         * be shorter since the motor starts at a intermediate position. Default
-         * is false
+         * @param hardstop  If true, the motor is stopped immediately without waiting for the
+         *                  current interval to complete. In this case the reported number of
+         *                  intervals will only include the last fully completed interval. If the
+         *                  motor is restarted the next interval will be shorter since the motor
+         *                  starts at a intermediate position. Default is false
          */
         if (state && hardstop) {
             // stop immediately
@@ -156,24 +169,23 @@ class MotorInterval {
 
     void set(unsigned intervals) {
         /*! Controls the motor
-         * @param intervals Number of intervals before automatically stopping
-         * the motor.
+         * @param intervals Number of intervals before automatically stopping the motor.
          *
-         * If the motor is already running, the number of intervals to advance
-         * is changed to the specified value. By specifing a value equal or
-         * lesser than the vallue of the already advanced intervals, the motor
-         * will stop as soon as the current interval has been completed.
+         * If the motor is already running, the number of intervals to advance is changed to the
+         * specified value. By specifing a value equal or lesser than the vallue of the already
+         * advanced intervals, the motor will stop as soon as the current interval has been
+         * completed.
          */
         if (state) {
             if (intervals) {
-                target_interval = intervals == UINT_MAX ? maxIntervals : intervals;
+                target_interval = intervals == UINT_MAX ? defaultIntervals : intervals;
                 publishf(name + "/switch/requestedintervals", "%u", target_interval);
             } else {
                 stop();
             }
         } else {
             if (intervals) {
-                target_interval = intervals == UINT_MAX ? maxIntervals : intervals;
+                target_interval = intervals == UINT_MAX ? defaultIntervals : intervals;
                 current_interval = 0;
                 lastResult = "OK";
                 startMotor();

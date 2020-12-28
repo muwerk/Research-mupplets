@@ -70,9 +70,9 @@ class AirQualityBme280 {
 #endif
         } else {
             pAirQuality->setSampling(Adafruit_BME280::MODE_FORCED,
-                                     Adafruit_BME280::SAMPLING_X1,    // temperature
-                                     Adafruit_BME280::SAMPLING_NONE,  // pressure
-                                     Adafruit_BME280::SAMPLING_X1,    // humidity
+                                     Adafruit_BME280::SAMPLING_X1,   // temperature
+                                     Adafruit_BME280::SAMPLING_X16,  // pressure
+                                     Adafruit_BME280::SAMPLING_X1,   // humidity
                                      Adafruit_BME280::FILTER_OFF);
 
             bme_temp = pAirQuality->getTemperatureSensor();

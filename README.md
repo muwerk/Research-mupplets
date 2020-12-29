@@ -37,7 +37,6 @@ Note: third-party libraries may be subject to different licensing conditions.
 | clock7seg.h | Simple 4 digit clock with timer | [4x 7segment display with HT16K33](https://www.adafruit.com/product/881) | [Adafruit GFX Library](https://github.com/adafruit/Adafruit-GFX-Library) [Adafruit LED Backpack Library](https://github.com/adafruit/Adafruit_LED_Backpack) | ESP
 | dhtxx.h     | Temperature, humidity sensor | DHT 11, DHT 21, DHT 22 | [DHT sensor library](https://github.com/adafruit/DHT-sensor-library), [Adafruit unified sensor](https://github.com/adafruit/Adafruit_Sensor) | ESP, ESP32 | yes
 | digital_out.h | GPIO output | switch external hardware via GPIO | | ESP, ESP32 | yes
-| gy906_temp.h   | IR and ambient temperature | GY-906 / MLX90614 I2C Sensor | https://github.com/adafruit/Adafruit-MLX90614-Library | ESP, ESP32 | yes
 | i2c_pwm.h   | 16 channel PWM via I2C | [PCA9685 based I2C 16 channel board](https://www.adafruit.com/products/815) | https://github.com/adafruit/Adafruit-PWM-Servo-Driver-Library | ESP
 | ldr.h       | Illuminance | LDR connected to analog port | | ESP, ESP32 | yes
 | led.h       | LED diode | Digital out or PWM connected to led | | ESP, ESP32 | yes
@@ -48,6 +47,8 @@ Note: third-party libraries may be subject to different licensing conditions.
 | pressure_bmp280.h  | Air pressure and temperature sensor | BMP280 | [Adafruit BMP280](https://github.com/adafruit/Adafruit_BMP280_Library), [Adafruit unified sensor](https://github.com/adafruit/Adafruit_Sensor) | ESP, ESP32 | yes
 | shift_reg_74595.h | serial to parallel output | 74HC595 shift register(s) | | ESP, ESP32
 | switch.h    | Button | any push button |   | ESP, ESP32 | yes
+| temperature_gy906.h   | IR and ambient temperature | GY-906 / MLX90614 I2C Sensor | https://github.com/adafruit/Adafruit-MLX90614-Library | ESP, ESP32 | yes
+| temperature_mcp9808.h   | High precision temperature | MCP9808 I2C Sensor | https://github.com/adafruit/Adafruit_MCP9808_Library | ESP, ESP32 | yes
 | tsl2561.h     | Illuminance | [Adafruit TSL2561](https://learn.adafruit.com/tsl2561/overview) | Wire, [Adafruit unified sensor](https://github.com/adafruit/Adafruit_Sensor), [Adafruit TSL2561](https://github.com/adafruit/Adafruit_TSL2561) | ESP, ESP32 | yes
 
 **Note**: [Home Assistent](https://www.home-assistant.io), if support is `yes`, the device can be auto-registered using [Home Assistant's MQTT discovery functionality](https://www.home-assistant.io/docs/mqtt/discovery/) by calling `myMupplet.registerHomeAssistant("muppletFriendlyName");`

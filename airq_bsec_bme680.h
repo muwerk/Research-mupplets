@@ -62,7 +62,7 @@ class AirQualityBsecBme680 {
         /*! Instantiate a BME680-sensor with BOSCH BSEC libraries.
          *
          * @param name Mupplet name
-         * @param i2cAddress i2c-Address (usually 0x76 or 0x77)
+         * @param i2cAddress i2c-Address (usually 0x76[primary] or 0x77[secondary])
          */
         pAirQuality = new Bsec();
     }

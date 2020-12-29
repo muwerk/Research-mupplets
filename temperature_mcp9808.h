@@ -24,7 +24,7 @@ class TemperatureMCP9808 {
     double temperatureSensorVal;
     bool bActive = false;
     String errmsg;
-    ustd::sensorprocessor temperatureSensor = ustd::sensorprocessor(4, 600, 0.1);
+    ustd::sensorprocessor temperatureSensor = ustd::sensorprocessor(1, 30, 0.01);
     Adafruit_MCP9808 *pTemp;
 #ifdef __ESP__
     HomeAssistant *pHA;
@@ -36,21 +36,23 @@ class TemperatureMCP9808 {
          * @param name              The name of the entity
          * @param i2cAddress I2C-address of sensor. Default is 0x18, for Adafruit's sensor, address
          * can be configured:
-         *  A2 A1 A0 address
-         *  0  0  0   0x18  [default]
-         *  0  0  1   0x19
-         *  0  1  0   0x1A
-         *  0  1  1   0x1B
-         *  1  0  0   0x1C
-         *  1  0  1   0x1D
-         *  1  1  0   0x1E
-         *  1  1  1   0x1F
+         *  A2 |  A1 | A0  address
+         * --- | --- --- -------
+         *  0  |  0  |  0   0x18  [default]
+         *  0  |  0  |  1   0x19
+         *  0  |  1  |  0   0x1A
+         *  0  |  1  |  1   0x1B
+         *  1  |  0  |  0   0x1C
+         *  1  |  0  |  1   0x1D
+         *  1  |  1  |  0   0x1E
+         *  1  |  1  |  1   0x1F
          * @param resolution Resolution of measurement:
-         * Res Precision Delay
-         *  0  0.5°C     30 ms
-         *  1  0.25°C    65 ms
-         *  2  0.125°C   130 ms
-         *  3  0.0625°C  250 ms [default]
+         * Res | Precision | Delay
+         * --- | --------- | -----
+         *  0  | 0.5°C     | 30 ms
+         *  1  | 0.25°C    | 65 ms
+         *  2  | 0.125°C   | 130 ms
+         *  3  | 0.0625°C  | 250 ms [default]
          */
         pTemp = new Adafruit_MCP9808();
     }

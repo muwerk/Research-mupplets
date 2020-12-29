@@ -158,10 +158,11 @@ class AirQualityBsecBme680 {
         BSEC_OUTPUT_BREATH_VOC_EQUIVALENT,
     };
 
-    void begin(Scheduler *_pSched, TwoWire wire) {
+    void begin(Scheduler *_pSched) {
         pSched = _pSched;
+        // wire = _wire;
 
-        pAirQuality->begin(i2caddr, wire);
+        pAirQuality->begin(i2caddr, Wire);
 #ifdef USE_SERIAL_DBG
         Serial.println("BSEC library version " + String(pAirQuality->version.major) + "." +
                        String(pAirQuality->version.minor) + "." +

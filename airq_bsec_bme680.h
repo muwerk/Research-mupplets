@@ -46,7 +46,7 @@ class AirQualityBsecBme680 {
     String errmsg = "";
     ustd::sensorprocessor rawTemperatureSensor = ustd::sensorprocessor(4, 30, 0.1);
     ustd::sensorprocessor temperatureSensor = ustd::sensorprocessor(4, 30, 0.1);
-    ustd::sensorprocessor rawhumiditySensor = ustd::sensorprocessor(4, 30, 0.1);
+    ustd::sensorprocessor rawHumiditySensor = ustd::sensorprocessor(4, 30, 0.1);
     ustd::sensorprocessor humiditySensor = ustd::sensorprocessor(4, 30, 0.1);
     ustd::sensorprocessor pressureSensor = ustd::sensorprocessor(4, 30, 0.01);
     ustd::sensorprocessor gasResistanceSensor = ustd::sensorprocessor(4, 30, 0.01);
@@ -151,11 +151,11 @@ class AirQualityBsecBme680 {
         BSEC_OUTPUT_RAW_HUMIDITY,
         BSEC_OUTPUT_RAW_GAS,
         BSEC_OUTPUT_IAQ,
-        BSEC_OUTPUT_SENSOR_HEAT_COMPENSATED_TEMPERATURE,
-        BSEC_OUTPUT_SENSOR_HEAT_COMPENSATED_HUMIDITY,
         BSEC_OUTPUT_STATIC_IAQ,
         BSEC_OUTPUT_CO2_EQUIVALENT,
         BSEC_OUTPUT_BREATH_VOC_EQUIVALENT,
+        BSEC_OUTPUT_SENSOR_HEAT_COMPENSATED_TEMPERATURE,
+        BSEC_OUTPUT_SENSOR_HEAT_COMPENSATED_HUMIDITY,
     };
 
     void begin(Scheduler *_pSched) {
@@ -175,7 +175,7 @@ class AirQualityBsecBme680 {
 #ifdef USE_SERIAL_DBG
             Serial.println("Found BME680");
 #endif
-            pAirQuality->updateSubscription(sensorList, 7, BSEC_SAMPLE_RATE_LP);
+            pAirQuality->updateSubscription(sensorList, 10, BSEC_SAMPLE_RATE_LP);
             if (!checkIaqSensorStatus()) {
                 bActive = false;
 #ifdef USE_SERIAL_DBG
@@ -190,7 +190,7 @@ class AirQualityBsecBme680 {
         }
 
         auto ft = [=]() { this->loop(); };
-        tID = pSched->add(ft, name, 5000000);  // every 5s
+        tID = pSched->add(ft, name, 3000000);  // 3 seconds timing required.
 
         auto fnall = [=](String topic, String msg, String originator) {
             this->subsMsg(topic, msg, originator);
@@ -208,7 +208,7 @@ class AirQualityBsecBme680 {
         pHA->addSensor("pressure", "Pressure", "hPa", "pressure", "mdi:altimeter");
         pHA->addSensor("co2", "CO2", "ppm", "None", "mdi:air-filter");
         pHA->addSensor("voc", "VOC", "ppb", "None", "mdi:air-filter");
-        pHA->addSensor("iaq", "iaq", "?%", "None", "mdi:air-filter");
+        pHA->addSensor("iaq", "iaq", "0-500", "None", "mdi:air-filter");
         pHA->begin(pSched);
     }
 #endif
@@ -319,7 +319,7 @@ class AirQualityBsecBme680 {
                 t = pAirQuality->temperature;
                 rh = pAirQuality->rawHumidity;
                 h = pAirQuality->humidity;
-                p = pAirQuality->pressure;
+                p = pAirQuality->pressure / 100.0;
                 k = pAirQuality->gasResistance;
                 ia = pAirQuality->iaq;
                 iaqacc = pAirQuality->iaqAccuracy;
@@ -327,11 +327,11 @@ class AirQualityBsecBme680 {
                 c = pAirQuality->co2Equivalent;
                 v = pAirQuality->breathVocEquivalent;
 
-                if (temperatureSensor.filter(&rt)) {
+                if (rawTemperatureSensor.filter(&rt)) {
                     rawTemperature = rt;
                     publishRawTemperature();
                 }
-                if (humiditySensor.filter(&rh)) {
+                if (rawHumiditySensor.filter(&rh)) {
                     rawHumidity = rh;
                     publishRawHumidity();
                 }
@@ -355,11 +355,11 @@ class AirQualityBsecBme680 {
                     iaq = ia;
                     publishIaq();
                 }
-                if (iaqSensor.filter(&siaq)) {
+                if (staticIaqSensor.filter(&siaq)) {
                     staticIaq = siaq;
                     publishStaticIaq();
                 }
-                if (iaqSensor.filter(&iaqacc)) {
+                if (iaqAccuracySensor.filter(&iaqacc)) {
                     iaqAccuracy = iaqacc;
                     publishIaqAccuracy();
                 }

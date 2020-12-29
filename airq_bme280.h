@@ -69,11 +69,6 @@ class AirQualityBme280 {
             Serial.println(errmsg);
 #endif
         } else {
-            pAirQuality->setSampling(Adafruit_BME280::MODE_FORCED,
-                                     Adafruit_BME280::SAMPLING_X1,   // temperature
-                                     Adafruit_BME280::SAMPLING_X16,  // pressure
-                                     Adafruit_BME280::SAMPLING_X1,   // humidity
-                                     Adafruit_BME280::FILTER_OFF);
 
             bme_temp = pAirQuality->getTemperatureSensor();
             bme_pressure = pAirQuality->getPressureSensor();
@@ -81,6 +76,7 @@ class AirQualityBme280 {
 
             bActive = true;
             pSched->publish(name + "/sensor/result", "OK");
+            configureSensor();
         }
 
         auto ft = [=]() { this->loop(); };
@@ -103,6 +99,15 @@ class AirQualityBme280 {
         pHA->begin(pSched);
     }
 #endif
+
+    void configureSensor() {
+        pAirQuality->setSampling(Adafruit_BME280::MODE_FORCED,
+                                 Adafruit_BME280::SAMPLING_X1,      // temperature
+                                 Adafruit_BME280::SAMPLING_X1,      // pressure
+                                 Adafruit_BME280::SAMPLING_X1,      // humidity
+                                 Adafruit_BME280::FILTER_OFF,       // no exponential sample filter
+                                 Adafruit_BME280::STANDBY_MS_0_5);  // minimal standby
+    }
 
     void publishTemperature() {
         if (bActive && !bStartup) {
@@ -151,6 +156,9 @@ class AirQualityBme280 {
             t = temp_event.temperature;
             h = humidity_event.relative_humidity;
             p = pressure_event.pressure;
+
+            configureSensor();  // reload parameters after each measurement
+
             if (temperature.filter(&t)) {
                 temperatureVal = t;
                 publishTemperature();

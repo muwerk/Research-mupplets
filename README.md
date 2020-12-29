@@ -31,9 +31,10 @@ Note: third-party libraries may be subject to different licensing conditions.
 
 | mupplet     | Function | Hardware | Dependencies | Platform | Home Assistant
 | ----------- | -------- | -------- | ------------ | -------- | --------------
-| airqual.h   | Air quality sensor CO<sub>2</sub>, VOC | [CCS811](https://www.sparkfun.com/products/14193) | [SparkFun CCS811 Arduino Library](https://github.com/sparkfun/SparkFun_CCS811_Arduino_Library) | ESP, ESP32 | yes
 | airq_bme280.h | Temperature, Humidity, Pressure | [Adafruit BM2680](https://www.adafruit.com/product/2652) | [Adafruit BME280 Library](https://github.com/adafruit/Adafruit_BME280_Library), [Adafruit unified sensor](https://github.com/adafruit/Adafruit_Sensor) | ESP, ESP32 | yes
 | airq_bme680.h | Air quality ("gas resistance"), Temperature, Humidity, Pressure | [Adafruit BME680](https://www.adafruit.com/product/3660) | [Adafruit BME680 Library](https://github.com/adafruit/Adafruit_BME680), [Adafruit unified sensor](https://github.com/adafruit/Adafruit_Sensor) | ESP, ESP32 | yes
+| airq_bsec_bme680.h | Air quality ("gas resistance"), Temperature, Humidity, Pressure | based on *proprietary* [BOSCH BSEC library](https://www.bosch-sensortec.com/software-tools/software/bsec/) | ESP, ESP32 | yes
+| airq_ccs811.h   | Air quality sensor CO<sub>2</sub>, VOC | [CCS811](https://www.sparkfun.com/products/14193) | [SparkFun CCS811 Arduino Library](https://github.com/sparkfun/SparkFun_CCS811_Arduino_Library) | ESP, ESP32 | yes
 | clock7seg.h | Simple 4 digit clock with timer | [4x 7segment display with HT16K33](https://www.adafruit.com/product/881) | [Adafruit GFX Library](https://github.com/adafruit/Adafruit-GFX-Library) [Adafruit LED Backpack Library](https://github.com/adafruit/Adafruit_LED_Backpack) | ESP
 | dhtxx.h     | Temperature, humidity sensor | DHT 11, DHT 21, DHT 22 | [DHT sensor library](https://github.com/adafruit/DHT-sensor-library), [Adafruit unified sensor](https://github.com/adafruit/Adafruit_Sensor) | ESP, ESP32 | yes
 | digital_out.h | GPIO output | switch external hardware via GPIO | | ESP, ESP32 | yes

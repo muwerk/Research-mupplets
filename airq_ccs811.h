@@ -1,4 +1,4 @@
-// airqual.h
+// airq_ccs811.h
 // adapted from:
 // https://github.com/sparkfun/SparkFun_CCS811_Arduino_Library/blob/master/examples/BasicReadings/BasicReadings.ino
 #pragma once
@@ -14,7 +14,7 @@
 #define SPARKFUN_CCS811_ADDR 0x5B
 
 namespace ustd {
-class AirQuality {
+class AirQualityCCS811 {
   public:
     String AIRQUALITY_VERSION = "0.1.0";
     Scheduler *pSched;
@@ -38,12 +38,13 @@ class AirQuality {
     HomeAssistant *pHA;
 #endif
 
-    AirQuality(String name, uint8_t i2caddr = SPARKFUN_CCS811_ADDR, String calibrationTopic = "")
+    AirQualityCCS811(String name, uint8_t i2caddr = SPARKFUN_CCS811_ADDR,
+                     String calibrationTopic = "")
         : name(name), i2caddr(i2caddr), calibrationTopic(calibrationTopic) {
         pAirQuality = new CCS811(i2caddr);
     }
 
-    ~AirQuality() {
+    ~AirQualityCCS811() {
     }
 
     double getCo2() {
@@ -259,6 +260,6 @@ class AirQuality {
             calibrate();
         }
     };
-};  // AirQuality
+};  // AirQualityCCS811
 
 }  // namespace ustd

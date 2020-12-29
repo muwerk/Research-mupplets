@@ -36,7 +36,7 @@ Note: third-party libraries may be subject to different licensing conditions.
 | airq_bsec_bme680.h | Air quality ("gas resistance"), Temperature, Humidity, Pressure | BME680 | based on *proprietary* [BSEC Software Library](https://github.com/BoschSensortec/BSEC-Arduino-library), see also [BOSCH BSEC library](https://www.bosch-sensortec.com/software-tools/software/bsec/) | ESP, ESP32 | yes
 | airq_ccs811.h   | Air quality sensor CO<sub>2</sub>, VOC | [CCS811](https://www.sparkfun.com/products/14193) | [SparkFun CCS811 Arduino Library](https://github.com/sparkfun/SparkFun_CCS811_Arduino_Library) | ESP, ESP32 | yes
 | clock7seg.h | Simple 4 digit clock with timer | [4x 7segment display with HT16K33](https://www.adafruit.com/product/881) | [Adafruit GFX Library](https://github.com/adafruit/Adafruit-GFX-Library) [Adafruit LED Backpack Library](https://github.com/adafruit/Adafruit_LED_Backpack) | ESP
-| dhtxx.h     | Temperature, humidity sensor | DHT 11, DHT 21, DHT 22 | [DHT sensor library](https://github.com/adafruit/DHT-sensor-library), [Adafruit unified sensor](https://github.com/adafruit/Adafruit_Sensor) | ESP, ESP32 | yes
+| temp_hum_dht.h     | Temperature, humidity sensor | DHT 11, DHT 21, DHT 22 | [DHT sensor library](https://github.com/adafruit/DHT-sensor-library), [Adafruit unified sensor](https://github.com/adafruit/Adafruit_Sensor) | ESP, ESP32 | yes
 | digital_out.h | GPIO output | switch external hardware via GPIO | | ESP, ESP32 | yes
 | i2c_pwm.h   | 16 channel PWM via I2C | [PCA9685 based I2C 16 channel board](https://www.adafruit.com/products/815) | https://github.com/adafruit/Adafruit-PWM-Servo-Driver-Library | ESP
 | ldr.h       | Illuminance | LDR connected to analog port | | ESP, ESP32 | yes
@@ -226,7 +226,7 @@ Hardware: 10kΩ, DHT22 sensor.
 ### Sample code
 
 ```cpp
-#include "dht.h"
+#include "temp_hum_dht.h"
 
 ustd::Scheduler sched(10,16,32);
 ustd::Dht dht("myDht",D4);

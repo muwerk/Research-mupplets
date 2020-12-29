@@ -2,7 +2,11 @@
 // adapted from:
 // https://github.com/BoschSensortec/BSEC-Arduino-library/tree/master/examples/basic
 
-// WARNING: CHECK PROPRIETARY LICENCE OF BOSCH LIBRARY!
+// WARNING: CHECK PROPRIETARY LICENSE OF BOSCH LIBRARY!
+// https://www.bosch-sensortec.com/media/boschsensortec/downloads/bsec/2017-07-17_clickthrough_license_terms_environmentalib_sw_clean.pdf
+
+// Note: mupplet airq_bme680.h works without proprietary binary blobs and is based
+// on Adafruit's implementation.
 
 #pragma once
 
@@ -11,27 +15,19 @@
 #include "sensors.h"
 
 //#include <Wire.h>
-#include "bsec.h"  // taints license.
+#include "bsec.h"  // taints license!
 
 #include "home_assistant.h"
-/*
-    output += ", " + String(iaqSensor.rawTemperature);
-    output += ", " + String(iaqSensor.pressure);
-    output += ", " + String(iaqSensor.rawHumidity);
-    output += ", " + String(iaqSensor.gasResistance);
-    output += ", " + String(iaqSensor.iaq);
-    output += ", " + String(iaqSensor.iaqAccuracy);
-    output += ", " + String(iaqSensor.temperature);
-    output += ", " + String(iaqSensor.humidity);
-    output += ", " + String(iaqSensor.staticIaq);
-    output += ", " + String(iaqSensor.co2Equivalent);
-    output += ", " + String(iaqSensor.breathVocEquivalent);
-    */
 
 namespace ustd {
 
 class AirQualityBsecBme680 {
   public:
+    /*! Mupplet for BME680 AirQuality measurement using BOSCH's proprietary BSEC libraries
+     *
+     * The Mupplet publishes temperature, humidity, pressure, co2(-equivalent), voc(-equivalent)
+     * and an air-quality index iaq (0[good]..500[bad])
+     */
     String AIRQUALITY_VERSION = "0.1.0";
     Scheduler *pSched;
     int tID;
@@ -63,6 +59,11 @@ class AirQualityBsecBme680 {
 
     AirQualityBsecBme680(String name, uint8_t i2cAddress = BME680_I2C_ADDR_PRIMARY)
         : name(name), i2caddr(i2cAddress) {
+        /*! Instantiate a BME680-sensor with BOSCH BSEC libraries.
+         *
+         * @param name Mupplet name
+         * @param i2cAddress i2c-Address (usually 0x76 or 0x77)
+         */
         pAirQuality = new Bsec();
     }
 
@@ -208,7 +209,7 @@ class AirQualityBsecBme680 {
         pHA->addSensor("pressure", "Pressure", "hPa", "pressure", "mdi:altimeter");
         pHA->addSensor("co2", "CO2", "ppm", "None", "mdi:air-filter");
         pHA->addSensor("voc", "VOC", "ppb", "None", "mdi:air-filter");
-        pHA->addSensor("iaq", "iaq", "0-500", "None", "mdi:air-filter");
+        pHA->addSensor("iaq", "iaq", "[0-500]", "None", "mdi:air-filter");
         pHA->begin(pSched);
     }
 #endif

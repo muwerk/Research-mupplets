@@ -11,7 +11,7 @@
 #include <home_assistant.h>
 
 namespace ustd {
-class MCP9808 {
+class TemperatureMCP9808 {
   public:
     /*! High precision temperature measurement with MCP9808
      */
@@ -19,7 +19,7 @@ class MCP9808 {
     Scheduler *pSched;
     int tID;
     String name;
-    uint8_t i2c_port;
+    uint8_t i2cAddress;
     uint8_t resolution;
     double temperatureSensorVal;
     bool bActive = false;
@@ -30,11 +30,11 @@ class MCP9808 {
     HomeAssistant *pHA;
 #endif
 
-    MCP9808(String name, uint8_t i2c_port = 0x18, uint8_t resolution = 3)
-        : name(name), i2c_port(i2c_port), resolution(resolution) {
+    TemperatureMCP9808(String name, uint8_t i2cAddress = 0x18, uint8_t resolution = 3)
+        : name(name), i2cAddress(i2cAddress), resolution(resolution) {
         /*! Instantiate an Interval Motor
          * @param name              The name of the entity
-         * @param i2c_port i2c_address of sensor. Default is 0x18, for Adafruit's sensor, address
+         * @param i2cAddress I2C-address of sensor. Default is 0x18, for Adafruit's sensor, address
          * can be configured:
          *  A2 A1 A0 address
          *  0  0  0   0x18  [default]
@@ -55,7 +55,7 @@ class MCP9808 {
         pTemp = new Adafruit_MCP9808();
     }
 
-    ~MCP9808() {
+    ~TemperatureMCP9808() {
     }
 
     double getTemperature() {
@@ -70,7 +70,7 @@ class MCP9808 {
         pSched = _pSched;
 
         Wire.begin();
-        if (pTemp->begin(i2c_addr)) {
+        if (pTemp->begin(i2cAddress)) {
             bActive = true;
             errmsg = "OK";
         } else {
@@ -108,10 +108,10 @@ class MCP9808 {
             pTemp->wake();
             double t = pTemp->readTempC();
             if (temperatureSensor.filter(&t)) {
-                temperaturSensorVal = t;
+                temperatureSensorVal = t;
                 publishTemperature();
             }
-            tempsensor.shutdown_wake(1);
+            pTemp->shutdown_wake(1);
         } else {
             pSched->publish(name + "/sensor/result", errmsg);
         }

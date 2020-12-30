@@ -16,11 +16,13 @@
 namespace ustd {
 class AirQualityBme280 {
   public:
+    enum SampleMode { FAST, MEDIUM, LONGTERM };
     String AIRQUALITY_VERSION = "0.1.0";
     Scheduler *pSched;
     int tID;
     String name;
     uint8_t i2c_addr;
+    uint8_t sampleMode;
     // uint8_t i2caddr;
     double temperatureVal = 0.0, humidityVal = 0.0, pressureVal = 0.0;
     time_t startTime = 0;
@@ -39,13 +41,67 @@ class AirQualityBme280 {
     HomeAssistant *pHA;
 #endif
 
-    AirQualityBme280(String name,
-                     uint i2c_addr = BME280_ADDRESS)  // i2c_addr: usually 0x77 or 0x76
-        : name(name), i2c_addr(i2c_addr) {
+    AirQualityBme280(String name, uint8_t i2c_addr = BME280_ADDRESS,
+                     uint8_t sampleMode = SampleMode::LONGTERM)  // i2c_addr: usually 0x77 or 0x76
+        : name(name), i2c_addr(i2c_addr), sampleMode(sampleMode) {
         pAirQuality = new Adafruit_BME280();  // seems to be on i2c port 0x77 always
+        setSampleMode(sampleMode, true);
     }
 
     ~AirQualityBme280() {
+    }
+
+    void setSampleMode(uint8_t mode, bool silent = false) {
+        switch (mode) {
+        case SampleMode::FAST:  // Fast
+            sampleMode = SampleMode::FAST;
+            temperature.smoothInterval = 1;
+            temperature.pollTimeSec = 15;
+            temperature.eps = 0.1;
+            temperature.reset();
+            humidity.smoothInterval = 1;
+            humidity.pollTimeSec = 15;
+            humidity.eps = 0.1;
+            humidity.reset();
+            pressure.smoothInterval = 1;
+            pressure.pollTimeSec = 15;
+            pressure.eps = 0.01;
+            pressure.reset();
+            break;
+        case SampleMode::MEDIUM:  // Medium
+            sampleMode = SampleMode::MEDIUM;
+            temperature.smoothInterval = 4;
+            temperature.pollTimeSec = 180;
+            temperature.eps = 0.2;
+            temperature.reset();
+            humidity.smoothInterval = 4;
+            humidity.pollTimeSec = 180;
+            humidity.eps = 0.5;
+            humidity.reset();
+            pressure.smoothInterval = 8;
+            pressure.pollTimeSec = 180;
+            pressure.eps = 0.1;
+            pressure.reset();
+            break;
+        case SampleMode::LONGTERM:
+        default:  // long-term
+            sampleMode = SampleMode::LONGTERM;
+            temperature.smoothInterval = 16;
+            temperature.pollTimeSec = 600;
+            temperature.eps = 0.5;
+            temperature.reset();
+            humidity.smoothInterval = 16;
+            humidity.pollTimeSec = 600;
+            humidity.eps = 0.5;
+            humidity.reset();
+            pressure.smoothInterval = 16;
+            pressure.pollTimeSec = 600;
+            pressure.eps = 1.0;
+            pressure.reset();
+            break;
+        }
+        if (!silent)
+            publishSampleMode();
     }
 
     double getTemperature() {
@@ -136,6 +192,23 @@ class AirQualityBme280 {
         }
     }
 
+    void publishSampleMode() {
+        switch (sampleMode) {
+        case SampleMode::FAST:
+            pSched->publish(name + "/sensor/mode", "FAST");
+            break;
+        case SampleMode::MEDIUM:
+            pSched->publish(name + "/sensor/mode", "MEDIUM");
+            break;
+        case SampleMode::LONGTERM:
+            pSched->publish(name + "/sensor/mode", "LONGTERM");
+            break;
+        default:
+            pSched->publish(name + "/sensor/mode", "ERROR");
+            break;
+        }
+    }
+
     void loop() {
 #ifdef USE_SERIAL_DBG
         Serial.println("BME280 enter loop");
@@ -199,6 +272,20 @@ class AirQualityBme280 {
         }
         if (topic == name + "/sensor/pressure/get") {
             publishPressure();
+        }
+        if (topic == name + "/sensor/mode/get") {
+            publishSampleMode();
+        }
+        if (topic == name + "/sensor/mode/set") {
+            if (msg == "fast" || msg == "FAST") {
+                setSampleMode(SampleMode::FAST);
+            } else {
+                if (msg == "medium" || msg == "MEDIUM") {
+                    setSampleMode(SampleMode::MEDIUM);
+                } else {
+                    setSampleMode(SampleMode::LONGTERM);
+                }
+            }
         }
     };
 };  // AirQuality

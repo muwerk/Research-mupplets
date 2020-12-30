@@ -18,7 +18,7 @@ class Dht {
     uint8_t type;
     double temperatureSensorVal;
     double humiditySensorVal;
-    ustd::sensorprocessor temperatureSensor = ustd::sensorprocessor(4, 30, 0.05);
+    ustd::sensorprocessor temperatureSensor = ustd::sensorprocessor(12, 600, 0.025);
     ustd::sensorprocessor humiditySensor = ustd::sensorprocessor(4, 600, 1.0);
     DHT *pDht;
 #ifdef __ESP__

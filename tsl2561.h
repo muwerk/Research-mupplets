@@ -18,7 +18,7 @@ class Illuminance {
     double luxvalue = 0.0;
     double unitIlluminanceValue = 0.0;
     double maxLux = 800.0;
-    ustd::sensorprocessor illuminanceSensor = ustd::sensorprocessor(4, 600, 5.0);
+    ustd::sensorprocessor illuminanceSensor = ustd::sensorprocessor(10, 600, 5.0);
 
     Adafruit_TSL2561_Unified *pTsl;
     bool bActive = false;
@@ -30,7 +30,7 @@ class Illuminance {
     HomeAssistant *pHA;
 #endif
 
-    Illuminance(String _name, uint8_t _port, String _gain = "16x", String _speed = "fast",
+    Illuminance(String _name, uint8_t _port, String _gain = "16x", String _speed = "medium",
                 double _amp = 1.0) {
         name = _name;
         port = _port;
@@ -160,7 +160,7 @@ class Illuminance {
             // this.loop():
             /* std::function<void()> */
             auto ft = [=]() { this->loop(); };
-            tID = pSched->add(ft, name, 300000);
+            tID = pSched->add(ft, name, 1000000);
 
             /* std::function<void(String, String, String)> */
             auto fnall = [=](String topic, String msg, String originator) {

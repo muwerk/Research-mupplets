@@ -24,7 +24,7 @@ class TemperatureMCP9808 {
     double temperatureSensorVal;
     bool bActive = false;
     String errmsg;
-    ustd::sensorprocessor temperatureSensor = ustd::sensorprocessor(1, 30, 0.01);
+    ustd::sensorprocessor temperatureSensor = ustd::sensorprocessor(6, 300, 0.01);
     Adafruit_MCP9808 *pTemp;
 #ifdef __ESP__
     HomeAssistant *pHA;

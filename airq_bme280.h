@@ -168,7 +168,7 @@ class AirQualityBme280 {
     void publishTemperature() {
         if (bActive && !bStartup) {
             char buf[32];
-            sprintf(buf, "%5.1f", temperatureVal);
+            sprintf(buf, "%6.2f", temperatureVal);
             pSched->publish(name + "/sensor/result", "OK");
             pSched->publish(name + "/sensor/temperature", buf);
         }
@@ -177,7 +177,7 @@ class AirQualityBme280 {
     void publishHumidity() {
         if (bActive && !bStartup) {
             char buf[32];
-            sprintf(buf, "%5.1f", humidityVal);
+            sprintf(buf, "%6.2f", humidityVal);
             pSched->publish(name + "/sensor/result", "OK");
             pSched->publish(name + "/sensor/humidity", buf);
         }
@@ -186,7 +186,7 @@ class AirQualityBme280 {
     void publishPressure() {
         if (bActive && !bStartup) {
             char buf[32];
-            sprintf(buf, "%5.1f", pressureVal);
+            sprintf(buf, "%6.2f", pressureVal);
             pSched->publish(name + "/sensor/result", "OK");
             pSched->publish(name + "/sensor/pressure", buf);
         }

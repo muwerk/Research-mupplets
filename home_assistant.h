@@ -307,6 +307,11 @@ class HomeAssistant {
                             "\"state_on\":\"on\"," + "\"state_off\":\"off\"," +
                             "\"pl_on\":\"on\"," + "\"pl_off\":\"off\"," + "\"icon\":\"" +
                             switch_iconNames[i] + "\"";
+                        if (willTopic != "") {
+                            HAdiscoEntityDef += ",\"avty_t\":\"" + willTopic + "\"";
+                            HAdiscoEntityDef += ",\"pl_avail\":\"connected\"";
+                            HAdiscoEntityDef += ",\"pl_not_avail\":\"" + willMessage + "\"";
+                        }
                         HAdiscoEntityDef =
                             HAdiscoEntityDef + ",\"device\":{" + "\"identifiers\":[\"" +
                             macAddress + "-" + devName + "\",\"" + macAddress + "-" + devName +
@@ -314,11 +319,6 @@ class HomeAssistant {
                             "\"name\":\"" + capHostName + "\"," + "\"manufacturer\":\"muWerk\"," +
                             "\"connections\":[[\"IP\",\"" + ipAddress + "\"]," + "[\"Host\",\"" +
                             hostName + "\"]]}";
-                        if (willTopic != "") {
-                            HAdiscoEntityDef += ",\"avty_t\":\"" + willTopic + "\"";
-                            HAdiscoEntityDef += ",\"pl_avail\":\"connected\"";
-                            HAdiscoEntityDef += ",\"pl_not_avail\":\"" + willMessage + "\"";
-                        }
                         HAdiscoEntityDef += "}";
                         switchesAttribs.add(HAattrTopic);
                         pSched->publish(HAdiscoTopic, HAdiscoEntityDef);

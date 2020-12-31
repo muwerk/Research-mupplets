@@ -27,6 +27,10 @@ class HomeAssistant {
     String swVersion;
     String muProject;
     long rssiVal = -99;
+    String HAmuPrefix = "";
+    String HAcmd = "";
+    String willTopic = "";
+    String willMessage = "";
 
     ustd::array<String> sensor_topic_sub_names;
     ustd::array<String> sensor_friendlyNames;
@@ -78,6 +82,7 @@ class HomeAssistant {
         if (macAddress == "")
             macAddress = WiFi.macAddress();
         pSched->subscribe(tID, "mqtt/state", fnmq);
+        pSched->subscribe(tID, "mqtt/config", fnmq);
         pSched->subscribe(tID, "net/network", fnmq);
         pSched->subscribe(tID, "net/rssi", fnmq);
         pSched->publish("mqtt/state/get");
@@ -163,38 +168,50 @@ class HomeAssistant {
                 String c2 = hostName.substring(1);
                 capHostName = c1 + c2;
             }
-        } else if (topic == "mqtt/state") {
+        } else if (topic == "mqtt/config") {
             if (useHA) {
-                String HAmuPrefix = "";
+                HAmuPrefix = "";
                 char cmsg[180];
                 char *p1 = nullptr;
-                memset(cmsg, 0,
-                       180);  // msg is format:   [dis]connected,prefix/hostname
+                char *p2 = nullptr;
+                memset(cmsg, 0, 180);  // msg is format:   [dis]connected,prefix/hostname
                 strncpy(cmsg, msg.c_str(), 179);
-                p1 = strchr(cmsg, ',');
+                p1 = strchr(cmsg, '+');
                 if (p1) {
                     *p1 = 0;
                     ++p1;
+                    HAmuPrefix = cmsg;
+                    p2 = strchr(p1, '+');
+                    if (p2) {
+                        *p2 = 0;
+                        ++p2;
+                        willTopic = p1;
+                        willMessage = p2;
+                    }
+                } else {
+                    HAmuPrefix = cmsg;
                 }
-                if (p1)
-                    HAmuPrefix = p1;  // prefix/hostname, e.g. omu/myhost
+                // if (p1)
+                //    HAmuPrefix = p1;  // prefix/hostname, e.g. omu/myhost
                 char cmd[64];
                 memset(cmd, 0, 64);
                 strncpy(cmd, HAmuPrefix.c_str(), 63);
-                String HAcmd = "";
+                HAcmd = "";
                 char *p0 = strchr(cmd, '/');  // get hostname from mqtt message, e.g. myhost
                 if (p0) {
                     ++p0;
                     HAcmd = String(p0);
                 }
-                if (!strcmp(cmsg, "connected")) {
-                    if (p1)
-                        HAmuPrefix = p1;
+            }
+        } else if (topic == "mqtt/state") {
+            if (useHA) {
+                if (msg == "connected") {
+                    // if (p1)
+                    //    HAmuPrefix = p1;
                     String HAnameNS = HAname;
                     HAnameNS.replace(" ", "_");
                     if (macAddress == "")
                         macAddress = WiFi.macAddress();
-
                     for (unsigned int i = 0; i < sensor_topic_sub_names.length(); i++) {
                         String subDevNo = String(i + 1);
                         String HAstateTopic =
@@ -211,6 +228,11 @@ class HomeAssistant {
                             "\"val_tpl\":\"{{ value | float }}\"," + "\"unit_of_meas\":\"" +
                             sensor_unitDescs[i] + "\"," + "\"expire_after\": 1800," +
                             "\"icon\":\"" + sensor_iconNames[i] + "\"";
+                        if (willTopic != "") {
+                            HAdiscoEntityDef += ",\"avty_t\":\"" + willTopic + "\"";
+                            HAdiscoEntityDef += ",\"pl_avail\":\"connected\"";
+                            HAdiscoEntityDef += ",\"pl_not_avail\":\"" + willMessage + "\"";
+                        }
                         if (sensor_classNames[i] != "None") {
                             HAdiscoEntityDef +=
                                 ",\"device_class\":\"" + sensor_classNames[i] + "\"";
@@ -251,6 +273,11 @@ class HomeAssistant {
                             "\"on_cmd_type\":\"brightness\"," + "\"pl_on\":\"on\"," +
                             "\"pl_off\":\"off\"";
                         //"\"icon\":\""+light_iconNames[i]+"\"";
+                        if (willTopic != "") {
+                            HAdiscoEntityDef += ",\"avty_t\":\"" + willTopic + "\"";
+                            HAdiscoEntityDef += ",\"pl_avail\":\"connected\"";
+                            HAdiscoEntityDef += ",\"pl_not_avail\":\"" + willMessage + "\"";
+                        }
                         HAdiscoEntityDef =
                             HAdiscoEntityDef + ",\"device\":{" + "\"identifiers\":[\"" +
                             macAddress + "-" + devName + "\",\"" + macAddress + "-" + devName +
@@ -287,6 +314,11 @@ class HomeAssistant {
                             "\"name\":\"" + capHostName + "\"," + "\"manufacturer\":\"muWerk\"," +
                             "\"connections\":[[\"IP\",\"" + ipAddress + "\"]," + "[\"Host\",\"" +
                             hostName + "\"]]}";
+                        if (willTopic != "") {
+                            HAdiscoEntityDef += ",\"avty_t\":\"" + willTopic + "\"";
+                            HAdiscoEntityDef += ",\"pl_avail\":\"connected\"";
+                            HAdiscoEntityDef += ",\"pl_not_avail\":\"" + willMessage + "\"";
+                        }
                         HAdiscoEntityDef += "}";
                         switchesAttribs.add(HAattrTopic);
                         pSched->publish(HAdiscoTopic, HAdiscoEntityDef);

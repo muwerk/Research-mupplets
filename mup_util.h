@@ -60,14 +60,24 @@ bool fsBeginDone = false;
 
 bool writeJson(String filename, JSONVar jsonobj) {
     if (!fsBeginDone) {
-#ifdef __USE_OLD_FS__
-        SPIFFS.begin();
+#ifdef __USE_SPIFFS_FS__
+        if (!SPIFFS.begin(false)) {
+#ifdef USE_SERIAL_DBG
+            Serial.println("SPIFFS.begin() failed.");
+#endif
+            return false;
+        }
 #else
-        LittleFS.begin();
+        if (!LittleFS.begin()) {
+#ifdef USE_SERIAL_DBG
+            Serial.println("LittleFS.begin() failed.");
+#endif
+            return false;
+        }
 #endif
         fsBeginDone = true;
     }
-#ifdef __USE_OLD_FS__
+#ifdef __USE_SPIFFS_FS__
     fs::File f = SPIFFS.open(filename, "w");
 #else
     fs::File f = LittleFS.open(filename, "w");
@@ -83,18 +93,28 @@ bool writeJson(String filename, JSONVar jsonobj) {
 
 bool readJson(String filename, String &content) {
     if (!fsBeginDone) {
-#ifdef __USE_OLD_FS__
-        SPIFFS.begin();
+#ifdef __USE_SPIFFS_FS__
+        if (!SPIFFS.begin(false)) {
+#ifdef USE_SERIAL_DBG
+            Serial.println("SPIFFS.begin() failed.");
+#endif
+            return false;
+        }
 #else
-        LittleFS.begin();
+        if (!LittleFS.begin()) {
+#ifdef USE_SERIAL_DBG
+            Serial.println("LittleFS.begin() failed.");
+#endif
+            return false;
+        }
 #endif
         fsBeginDone = true;
     }
     content = "";
-#ifdef __USE_OLD_FS__
-    fs::File f = SPIFFS.open(filename, "w");
+#ifdef __USE_SPIFFS_FS__
+    fs::File f = SPIFFS.open(filename, "r");
 #else
-    fs::File f = LittleFS.open(filename, "w");
+    fs::File f = LittleFS.open(filename, "r");
 #endif
     if (!f) {
         return false;

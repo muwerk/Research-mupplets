@@ -103,13 +103,24 @@ class NeoCandle {
             else
                 m1 = (m1 + m2) / 2.0;
         }
+        if (m1 == 0) {
+            if (state) {
+                state = false;
+                publishState();
+            }
+        } else {
+            if (!state) {
+                state = true;
+                publishState();
+            }
+        }
         return m1;
     }
 
     void begin(Scheduler *_pSched) {
         // Make sure _clientName is Unique! Otherwise MQTT server will
         // rapidly disconnect.
-        //char buf[32];
+        // char buf[32];
         pSched = _pSched;
 
         pPixels = new Adafruit_NeoPixel(numPixels, pin, options);
@@ -136,7 +147,7 @@ class NeoCandle {
     }
 
     void publishState() {
-        if (unitBrightness > 0.0) {
+        if (state) {
             pSched->publish(name + "/light/state", "on");
             this->state = true;
         } else {
@@ -156,14 +167,13 @@ class NeoCandle {
             bright = 1.0;
         unitBrightness = bright;
         bUnitBrightness = true;
-        if (bright>0.0) {
+        if (bright > 0.0) {
             manualSet = time(nullptr);
         } else {
             manualSet = 0;
         }
         publishState();
     }
-
 
     int f1 = 0, f2 = 0, max_b = 20;
     void butterlamp() {
@@ -246,6 +256,18 @@ class NeoCandle {
                 cr = ((double)cr * mx);
                 cg = ((double)cg * mx);
                 cb = ((double)cb * mx);
+            } else {
+                if (unitBrightness > 0) {
+                    if (!state) {
+                        state = true;
+                        publishState();
+                    }
+                } else {
+                    if (state) {
+                        state = false;
+                        publishState();
+                    }
+                }
             }
             pPixels->setPixelColor(i, pPixels->Color(cr, cg, cb));
         }

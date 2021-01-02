@@ -476,7 +476,7 @@ class Switch {
             setDebounce(dbt);
         }
         if (topic == "mqtt/state") {
-            if (mode == "default" || mode == "flipflop") {
+            if (mode == Mode::Default || mode == Mode::Flipflop) {
                 if (msg == "connected") {
                     publishLogicalState(logicalState);
                 }

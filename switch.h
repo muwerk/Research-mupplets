@@ -193,6 +193,7 @@ class Switch {
             this->subsMsg(topic, msg, originator);
         };
         pSched->subscribe(tID, name + "/switch/#", fnall);
+        pSched->subscribe(tID, "mqtt/state", fnall);
     }
 
 #ifdef __ESP__
@@ -473,6 +474,13 @@ class Switch {
         if (topic == name + "/switch/debounce/set") {
             long dbt = atol(msg.c_str());
             setDebounce(dbt);
+        }
+        if (topic == "mqtt/state") {
+            if (mode == "default" || mode == "flipflop") {
+                if (msg == "connected") {
+                    publishLogicalState(logicalState);
+                }
+            }
         }
     };
 };  // Switch

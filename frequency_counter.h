@@ -158,7 +158,7 @@ class FrequencyCounter {
                                String homeAssistantDiscoveryPrefix = "homeassistant") {
         pHA = new HomeAssistant(name, tID, homeAssistantFriendlyName, projectName,
                                 FREQUENCY_COUNTER_VERSION, homeAssistantDiscoveryPrefix);
-        pHA->addSensor("frequency", "Frequency", "Hz", "", "mdi:gauge");
+        pHA->addSensor("frequency", "Frequency", "Hz", "None", "mdi:gauge");
         pHA->begin(pSched);
         publish();
     }

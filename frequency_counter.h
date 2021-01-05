@@ -154,11 +154,11 @@ class FrequencyCounter {
     }
 
 #ifdef __ESP__
-    void registerHomeAssistant(String homeAssistantFriendlyName, String projectName = "",
+    void registerHomeAssistant(String homeAssistantFriendlyName, String projectName = "", icon="mdi:gauge",
                                String homeAssistantDiscoveryPrefix = "homeassistant") {
         pHA = new HomeAssistant(name, tID, homeAssistantFriendlyName, projectName,
                                 FREQUENCY_COUNTER_VERSION, homeAssistantDiscoveryPrefix);
-        pHA->addSensor("frequency", "Frequency", "Hz", "None", "mdi:gauge");
+        pHA->addSensor("frequency", "Frequency", "Hz", "None", icon);
         pHA->begin(pSched);
         publish();
     }

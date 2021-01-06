@@ -31,7 +31,7 @@ class MotorInterval {
      * A security mechanism performs a hard emergency stop if the sensor switch
      * does not report any activity during a specified timeout.
      */
-    String MOTORINTERVAL_VERSION = "0.2.0";
+    String MOTORINTERVAL_VERSION = "0.3.0";
     Scheduler *pSched;
     int tID;
     String name;
@@ -55,7 +55,7 @@ class MotorInterval {
                   bool motorActiveLogic = false, bool sensorActiveLogic = false)
         : name(name), motorPort(motorPort), sensorPort(sensorPort), sensorTimeout(sensorTimeout),
           motorActiveLogic(motorActiveLogic), sensorActiveLogic(sensorActiveLogic),
-          intervalSensor(name + ".sensor", sensorPort, ustd::Switch::Mode::Default,
+          intervalSensor(name + ".sensor", sensorPort, ustd::Switch::Mode::Falling,
                          sensorActiveLogic) {
         /*! Instantiate an Interval Motor
          * @param name              The name of the entity
@@ -255,8 +255,8 @@ class MotorInterval {
     };
 
     void sensorMsg(String topic, String msg, String originator) {
-        if (topic == name + ".sensor/switch/state") {
-            if (msg == "off") {
+        if (originator != "mqtt" && topic == name + ".sensor/switch/state") {
+            if (msg == "trigger") {
                 lastTime = millis();
                 ++current_interval;
                 if (current_interval >= target_interval) {

@@ -97,8 +97,35 @@ double getResetpIrqFrequency(uint8_t irqno, unsigned long minDtUs = 50) {
 }
 
 class FrequencyCounter {
+    /*! Interrupt driven frequency counter.
+
+    On an ESP32, measurement of frequencies at a GPIO are possible in ranges of 0-250kHz.
+    There are six measurement modes:
+    LOWFREQUENCY_FAST (good for measurements <50Hz, not much filtering)
+    LOWFREQUENCY_MEDIUM (good for sub-Hertz enabled measurements, e.g. Geiger-counters)
+    LOWFREQUENCY_LONGTERM (good for <50Hz, little deviation, high precision)
+
+    The HIGHFREQUENCY modes automatically reset the filter, if the input signal drops to
+    0Hz.
+    HIGHFREQUENCY_FAST (no filtering)
+    HIGHFREQUENCY_MEDIUM (some filtering)
+    HIGHFREQUENCY_LONGTERM (string filtering, good for precision measurement of signals with little
+    deviation)
+
+    Precision <80kHz is better than 0.0005%. Interrupt load > 80kHz impacts the
+    performance of the ESP32 severely and error goes up to 2-5%.
+    */
+
   public:
     enum InterruptMode { IM_RISING, IM_FALLING, IM_CHANGE };
+    enum MeasureMode {
+        LOWFREQUENCY_FAST,
+        LOWFREQUENCY_MEDIUM,
+        LOWFREQUENCY_LONGTERM,
+        HIGHFREQUENCY_FAST,
+        HIGHFREQUENCY_MEDIUM,
+        HIGHFREQUENCY_LONGTERM
+    };
     String FREQUENCY_COUNTER_VERSION = "0.1.0";
     Scheduler *pSched;
     int tID;
@@ -107,9 +134,10 @@ class FrequencyCounter {
     uint8_t pin_input;
     uint8_t irqno_input;
     int8_t interruptIndex_input;
+    MeasureMode measureMode;
     InterruptMode irqMode;
-    bool detectZeroChange;
 
+    bool detectZeroChange = false;
     bool irqsAttached = false;
     ustd::sensorprocessor frequency = ustd::sensorprocessor(4, 600, 0.01);
     double inputFrequencyVal = 0.0;
@@ -122,16 +150,73 @@ class FrequencyCounter {
 #endif
 
     FrequencyCounter(String name, uint8_t pin_input, int8_t interruptIndex_input,
-                     InterruptMode irqMode = InterruptMode::IM_FALLING,
-                     bool detectZeroChange = true)
+                     MeasureMode measureMode = HIGHFREQUENCY_MEDIUM,
+                     InterruptMode irqMode = InterruptMode::IM_FALLING)
         : name(name), pin_input(pin_input), interruptIndex_input(interruptIndex_input),
-          irqMode(irqMode), detectZeroChange(detectZeroChange) {
+          measureMode(measureMode), irqMode(irqMode) {
+        setMeasureMode(measureMode, true);
     }
 
     ~FrequencyCounter() {
         if (irqsAttached) {
             detachInterrupt(irqno_input);
         }
+    }
+
+    void setMeasureMode(MeasureMode mode, bool silent = false) {
+        switch (mode) {
+        case LOWFREQUENCY_FAST:
+            detectZeroChange = false;
+            measureMode = LOWFREQUENCY_FAST;
+            frequency.smoothInterval = 4;
+            frequency.pollTimeSec = 15;
+            frequency.eps = 0.01;
+            frequency.reset();
+            break;
+        case LOWFREQUENCY_MEDIUM:
+            detectZeroChange = false;
+            measureMode = LOWFREQUENCY_MEDIUM;
+            frequency.smoothInterval = 12;
+            frequency.pollTimeSec = 120;
+            frequency.eps = 0.01;
+            frequency.reset();
+            break;
+        case LOWFREQUENCY_LONGTERM:
+            detectZeroChange = false;
+            measureMode = LOWFREQUENCY_LONGTERM;
+            frequency.smoothInterval = 60;
+            frequency.pollTimeSec = 600;
+            frequency.eps = 0.001;
+            frequency.reset();
+            break;
+        case HIGHFREQUENCY_FAST:
+            detectZeroChange = true;
+            measureMode = HIGHFREQUENCY_FAST;
+            frequency.smoothInterval = 1;
+            frequency.pollTimeSec = 15;
+            frequency.eps = 0.1;
+            frequency.reset();
+            break;
+        case HIGHFREQUENCY_MEDIUM:
+            detectZeroChange = true;
+            measureMode = HIGHFREQUENCY_MEDIUM;
+            frequency.smoothInterval = 10;
+            frequency.pollTimeSec = 120;
+            frequency.eps = 0.01;
+            frequency.reset();
+            break;
+        default:
+        case HIGHFREQUENCY_LONGTERM:
+            detectZeroChange = true;
+            measureMode = HIGHFREQUENCY_LONGTERM;
+            frequency.smoothInterval = 60;
+            frequency.pollTimeSec = 600;
+            frequency.eps = 0.001;
+            frequency.reset();
+            break;
+        }
+        if (!silent)
+            publishMeasureMode();
     }
 
     bool begin(Scheduler *_pSched) {
@@ -182,6 +267,29 @@ class FrequencyCounter {
     }
 #endif
 
+    void publishMeasureMode() {
+        switch (measureMode) {
+        case LOWFREQUENCY_FAST:
+            pSched->publish(name + "/sensor/mode", "LOWFREQUENCY_FAST");
+            break;
+        case LOWFREQUENCY_MEDIUM:
+            pSched->publish(name + "/sensor/mode", "LOWFREQUENCY_MEDIUM");
+            break;
+        case LOWFREQUENCY_LONGTERM:
+            pSched->publish(name + "/sensor/mode", "LOWFREQUENCY_LONGTERM");
+            break;
+        case HIGHFREQUENCY_FAST:
+            pSched->publish(name + "/sensor/mode", "HIGHFREQUENCY_FAST");
+            break;
+        case HIGHFREQUENCY_MEDIUM:
+            pSched->publish(name + "/sensor/mode", "HIGHFREQUENCY_MEDIUM");
+            break;
+        case HIGHFREQUENCY_LONGTERM:
+            pSched->publish(name + "/sensor/mode", "HIGHFREQUENCY_LONGTERM");
+            break;
+        }
+    }
+
     void publish_frequency() {
         char buf[32];
         sprintf(buf, "%9.1f", inputFrequencyVal);
@@ -216,6 +324,29 @@ class FrequencyCounter {
         }
         if (topic == name + "/sensor/frequency/get") {
             publish_frequency();
+        }
+        if (topic == name + "/sensor/mode/set") {
+            if (msg == "LOWFREQUENCY_FAST" || msg == "0") {
+                setMeasureMode(MeasureMode::LOWFREQUENCY_FAST);
+            }
+            if (msg == "LOWFREQUENCY_MEDIUM" || msg == "1") {
+                setMeasureMode(MeasureMode::LOWFREQUENCY_MEDIUM);
+            }
+            if (msg == "LOWFREQUENCY_LONGTERM" || msg == "2") {
+                setMeasureMode(MeasureMode::LOWFREQUENCY_LONGTERM);
+            }
+            if (msg == "HIGHFREQUENCY_FAST" || msg == "3") {
+                setMeasureMode(MeasureMode::HIGHFREQUENCY_FAST);
+            }
+            if (msg == "HIGHFREQUENCY_MEDIUM" || msg == "4") {
+                setMeasureMode(MeasureMode::HIGHFREQUENCY_MEDIUM);
+            }
+            if (msg == "HIGHFREQUENCY_LONGTERM" || msg == "5") {
+                setMeasureMode(MeasureMode::HIGHFREQUENCY_LONGTERM);
+            }
+        }
+        if (topic == name + "/sensor/mode/get") {
+            publishMeasureMode();
         }
     };
 };  // FrequencyCounter

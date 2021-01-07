@@ -16,14 +16,14 @@
 namespace ustd {
 class AirQualityBme280 {
   public:
-    enum SampleMode { FAST, MEDIUM, LONGTERM };
-    String AIRQUALITY_VERSION = "0.1.0";
+    enum FilterMode { FAST, MEDIUM, LONGTERM };
+    String AIRQUALITY_VERSION = "0.1.1";
     Scheduler *pSched;
     int tID;
     String name;
     uint8_t i2c_addr;
-    uint8_t sampleMode;
-    // uint8_t i2caddr;
+    FilterMode filterMode;
+
     double temperatureVal = 0.0, humidityVal = 0.0, pressureVal = 0.0;
     time_t startTime = 0;
     bool bStartup = false;
@@ -42,19 +42,19 @@ class AirQualityBme280 {
 #endif
 
     AirQualityBme280(String name, uint8_t i2c_addr = BME280_ADDRESS,
-                     uint8_t sampleMode = SampleMode::LONGTERM)  // i2c_addr: usually 0x77 or 0x76
-        : name(name), i2c_addr(i2c_addr), sampleMode(sampleMode) {
+                     uint8_t filterMode = LONGTERM)  // i2c_addr: usually 0x77 or 0x76
+        : name(name), i2c_addr(i2c_addr), filterMode(filterMode) {
         pAirQuality = new Adafruit_BME280();  // seems to be on i2c port 0x77 always
-        setSampleMode(sampleMode, true);
+        setFilterMode(filterMode, true);
     }
 
     ~AirQualityBme280() {
     }
 
-    void setSampleMode(uint8_t mode, bool silent = false) {
+    void setFilterMode(FilterMode mode, bool silent = false) {
         switch (mode) {
-        case SampleMode::FAST:  // Fast
-            sampleMode = SampleMode::FAST;
+        case FAST:
+            filterMode = FAST;
             temperature.smoothInterval = 1;
             temperature.pollTimeSec = 15;
             temperature.eps = 0.1;
@@ -68,8 +68,8 @@ class AirQualityBme280 {
             pressure.eps = 0.01;
             pressure.reset();
             break;
-        case SampleMode::MEDIUM:  // Medium
-            sampleMode = SampleMode::MEDIUM;
+        case MEDIUM:
+            filterMode = MEDIUM;
             temperature.smoothInterval = 4;
             temperature.pollTimeSec = 180;
             temperature.eps = 0.2;
@@ -83,9 +83,9 @@ class AirQualityBme280 {
             pressure.eps = 0.1;
             pressure.reset();
             break;
-        case SampleMode::LONGTERM:
-        default:  // long-term
-            sampleMode = SampleMode::LONGTERM;
+        case LONGTERM:
+        default:
+            filterMode = LONGTERM;
             temperature.smoothInterval = 16;
             temperature.pollTimeSec = 600;
             temperature.eps = 0.5;
@@ -101,7 +101,7 @@ class AirQualityBme280 {
             break;
         }
         if (!silent)
-            publishSampleMode();
+            publishFilterMode();
     }
 
     double getTemperature() {
@@ -192,15 +192,15 @@ class AirQualityBme280 {
         }
     }
 
-    void publishSampleMode() {
-        switch (sampleMode) {
-        case SampleMode::FAST:
+    void publishFilterMode() {
+        switch (filterMode) {
+        case FilterMode::FAST:
             pSched->publish(name + "/sensor/mode", "FAST");
             break;
-        case SampleMode::MEDIUM:
+        case FilterMode::MEDIUM:
             pSched->publish(name + "/sensor/mode", "MEDIUM");
             break;
-        case SampleMode::LONGTERM:
+        case FilterMode::LONGTERM:
             pSched->publish(name + "/sensor/mode", "LONGTERM");
             break;
         default:
@@ -274,16 +274,16 @@ class AirQualityBme280 {
             publishPressure();
         }
         if (topic == name + "/sensor/mode/get") {
-            publishSampleMode();
+            publishFilterMode();
         }
         if (topic == name + "/sensor/mode/set") {
             if (msg == "fast" || msg == "FAST") {
-                setSampleMode(SampleMode::FAST);
+                setFilterMode(FilterMode::FAST);
             } else {
                 if (msg == "medium" || msg == "MEDIUM") {
-                    setSampleMode(SampleMode::MEDIUM);
+                    setFilterMode(FilterMode::MEDIUM);
                 } else {
-                    setSampleMode(SampleMode::LONGTERM);
+                    setFilterMode(FilterMode::LONGTERM);
                 }
             }
         }

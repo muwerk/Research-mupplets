@@ -292,7 +292,7 @@ class FrequencyCounter {
 
     void publish_frequency() {
         char buf[32];
-        sprintf(buf, "%9.1f", inputFrequencyVal);
+        sprintf(buf, "%10.3", inputFrequencyVal);
         char *p1 = buf;
         while (*p1 == ' ')
             ++p1;

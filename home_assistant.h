@@ -146,11 +146,15 @@ class HomeAssistant {
 
     void mqMsg(String topic, String msg, String originator) {
         if (topic == "net/rssi") {
-            JSONVar mqttJsonMsg = JSON.parse(msg);
-            if (JSON.typeof(mqttJsonMsg) == "undefined") {
-                return;
+            if (msg[0] == "{") {
+                JSONVar mqttJsonMsg = JSON.parse(msg);
+                if (JSON.typeof(mqttJsonMsg) == "undefined") {
+                    return;
+                }
+                rssiVal = (long)mqttJsonMsg["rssi"];  // root["state"];
+            } else {
+                rssiVal = (long)msg.toInt();
             }
-            rssiVal = (long)mqttJsonMsg["rssi"];  // root["state"];
             publishAttribs();
         } else if (topic == "net/network") {
             JSONVar mqttJsonMsg = JSON.parse(msg);

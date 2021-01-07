@@ -140,6 +140,21 @@ class IlluminanceTsl2561 {
         return val;
     }
 
+    double setMaxLux(double newMaxLux) {
+        /*! setMaxLux defines the maximum lux value used to calculate unitIlluminance. For all
+        values of lux>=maxLux, unitIlluminance is 1.0
+
+        @param newMaxLux New limit for lux value, all values above generate unitIlluminance of 1.0
+        @returns Bounds checked value for maxLux.
+        */
+        maxLux = newMaxLux;
+        if (maxLux < 10.0)
+            maxLux = 10.0;
+        if (maxLux > 100000.0)
+            maxLux = 100000.0;
+        return maxLux;
+    }
+
     double getLux() {
         return luxvalue;
     }
@@ -280,11 +295,8 @@ class IlluminanceTsl2561 {
             publishIlluminance();
         }
         if (topic == name + "/sensor/maxlux/set") {
-            maxLux = msg.toFloat();
-            if (maxLux < 10.0)
-                maxLux = 10.0;
-            if (maxLux > 100000.0)
-                maxLux = 100000.0;
+            double tmpMaxLux = msg.toFloat();
+            setMaxLux(tmpMaxLux);
         }
         if (topic == name + "/sensor/maxlux/get") {
             publishMaxLux();

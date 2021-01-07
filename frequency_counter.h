@@ -77,15 +77,16 @@ unsigned long getResetpIrqCount(uint8_t irqno) {
     return count;
 }
 
+double frequencyMultiplicator = 1000000.0;
 double getResetpIrqFrequency(uint8_t irqno, unsigned long minDtUs = 50) {
     double frequency = 0.0;
     noInterrupts();
     if (irqno < USTD_MAX_PIRQS) {
         unsigned long count = pirqcounter[irqno];
         unsigned long dt = timeDiff(pbeginIrqTimer[irqno], plastIrqTimer[irqno]);
-        if (dt > minDtUs) {                       // Ignore small Irq flukes
-            frequency = (count * 500000.0) / dt;  // = count/2.0*1000.0000 uS / dt; no.
-                                                  // of waves (count/2) / dt.
+        if (dt > minDtUs) {                                     // Ignore small Irq flukes
+            frequency = (count * frequencyMultiplicator) / dt;  // = count/2.0*1000.0000 uS / dt;
+                                                                // no. of waves (count/2) / dt.
         }
         pbeginIrqTimer[irqno] = 0;
         pirqcounter[irqno] = 0;
@@ -97,16 +98,20 @@ double getResetpIrqFrequency(uint8_t irqno, unsigned long minDtUs = 50) {
 
 class FrequencyCounter {
   public:
+    enum InterruptMode { IM_RISING, IM_FALLING, IM_CHANGE };
     String FREQUENCY_COUNTER_VERSION = "0.1.0";
     Scheduler *pSched;
     int tID;
 
     String name;
-    bool irqsAttached = false;
     uint8_t pin_input;
     uint8_t irqno_input;
     int8_t interruptIndex_input;
-    ustd::sensorprocessor frequency = ustd::sensorprocessor(30, 600, 0.1);
+    InterruptMode irqMode;
+    bool detectZeroChange;
+
+    bool irqsAttached = false;
+    ustd::sensorprocessor frequency = ustd::sensorprocessor(4, 600, 0.01);
     double inputFrequencyVal = 0.0;
 
     double frequencyRenormalisation = 1.0;
@@ -116,8 +121,11 @@ class FrequencyCounter {
     HomeAssistant *pHA;
 #endif
 
-    FrequencyCounter(String name, uint8_t pin_input, int8_t interruptIndex_input)
-        : name(name), pin_input(pin_input), interruptIndex_input(interruptIndex_input) {
+    FrequencyCounter(String name, uint8_t pin_input, int8_t interruptIndex_input,
+                     InterruptMode irqMode = InterruptMode::IM_FALLING,
+                     bool detectZeroChange = true)
+        : name(name), pin_input(pin_input), interruptIndex_input(interruptIndex_input),
+          irqMode(irqMode), detectZeroChange(detectZeroChange) {
     }
 
     ~FrequencyCounter() {
@@ -132,12 +140,21 @@ class FrequencyCounter {
         pinMode(pin_input, INPUT_PULLUP);
 
         if (interruptIndex_input >= 0 && interruptIndex_input < USTD_MAX_PIRQS) {
-#ifdef __ESP32__
             irqno_input = digitalPinToInterrupt(pin_input);
-#else
-            irqno_input = digitalPinToInterrupt(pin_input);
-#endif
-            attachInterrupt(irqno_input, ustd_pirq_table[interruptIndex_input], CHANGE);
+            switch (irqMode) {
+            case IM_FALLING:
+                attachInterrupt(irqno_input, ustd_pirq_table[interruptIndex_input], FALLING);
+                frequencyMultiplicator = 1000000.0;
+                break;
+            case IM_RISING:
+                attachInterrupt(irqno_input, ustd_pirq_table[interruptIndex_input], RISING);
+                frequencyMultiplicator = 1000000.0;
+                break;
+            case IM_CHANGE:
+                attachInterrupt(irqno_input, ustd_pirq_table[interruptIndex_input], CHANGE);
+                frequencyMultiplicator = 500000.0;
+                break;
+            }
             irqsAttached = true;
         } else {
             return false;
@@ -154,7 +171,8 @@ class FrequencyCounter {
     }
 
 #ifdef __ESP__
-    void registerHomeAssistant(String homeAssistantFriendlyName, String projectName = "", String icon="mdi:gauge",
+    void registerHomeAssistant(String homeAssistantFriendlyName, String projectName = "",
+                               String icon = "mdi:gauge",
                                String homeAssistantDiscoveryPrefix = "homeassistant") {
         pHA = new HomeAssistant(name, tID, homeAssistantFriendlyName, projectName,
                                 FREQUENCY_COUNTER_VERSION, homeAssistantDiscoveryPrefix);
@@ -178,11 +196,12 @@ class FrequencyCounter {
     }
 
     void loop() {
-        double freq = getResetpIrqFrequency(interruptIndex_input, 50) * frequencyRenormalisation;
-        /* XXX timer for freq=0 > 5sec needed.
-                if ((frequency.lastVal == 0.0 && freq > 0.0) || (frequency.lastVal > 0.0 && freq ==
-           0.0)) frequency.reset();
-        */
+        double freq = getResetpIrqFrequency(interruptIndex_input, 0) * frequencyRenormalisation;
+        if (detectZeroChange) {
+            if ((frequency.lastVal == 0.0 && freq > 0.0) ||
+                (frequency.lastVal > 0.0 && freq == 0.0))
+                frequency.reset();
+        }
         if (freq >= 0.0 && freq < 1000000.0) {
             if (frequency.filter(&freq)) {
                 inputFrequencyVal = freq;

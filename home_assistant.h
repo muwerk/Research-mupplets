@@ -146,7 +146,7 @@ class HomeAssistant {
 
     void mqMsg(String topic, String msg, String originator) {
         if (topic == "net/rssi") {
-            if (msg[0] == "{") {
+            if (msg[0] == '{') {
                 JSONVar mqttJsonMsg = JSON.parse(msg);
                 if (JSON.typeof(mqttJsonMsg) == "undefined") {
                     return;

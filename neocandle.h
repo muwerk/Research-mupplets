@@ -137,18 +137,18 @@ class NeoCandle {
         return false;
     }
 
-    static bool parseHourMinuteString(String hourMinute, uint8_t *hour, uint8_t *minute) {
+    static bool parseHourMinuteString(String hourMinute, int *hour, int *minute) {
         int ind = hourMinute.indexOf(':');
         if (ind == -1)
             return false;
         int hr = hourMinute.substring(0, ind).toInt();
-        int mn = hourMinute.substring(ind).toInt();
+        int mn = hourMinute.substring(ind + 1).toInt();
         if (hr < 0 || hr > 23)
             return false;
         if (mn < 0 || mn > 59)
             return false;
-        *hour = (uint8_t)hr;
-        *minute = (uint8_t)mn;
+        *hour = hr;
+        *minute = mn;
         return true;
     }
 

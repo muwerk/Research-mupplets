@@ -39,6 +39,8 @@ class NeoCandle {
     double unitBrightness = 0.0;
     double oldMx = -1.0;
     bool state = false;
+    bool useAutoTimer = true;
+    uint8_t start_hour = 18, start_minute = 0, end_hour = 0, end_minute = 0;
 
 #ifdef __ESP__
     HomeAssistant *pHA;
@@ -74,6 +76,82 @@ class NeoCandle {
     }
 #endif
 
+    static int cmpHourMinuteTime(uint8_t h1, uint8_t m1, uint8_t h2, uint8_t m2) {
+        /*! compare two hour/minute times h1:m1 and h2:m2
+        @param h1 hour 0-23 of time-1
+        @param m1 minute 0-59 of time-1
+        @param h2 hour of time-2
+        @param m2 minute of time-2
+        @return 1: if h2:m2 is later than h1:m1, -1 if earlier, 0 if equal.
+        */
+        if (h2 > h1)
+            return 1;
+        if (h2 < h1)
+            return -1;
+        if (m2 > m1)
+            return 1;
+        if (m2 < m1)
+            return -1;
+        return 0;
+    }
+
+    static int deltaHourMinuteTime(uint8_t h1, uint8_t m1, uint8_t h2, uint8_t m2) {
+        /*! time difference between h2:m2 and h1:m1 in minutes.
+        @param h1 hour 0-23 of time-1
+        @param m1 minute 0-59 of time-1
+        @param h2 hour of time-2
+        @param m2 minute of time-2
+        @return time difference in minutes.
+        */
+        if (m2 < m1) {
+            m2 += 60;
+            if (h2 > 0)
+                --h2;
+            else
+                h2 = 23;
+        }
+        if (h2 < h1)
+            h2 += 24;
+        return (h2 - h1) * 60 + m2 - m1;
+    }
+
+    static bool inHourMinuteInterval(uint8_t test_hour, uint8_t test_minute, uint8_t start_hour,
+                                     uint8_t start_minute, uint8_t end_hour, uint8_t end_minute) {
+        /*! test if test_hour:test_minute is in interval [start_hour:start_minute, end_hour,
+        end_minute]
+        @returns true if test_hour:test_minute is between start end end time.
+        */
+        if (cmpHourMinuteTime(start_hour, start_minute, end_hour, end_minute) > 0) {
+            if (cmpHourMinuteTime(test_hour, test_minute, start_hour, start_minute) <= 0 &&
+                cmpHourMinuteTime(test_hour, test_minute, end_hour, end_minute) >= 0)
+                return true;
+            else
+                return false;
+        } else {
+            if (cmpHourMinuteTime(test_hour, test_minute, start_hour, start_minute) > 0 &&
+                cmpHourMinuteTime(test_hour, test_minute, end_hour, end_minute) < 0)
+                return false;
+            else
+                return true;
+        }
+        return false;
+    }
+
+    static bool parseHourMinuteString(String hourMinute, uint8_t *hour, uint8_t *minute) {
+        int ind = hourMinute.indexOf(':');
+        if (ind == -1)
+            return false;
+        int hr = hourMinute.substring(0, ind).toInt();
+        int mn = hourMinute.substring(ind).toInt();
+        if (hr < 0 || hr > 23)
+            return false;
+        if (mn < 0 || mn > 59)
+            return false;
+        *hour = (uint8_t)hr;
+        *minute = (uint8_t)mn;
+        return true;
+    }
+
     double modulator() {
         double m1 = 1.0;
         double m2 = 0.0;
@@ -85,12 +163,33 @@ class NeoCandle {
         if (dt < 3600) {
             m2 = (3600.0 - (double)dt) / 3600.0;
         }
-        struct tm *pTm = localtime(&now);
-        if (pTm->tm_hour < 18)
+
+        if (useAutoTimer) {
+            struct tm *pTm = localtime(&now);
+
+            if (inHourMinuteInterval(pTm->tm_hour, pTm->tm_min, start_hour, start_minute, end_hour,
+                                     end_minute)) {
+                int deltaAll = deltaHourMinuteTime(start_hour, start_minute, end_hour, end_minute);
+                int deltaCur =
+                    deltaHourMinuteTime(start_hour, start_minute, pTm->tm_hour, pTm->tm_min);
+                if (deltaAll > 0.0)
+                    m1 = (deltaAll - deltaCur) / (double)deltaAll;
+                else
+                    m1 = 0.0;
+            } else {
+                m1 = 0.0;
+            }
+            /*
+            if (pTm->tm_hour < 18)
+                m1 = 0.0;
+            else {
+                m1 = (24.0 - (pTm->tm_hour + pTm->tm_min / 60.0)) / (24.0 - 18.0);
+            }
+            */
+        } else {
             m1 = 0.0;
-        else {
-            m1 = (24.0 - (pTm->tm_hour + pTm->tm_min / 60.0)) / (24.0 - 18.0);
         }
+
         if (bUnitBrightness) {
             if (m1 > 0.0 || m2 > 0.0) {
                 m1 = m1 * unitBrightness;
@@ -117,11 +216,22 @@ class NeoCandle {
         return m1;
     }
 
-    void begin(Scheduler *_pSched) {
+    void begin(Scheduler *_pSched, int _start_hour = -1, int _start_minute = -1, int _end_hour = -1,
+               int _end_minute = -1) {
         // Make sure _clientName is Unique! Otherwise MQTT server will
         // rapidly disconnect.
         // char buf[32];
         pSched = _pSched;
+
+        if (_start_hour == -1 || _start_minute == -1 || _end_hour == -1 || _end_minute == -1) {
+            useAutoTimer = false;
+        } else {
+            useAutoTimer = true;
+            start_hour = _start_hour;
+            start_minute = _start_minute;
+            end_hour = _end_hour;
+            end_minute = _end_minute;
+        }
 
         pPixels = new Adafruit_NeoPixel(numPixels, pin, options);
         pPixels->begin();

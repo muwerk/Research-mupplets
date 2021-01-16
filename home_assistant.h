@@ -222,7 +222,7 @@ class HomeAssistant {
                             HAmuPrefix + "/" + devName + "/sensor/" + sensor_topic_sub_names[i];
                         String HAattrTopic =
                             devName + "/sensor/" + sensor_topic_sub_names[i] + "/attribs";
-                        String HAdiscoTopic = "!" + HAprefix + "/sensor/" + subDevNo + "-" +
+                        String HAdiscoTopic = "!!" + HAprefix + "/sensor/" + subDevNo + "-" +
                                               HAnameNS + "/" + devName + "/config";
                         String HAdiscoEntityDef =
                             "{\"stat_t\":\"" + HAstateTopic + "\"," + "\"json_attr_t\":\"" +
@@ -263,7 +263,7 @@ class HomeAssistant {
                         String HAcommandBrTopic = HAcmd + "/" + devName + "/light/set";
                         String HAstateBrTopic =
                             HAmuPrefix + "/" + devName + "/light/unitbrightness";
-                        String HAdiscoTopic = "!" + HAprefix + "/light/" + subDevNo + "-" +
+                        String HAdiscoTopic = "!!" + HAprefix + "/light/" + subDevNo + "-" +
                                               HAnameNS + "/" + devName + "/config";
                         String HAdiscoEntityDef =
                             "{\"stat_t\":\"" + HAstateTopic + "\"," + "\"name\":\"" + HAname +
@@ -301,7 +301,7 @@ class HomeAssistant {
                         String HAcommandTopic = HAcmd + "/" + devName + "/switch/set";
                         String HAstateTopic = HAmuPrefix + "/" + devName + "/switch/state";
                         String HAattrTopic = devName + "/switch/attribs";
-                        String HAdiscoTopic = "!" + HAprefix + "/switch/" + subDevNo + "-" +
+                        String HAdiscoTopic = "!!" + HAprefix + "/switch/" + subDevNo + "-" +
                                               HAnameNS + "/" + devName + "/config";
                         String HAdiscoEntityDef =
                             "{\"stat_t\":\"" + HAstateTopic + "\"," + "\"name\":\"" + HAname +

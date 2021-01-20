@@ -2,6 +2,8 @@
 
 **Note:** This is very much a work-in-progress. Interface and messages are NOT stable or final.
 
+This repository is a testing-ground for new ideas and implementations.
+
 ## History
 
 * 2019-11-20: v.0.2.0 Breaking changes to MQTT messages formats and APIs for greater consistency: `led`->`light`, `luminosity`->`illuminance`, `/sensor/` prefix for sensor data, led-brightness `luminance`->`brightness`.

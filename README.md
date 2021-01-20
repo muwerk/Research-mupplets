@@ -1,4 +1,4 @@
-# mupplets [WIP]
+# Research-mupplets [WIP]
 
 **Note:** This is very much a work-in-progress. Interface and messages are NOT stable or final.
 

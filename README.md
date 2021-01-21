@@ -1,6 +1,9 @@
 # Research-mupplets [WIP]
 
-**Note:** This is very much a work-in-progress. Interface and messages are NOT stable or final.
+**Note:** We have started the process of preparing a release library of mupplets in project [mupplet-core](https://github.com/muwerk/mupplet-core). Currently, neither this project nor the new `mupplet-core` are stable,
+this is very much ongoing development.
+
+Interfaces and messages in this project are NOT stable or final.
 
 This repository is a testing-ground for new ideas and implementations.
 

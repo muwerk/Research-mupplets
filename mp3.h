@@ -62,6 +62,77 @@ class Mp3PlayerProtocol {
     }
 };
 
+// This: https://wiki.dfrobot.com/DFPlayer_Mini_SKU_DFR0299
+class Mp3PlayerDFRobot : Mp3PlayerProtocol {  // Untested!
+  public:
+    enum MP3_CMD {
+        PLAYINDEX = 0x03,
+        VOLUME = 0x06,
+        SELECT_SD = 0x09,
+        PLAY = 0x0d,
+        PAUSE = 0x0e,
+        PLAYFOLDERTRACK = 0x0f
+    };
+    enum MP3_SUBCMD { SELECT_SD_TF = 0x02 };
+
+  private:
+    void _sendMP3(uint8_t cmd, uint8_t feedback = 0, uint8_t hi = 0, uint8_t lo = 0) {
+        uint8_t buf[10] = {0x7e, 0xff, 0x06, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xef};
+        buf[3] = cmd;
+        buf[4] = feedback;
+        buf[5] = hi;
+        buf[6] = lo;
+        uint16_t crc = 0;
+        for (int i = 1; i < 7; i++)
+            crc += buf[i];
+        buf[7] = crc >> 8;
+        buf[8] = crc & 0xff;
+        // for (int i = 0; i < 8; i++)
+        //    pSer->write(buf[i]);
+        pSer->write(buf, 8);
+    }
+
+    void _selectSD() {
+        _sendMP3(MP3_CMD::SELECT_SD, 0, MP3_SUBCMD::SELECT_SD_TF);
+    }
+
+  public:
+    HardwareSerial *pSer;
+    Mp3PlayerDFRobot(HardwareSerial *pSer) : pSer(pSer) {
+    }
+
+    virtual bool begin() override {
+        pSer->begin(9600);
+        _selectSD();
+        return true;
+    }
+    virtual bool playFolderTrack(uint8_t folder = 0, uint8_t track = 0) override {
+        _sendMP3(MP3_CMD::PLAYFOLDERTRACK, folder, track);
+        return true;
+    }
+
+    virtual bool playIndex(uint16_t index = 1) override {
+        _sendMP3(MP3_CMD::PLAYINDEX, index / 256, index % 256);
+        return true;
+    }
+
+    virtual bool pause() override {
+        _sendMP3(MP3_CMD::PAUSE, 0, 0);
+        return true;
+    }
+    virtual bool play() override {
+        _sendMP3(MP3_CMD::PLAY, 0, 0);
+        return true;
+    }
+
+    virtual bool setVolume(uint8_t vol) override {
+        if (vol > 30)
+            vol = 30;
+        _sendMP3(MP3_CMD::VOLUME, 0, vol);
+        return true;
+    }
+};
+
 // This: http://geekmatic.in.ua/pdf/Catalex_MP3_board.pdf
 class Mp3PlayerCatalex : Mp3PlayerProtocol {  // Untested!
   public:
@@ -454,7 +525,7 @@ class Mp3Player {
 
   public:
     Mp3PlayerProtocol *mp3prot;
-    enum MP3_PLAYER_TYPE { CATALEX, OPENSMART };
+    enum MP3_PLAYER_TYPE { CATALEX, OPENSMART, DFROBOT };
     String name;
     HardwareSerial *pSerial;
     MP3_PLAYER_TYPE mp3type;
@@ -463,6 +534,9 @@ class Mp3Player {
               MP3_PLAYER_TYPE mp3type = MP3_PLAYER_TYPE::OPENSMART)
         : name(name), pSerial(pSerial), mp3type(mp3type) {
         switch (mp3type) {
+        case MP3_PLAYER_TYPE::DFROBOT:
+            mp3prot = (Mp3PlayerProtocol *)new Mp3PlayerDFRobot(pSerial);
+            break;
         case MP3_PLAYER_TYPE::CATALEX:
             mp3prot = (Mp3PlayerProtocol *)new Mp3PlayerCatalex(pSerial);
             break;

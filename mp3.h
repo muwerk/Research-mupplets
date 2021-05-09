@@ -68,16 +68,17 @@ class Mp3PlayerDFRobot : Mp3PlayerProtocol {  // Untested!
     enum MP3_CMD {
         PLAYINDEX = 0x03,
         VOLUME = 0x06,
+        PLAYBACK_MODE = 0x08,
         SELECT_SD = 0x09,
         RESET = 0x0c,
         PLAY = 0x0d,
         PAUSE = 0x0e,
         PLAYFOLDERTRACK = 0x0f
     };
-    enum MP3_SUBCMD { SELECT_SD_TF = 0x02 };
-
+    enum MP3_SUBCMD { SELECT_SDC = 0x02};
   private:
-    void _sendMP3(uint8_t cmd, uint8_t feedback = 0, uint8_t hi = 0, uint8_t lo = 0) {
+    uint8_t feedback = 0; 
+    void _sendMP3(uint8_t cmd, uint8_t hi = 0, uint8_t lo = 0) {
         uint8_t buf[10] = {0x7e, 0xff, 0x06, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xef};
         buf[3] = cmd;
         buf[4] = feedback;
@@ -85,7 +86,7 @@ class Mp3PlayerDFRobot : Mp3PlayerProtocol {  // Untested!
         buf[6] = lo;
         uint16_t crc = 0;
         for (int i = 1; i < 7; i++)
-            crc += buf[i];
+            crc += (uint16_t)(buf[i]);
         crc = -crc;
         buf[7] = (uint8_t)(crc >> 8);
         buf[8] = (uint8_t)(crc & 0xff);
@@ -95,7 +96,11 @@ class Mp3PlayerDFRobot : Mp3PlayerProtocol {  // Untested!
     }
 
     void _selectSD() {
-        _sendMP3(MP3_CMD::SELECT_SD, 0, MP3_SUBCMD::SELECT_SD_TF);
+        _sendMP3(MP3_CMD::SELECT_SD, 0, MP3_SUBCMD::SELECT_SDC);
+    }
+
+    void _selectPlaybackMode(uint8_t mode) {
+        _sendMP3(MP3_CMD::PLAYBACK_MODE, 0, mode);
     }
 
     void _reset() {
@@ -110,13 +115,15 @@ class Mp3PlayerDFRobot : Mp3PlayerProtocol {  // Untested!
     virtual bool begin() override {
         pSer->begin(9600);
         _reset();
-        delay(500);
-        //_selectSD();
-        // delay(20);
+        delay(2000);
+        _selectSD();
+        delay(20);
         return true;
     }
     virtual bool playFolderTrack(uint8_t folder = 0, uint8_t track = 0) override {
-        _sendMP3(MP3_CMD::PLAYFOLDERTRACK, folder, track);
+        //_sendMP3(MP3_CMD::PLAYFOLDERTRACK, 0, folder);
+        _sendMP3(MP3_CMD::PLAYINDEX, 0, track);
+        //_sendMP3(MP3_CMD::PLAY,0,0);
         return true;
     }
 
@@ -137,7 +144,7 @@ class Mp3PlayerDFRobot : Mp3PlayerProtocol {  // Untested!
     virtual bool setVolume(uint8_t vol) override {
         if (vol > 30)
             vol = 30;
-        _sendMP3(MP3_CMD::VOLUME, 0, vol);
+        _sendMP3(MP3_CMD::VOLUME, 1, vol);
         return true;
     }
 };
@@ -177,7 +184,7 @@ class Mp3PlayerCatalex : Mp3PlayerProtocol {  // Untested!
 
     virtual bool begin() override {
         pSer->begin(9600);
-        _selectSD();
+        //_selectSD();
         return true;
     }
     virtual bool playFolderTrack(uint8_t folder = 0, uint8_t track = 0) override {

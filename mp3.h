@@ -5,7 +5,7 @@
 
 #pragma once
 
-#include "scheduler.h"
+// #include "scheduler.h"
 
 namespace ustd {
 
@@ -69,6 +69,7 @@ class Mp3PlayerDFRobot : Mp3PlayerProtocol {  // Untested!
         PLAYINDEX = 0x03,
         VOLUME = 0x06,
         SELECT_SD = 0x09,
+        RESET = 0x0c,
         PLAY = 0x0d,
         PAUSE = 0x0e,
         PLAYFOLDERTRACK = 0x0f
@@ -85,15 +86,20 @@ class Mp3PlayerDFRobot : Mp3PlayerProtocol {  // Untested!
         uint16_t crc = 0;
         for (int i = 1; i < 7; i++)
             crc += buf[i];
-        buf[7] = crc >> 8;
-        buf[8] = crc & 0xff;
+        crc = -crc;
+        buf[7] = (uint8_t)(crc >> 8);
+        buf[8] = (uint8_t)(crc & 0xff);
         // for (int i = 0; i < 8; i++)
         //    pSer->write(buf[i]);
-        pSer->write(buf, 8);
+        pSer->write(buf, 10);
     }
 
     void _selectSD() {
         _sendMP3(MP3_CMD::SELECT_SD, 0, MP3_SUBCMD::SELECT_SD_TF);
+    }
+
+    void _reset() {
+        _sendMP3(MP3_CMD::RESET, 0, 0);
     }
 
   public:
@@ -103,7 +109,10 @@ class Mp3PlayerDFRobot : Mp3PlayerProtocol {  // Untested!
 
     virtual bool begin() override {
         pSer->begin(9600);
-        _selectSD();
+        _reset();
+        delay(500);
+        //_selectSD();
+        // delay(20);
         return true;
     }
     virtual bool playFolderTrack(uint8_t folder = 0, uint8_t track = 0) override {

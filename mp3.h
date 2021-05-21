@@ -4,7 +4,6 @@
 // different protocol variations.
 
 #pragma once
-
 // #include "scheduler.h"
 
 namespace ustd {
@@ -25,6 +24,9 @@ class Mp3PlayerProtocol {
         return false;
     }
     virtual bool playIndex(uint16_t index) {
+        return false;
+    }
+    virtual bool loopIndex(uint16_t index) {
         return false;
     }
     virtual bool interleaveFolderTrack(uint8_t folder, uint8_t track) {
@@ -63,21 +65,24 @@ class Mp3PlayerProtocol {
 };
 
 // This: https://wiki.dfrobot.com/DFPlayer_Mini_SKU_DFR0299
+// command doc is partly wrong, misleading or incomplete. Refer to source:
+// https://github.com/DFRobot/DFRobotDFPlayerMini
 class Mp3PlayerDFRobot : Mp3PlayerProtocol {  // Untested!
   public:
     enum MP3_CMD {
         PLAYINDEX = 0x03,
         VOLUME = 0x06,
-        PLAYBACK_MODE = 0x08,
+        REPEATMODE = 0x08,
         SELECT_SD = 0x09,
         RESET = 0x0c,
         PLAY = 0x0d,
         PAUSE = 0x0e,
         PLAYFOLDERTRACK = 0x0f
     };
-    enum MP3_SUBCMD { SELECT_SDC = 0x02};
+    enum MP3_SUBCMD { SELECT_SDC = 0x02 };
+
   private:
-    uint8_t feedback = 0; 
+    uint8_t feedback = 0;
     void _sendMP3(uint8_t cmd, uint8_t hi = 0, uint8_t lo = 0) {
         uint8_t buf[10] = {0x7e, 0xff, 0x06, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xef};
         buf[3] = cmd;
@@ -98,11 +103,11 @@ class Mp3PlayerDFRobot : Mp3PlayerProtocol {  // Untested!
     void _selectSD() {
         _sendMP3(MP3_CMD::SELECT_SD, 0, MP3_SUBCMD::SELECT_SDC);
     }
-
-    void _selectPlaybackMode(uint8_t mode) {
-        _sendMP3(MP3_CMD::PLAYBACK_MODE, 0, mode);
-    }
-
+    /*
+        void _selectPlaybackMode(uint8_t mode) {
+            _sendMP3(MP3_CMD::PLAYBACK_MODE, 0, mode);
+        }
+    */
     void _reset() {
         _sendMP3(MP3_CMD::RESET, 0, 0);
     }
@@ -129,6 +134,11 @@ class Mp3PlayerDFRobot : Mp3PlayerProtocol {  // Untested!
 
     virtual bool playIndex(uint16_t index = 1) override {
         _sendMP3(MP3_CMD::PLAYINDEX, index / 256, index % 256);
+        return true;
+    }
+
+    virtual bool loopIndex(uint16_t index = 1) override {
+        _sendMP3(MP3_CMD::REPEATMODE, index / 256, index % 256);
         return true;
     }
 
@@ -595,6 +605,9 @@ class Mp3Player {
     }
     bool playIndex(uint16_t index) {
         return mp3prot->playIndex(index);
+    }
+    bool loopIndex(uint16_t index) {
+        return mp3prot->loopIndex(index);
     }
     bool interleaveFolderTrack(uint8_t folder, uint8_t track) {
         return mp3prot->interleaveFolderTrack(folder, track);

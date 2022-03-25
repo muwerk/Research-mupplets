@@ -10,7 +10,7 @@ namespace ustd {
 #define G_INT_ATTR IRAM_ATTR
 #else
 #ifdef __ESP__
-#define G_INT_ATTR ICACHE_RAM_ATTR
+#define G_INT_ATTR IRAM_ATTR
 #else
 #define G_INT_ATTR
 #endif

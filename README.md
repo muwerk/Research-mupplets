@@ -15,7 +15,7 @@ This repository is a testing-ground for new ideas and implementations.
 
 **mupplets** use muwerks MQTT-style messaging to pass information between each other on the same device. If connected to an MQTT-server via munet, all functionallity is externally available through an MQTT server such as Mosquitto.
 
-See [mupplet led and switch example](https://github.com/muwerk/Examples/tree/master/led-ha) for a complete example that illustrates how a
+See [mupplet led and switch example](https://github.com/muwerk/Research-Examples/tree/master/led-ha) for a complete example that illustrates how a
 switch mupplet (interfacing to a physical button) and a led mupplet (infacing to a physical led) communicate using muwerk.
 Both switch and led are also accessible via external MQTT without extra code. Additionally, both switch and led auto-register with [Home Assistant](https://www.home-assistant.io) [optional, if available], so they can be controlled using Home Assistant, Siri or Alexa.
 
@@ -149,8 +149,8 @@ void setup() {
 
 ```
 
-* See [mupplet led and switch example](https://github.com/muwerk/Examples/tree/master/led) for a complete example.
-* See [mupplet led and switch home assistant example](https://github.com/muwerk/Examples/tree/master/led-ha) for an example with Home Assistant switch integration.
+* See [mupplet led and switch example](https://github.com/muwerk/Research-Examples/tree/master/led) for a complete example.
+* See [mupplet led and switch home assistant example](https://github.com/muwerk/Research-Examples/tree/master/led-ha) for an example with Home Assistant switch integration.
 
 ## Switch
 
@@ -179,7 +179,7 @@ messages are sent on rising or falling signal.
 | ----- | ------------ | -------
 | `<mupplet-name>/switch/set` | `on`, `off`, `true`, `false`, `toggle` | Override switch setting. When setting the switch state via message, the hardware port remains overridden until the hardware changes state (e.g. button is physically pressed). Sending a `switch/set` message puts the switch in override-mode: e.g. when sending `switch/set` `on`, the state of the button is signalled `on`, even so the physical button might be off. Next time the physical button is pressed (or changes state), override mode is stopped, and the state of the actual physical button is published again.  
 | `<mupplet-name>/switch/mode/set` | `default`, `rising`, `falling`, `flipflop`, `timer <time-in-ms>`, `duration [shortpress_ms[,longpress_ms]]` | Mode `default` sends `on` when a button is pushed, `off` on release. `falling` and `rising` send `trigger` on corresponding signal change. `flipflop` changes the state of the logical switch on each change from button on to off. `timer` keeps the switch on for the specified duration (ms). `duration` mode sends messages `switch/shortpress`, if button was pressed for less than `<shortpress_ms>` (default 3000ms), `switch/longpress` if pressed less than `<longpress_ms>`, and `switch/verylongpress` for longer presses.
-| `<mupplet-name>/switch/debounce/set` | <time-in-ms> | String encoded switch debounce time in ms, [0..1000]ms. Default is 20ms. This is especially need, when switch is created in interrupt mode (see comment in [example](https://github.com/muwerk/Examples/tree/master/led)).
+| `<mupplet-name>/switch/debounce/set` | <time-in-ms> | String encoded switch debounce time in ms, [0..1000]ms. Default is 20ms. This is especially need, when switch is created in interrupt mode (see comment in [example](https://github.com/muwerk/Research-Examples/tree/master/led)).
 
 ### Sample code
 
@@ -211,8 +211,8 @@ void setup() {
 }
 ```
 
-* See [mupplet led and switch example](https://github.com/muwerk/Examples/tree/master/led) for a complete example.
-* See [mupplet led and switch home assistant example](https://github.com/muwerk/Examples/tree/master/led-ha) for an example with Home Assistant switch integration.
+* See [mupplet led and switch example](https://github.com/muwerk/Research-Examples/tree/master/led) for a complete example.
+* See [mupplet led and switch home assistant example](https://github.com/muwerk/Research-Examples/tree/master/led-ha) for an example with Home Assistant switch integration.
 
 ## DHT22, DHT11, DHT21 temperature and humidity sensors
 
@@ -299,7 +299,7 @@ void setup() {
 
 ```
 
-See [Servo](https://github.com/muwerk/Examples/tree/master/servo) for a complete example.
+See [Servo](https://github.com/muwerk/Research-Examples/tree/master/servo) for a complete example.
 
 ## MP3 player with SD-Card (OpenSmart)
 
@@ -353,13 +353,13 @@ void setup() {
 }
 ```
 
-See [MP3](https://github.com/muwerk/Examples/tree/master/mp3) for a complete example.
+See [MP3](https://github.com/muwerk/Research-Examples/tree/master/mp3) for a complete example.
 
 ## 74HC595 shift register
 
 Allows serial output of 8 bit (or more, if cascaded) data using either 3 GPIOs or SPI (MOSI, CLK, +latch).
 
-<img src="https://github.com/muwerk/mupplets/blob/master/Resources/74hc595.png" width="60%" height="30%">
+<img src="https://github.com/muwerk/Research-mupplets/blob/master/Resources/74hc595.png" width="60%" height="30%">
 Hardware: OpenSmart MP3 player (e.g. AliExpress).
 
 #### Notes
